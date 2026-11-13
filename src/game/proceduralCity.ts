@@ -35,6 +35,7 @@ import {
   WorldPos,
 } from './types';
 import { pickArchetype } from './archetypes';
+import { pickFairStarts } from './hazardWarning';
 import { PRESET_CITIES, buildCustomCitySeed, getRealStreetsEnForCity, getRealStreetsForCity } from './customCity';
 
 export function createRng(seed: number): () => number {
@@ -1648,11 +1649,13 @@ export function generateProceduralCity(
   }
 
   // Build Traffic Vehicles strictly in Right-Hand Lanes around continuous multi-block loops!
+  const spawnWorldPos = gridToWorld(spawnCoord, totalGridSize);
   const hazards: TrafficHazard[] = [];
   const rightHandLoops = extractRightHandTrafficLoops(tiles, spawnCoord, totalGridSize, rng);
 
-  for (let i = 0; i < Math.min(config.cruiserCount, rightHandLoops.length); i++) {
-    const loop = rightHandLoops[i];
+  const cruiserLoops = pickFairStarts(rightHandLoops, (loop) => loop[0], spawnWorldPos, config.cruiserCount);
+  for (let i = 0; i < cruiserLoops.length; i++) {
+    const loop = cruiserLoops[i];
     const startWp = loop[0];
     const nextWp = loop[1];
     const yaw = Math.atan2(nextWp.x - startWp.x, nextWp.z - startWp.z);
@@ -1679,8 +1682,9 @@ export function generateProceduralCity(
 
   // Express Scooter Couriers in Right-Hand Lane on straight corridors away from spawn
   const scooterCorridors = extractSafeRoadCorridors(tiles, spawnCoord, totalGridSize);
-  for (let i = 0; i < Math.min(config.scooterCount, scooterCorridors.length); i++) {
-    const corr = scooterCorridors[i];
+  const scooterPicks = pickFairStarts(scooterCorridors, (corr) => corr[0], spawnWorldPos, config.scooterCount);
+  for (let i = 0; i < scooterPicks.length; i++) {
+    const corr = scooterPicks[i];
     const rawA = corr[0];
     const rawB = corr[1];
     const yaw = Math.atan2(rawB.x - rawA.x, rawB.z - rawA.z);
@@ -1706,6 +1710,7 @@ export function generateProceduralCity(
       dashEnd: pB,
     });
   }
+
 
   // Timed Canal Bridge Gates
   const activeBridges: GridCoord[] = [];

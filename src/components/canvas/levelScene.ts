@@ -17,6 +17,8 @@ import { loadGhost, sampleGhostAt, saveGhost } from '../../game/ghost';
 import type { GhostSample } from '../../game/ghost';
 import { getGhostKey, getRunMode } from '../../game/runMode';
 import type { WeatherKind } from '../../game/weather';
+import { isCrossingWarningActive, warningPulse } from '../../game/hazardWarning';
+import type { TrafficHazard } from '../../game/types';
 import { GamePhase, OutcomeKind, ShiftAtmosphere } from '../../game/types';
 import type { LevelConfig, TopperId, VehicleId } from '../../game/types';
 import type { ToyTruckRig } from '../../game/meshes';
@@ -215,6 +217,58 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
 
       truckRig.headlightCones.visible =
         kind !== 'clear' || baseAtmosphere === ShiftAtmosphere.TwilightNeon;
+    }
+
+    // ---- Crossing-hazard ground warnings --------------------------------------
+    // A dashing scooter coning across the lanes is only readable if the asphalt
+    // announces it first, so each winding-up dash projects a blinking red strip
+    // along the exact line it is about to travel.
+    const WARNING_POOL = 6;
+    const warningMeshes: THREE.Mesh[] = [];
+    let warningMat: THREE.MeshBasicMaterial | null = null;
+
+    function ensureWarningPool() {
+      if (warningMeshes.length > 0) return;
+      warningMat = new THREE.MeshBasicMaterial({
+        color: 0xff3b30,
+        transparent: true,
+        opacity: 0.3,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        toneMapped: false,
+      });
+      const geo = new THREE.PlaneGeometry(1, 1);
+      geo.rotateX(-Math.PI / 2);
+      for (let i = 0; i < WARNING_POOL; i++) {
+        const mesh = new THREE.Mesh(geo, warningMat);
+        mesh.visible = false;
+        mesh.renderOrder = 3;
+        scene.add(mesh);
+        warningMeshes.push(mesh);
+      }
+    }
+
+    function updateHazardWarnings(hazards: readonly TrafficHazard[], clock: number) {
+      ensureWarningPool();
+      let used = 0;
+      for (const h of hazards) {
+        if (used >= WARNING_POOL) break;
+        if (!isCrossingWarningActive(h)) continue;
+        const mesh = warningMeshes[used++];
+        const dx = h.dashEnd.x - h.dashStart.x;
+        const dz = h.dashEnd.z - h.dashStart.z;
+        const len = Math.hypot(dx, dz);
+        mesh.visible = true;
+        mesh.position.set(
+          (h.dashStart.x + h.dashEnd.x) * 0.5,
+          0.306,
+          (h.dashStart.z + h.dashEnd.z) * 0.5,
+        );
+        mesh.rotation.y = Math.atan2(dx, dz);
+        mesh.scale.set(1.15, 1, Math.max(1.2, len * 0.94));
+      }
+      for (let i = used; i < WARNING_POOL; i++) warningMeshes[i].visible = false;
+      if (warningMat && used > 0) warningMat.opacity = warningPulse(clock);
     }
 
     let ghostRig: THREE.Group | null = null;
@@ -475,6 +529,7 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
     applyAtmosphereRig,
     applyWeatherRig,
     updateGhost,
+    updateHazardWarnings,
     buildCityScene,
     startDemoReel,
     stopDemoReel,

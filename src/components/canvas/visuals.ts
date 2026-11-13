@@ -1,4 +1,5 @@
 import type * as THREE from 'three';
+import type { TrafficHazard } from '../../game/types';
 import { pokoAudio } from '../../game/audio';
 import { getActiveStop, stepParcelStackWobble } from '../../game/rules';
 import { GamePhase, HazardKind, HazardPhase, SignalAxisState } from '../../game/types';
@@ -24,6 +25,7 @@ export interface VisualDeps {
   truckRig: ToyTruckRig;
   windStreakRig: WindStreakRig;
   refreshForwardRoadPath: () => void;
+  updateHazardWarnings: (hazards: readonly TrafficHazard[], clock: number) => void;
 }
 
 // Section 7 of the frame: push simulation state into the three.js scene graph.
@@ -446,6 +448,8 @@ export function updateVisuals(
       }
 
       fx.updateBreadcrumbs(S.cachedRoadPath, S.visualClock);
+
+      deps.updateHazardWarnings(S.currentCity.hazards, S.visualClock);
 
       // Advance every pooled visual effect (parcels, tip coins, crash bursts, particles)
       fx.setCoinTarget(S.truckState.x, 1.38 + S.truckState.y, S.truckState.z);

@@ -20,6 +20,9 @@ import {
   TruckState,
 } from '../types';
 
+import { RIVAL_SPEED_RATIO } from '../hazardWarning';
+import { resolveVehicleSpec } from '../upgrades';
+import { TRUCK_MAX_SPEED } from '../../config/balance';
 /**
  * Steps 4-phase intersection Traffic Signals:
  * EWGreen (6.5s) -> EWYellow (1.8s) -> NSGreen (6.5s) -> NSYellow (1.8s)
@@ -168,6 +171,9 @@ export function stepRivalCourier(
 ): 'player_claimed' | 'rival_claimed' | null {
   if (!rival || rival.waypoints.length < 2) return null;
   const clampedDt = Math.min(dt, 0.05);
+  // Keep the rival beatable: never faster than 75% of the player's top speed.
+  const rivalCap = RIVAL_SPEED_RATIO * TRUCK_MAX_SPEED * resolveVehicleSpec(truck.vehicleId).maxSpeedMult;
+  if (rival.speed > rivalCap) rival.speed = rivalCap;
 
   if (rival.bumpTimer && rival.bumpTimer > 0) {
     rival.bumpTimer = Math.max(0, rival.bumpTimer - clampedDt);

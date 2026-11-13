@@ -427,7 +427,13 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
     }
 
     const titleStepDeps: TitleStepDeps = { camera, camLookTarget, waterPlane };
-    const visualDeps: VisualDeps = { fx, truckRig, windStreakRig, refreshForwardRoadPath };
+    const visualDeps: VisualDeps = {
+      fx,
+      truckRig,
+      windStreakRig,
+      refreshForwardRoadPath,
+      updateHazardWarnings: level.updateHazardWarnings,
+    };
 
     const cameraFramingDeps: CameraFramingDeps = {
       camera,

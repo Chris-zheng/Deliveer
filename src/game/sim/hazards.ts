@@ -16,6 +16,8 @@ import {
   TrafficSignal,
   TruckState,
 } from '../types';
+import { CROSSING_WARNING_SEC } from '../hazardWarning';
+
 
 import {
   MAX_CONCURRENT_SCOOTER_ATTACKS,
@@ -276,7 +278,7 @@ export function stepHazardsAndCollisions(
           activeScooterAttackers < MAX_CONCURRENT_SCOOTER_ATTACKS
         ) {
           h.phase = HazardPhase.Windup;
-          h.phaseTimer = 0.65;
+          h.phaseTimer = CROSSING_WARNING_SEC;
           activeScooterAttackers++;
           startedWindups.push(h);
         }
