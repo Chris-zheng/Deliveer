@@ -4,6 +4,7 @@ import { updateCameraFraming, type CameraFramingDeps } from './cameraFrame';
 import { stepPlay, type PlayStepDeps } from './playStep';
 import { createLevelScene } from './levelScene';
 import { triggerParcelDelivery as triggerParcelDeliveryImpl, type DeliveryDeps } from './delivery';
+import { createHudBridge } from './hudBridge';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CAMERA, POOLS } from '../../config/balance';
@@ -249,6 +250,14 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
     // Level World Container (rebuilt cleanly per level)
   const S = createRuntimeState({ levelRef, walletCoinsRef, vehicleRef, startShieldRef, scene });
 
+    const { syncTruckParcelStack, syncMinimapSnapshot, refreshForwardRoadPath, emitHudSnapshot } = createHudBridge(S, {
+      truckRig,
+      minimapSnapRef,
+      onHudUpdateRef,
+      bestScoreRef,
+      walletCoinsRef,
+    });
+
     const level = createLevelScene(S, {
       scene,
       camera,
@@ -304,62 +313,6 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       resetTouchControls();
     }
 
-    function syncTruckParcelStack() {
-      const remaining = S.currentCity.stops.filter((s) => !s.delivered).length;
-      truckRig.parcelBoxes.forEach((box, idx) => {
-        box.visible = idx < remaining;
-      });
-    }
-
-    function syncMinimapSnapshot() {
-      const snap = minimapSnapRef.current.current;
-      if (!snap) return;
-      const activeStop = getActiveStop(S.currentCity.stops);
-      snap.city = S.currentCity;
-      snap.truckX = S.truckState.x;
-      snap.truckZ = S.truckState.z;
-      snap.truckYaw = S.truckState.yaw;
-      snap.activeStopIndex = activeStop ? activeStop.index : -1;
-    }
-
-    function refreshForwardRoadPath() {
-      S.cachedRoadPath = computeForwardRoadPath(
-        S.currentCity,
-        S.truckState,
-        getActiveStop(S.currentCity.stops),
-      );
-    }
-    function emitHudSnapshot() {
-      onHudUpdateRef.current(
-        buildRunHudState({
-          currentCity: S.currentCity,
-          truckState: S.truckState,
-          score: S.score,
-          combo: S.combo,
-          comboTimer: S.comboTimer,
-          timeRemainingSec: S.timeRemainingSec,
-          bannerEvent: S.bannerEvent,
-          countdownState: S.countdownState,
-          demoState: S.demoState,
-          demoSandboxCoins: S.demoSandboxCoins,
-          getCachedRoadPath: () => S.cachedRoadPath,
-          lastEarningEvent: S.lastEarningEvent,
-          riderBaseIncome: S.riderBaseIncome,
-          riderOnTimeBonus: S.riderOnTimeBonus,
-          riderHotMealTip: S.riderHotMealTip,
-          riderBullseyeTip: S.riderBullseyeTip,
-          riderRushHourBonus: S.riderRushHourBonus,
-          riderSpillDeduction: S.riderSpillDeduction,
-          riderTrafficFines: S.riderTrafficFines,
-          riderLateDeduction: S.riderLateDeduction,
-          riderReviewScore: S.riderReviewScore,
-          walletCoins: walletCoinsRef.current,
-          bestScore: bestScoreRef.current,
-          refreshForwardRoadPath,
-          syncMinimapSnapshot,
-        }),
-      );
-    }
 
 
     loadLevelFnRef.current = (lvl: number, resetScore: boolean, customCfg?: LevelConfig | null) => {
