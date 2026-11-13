@@ -19,7 +19,7 @@ import { getGhostKey, getRunMode } from '../../game/runMode';
 import type { WeatherKind } from '../../game/weather';
 import { isCrossingWarningActive, warningPulse } from '../../game/hazardWarning';
 import type { TrafficHazard } from '../../game/types';
-import { GamePhase, OutcomeKind, ShiftAtmosphere } from '../../game/types';
+import { GamePhase, LiveryId, OutcomeKind, ShiftAtmosphere } from '../../game/types';
 import type { LevelConfig, TopperId, VehicleId } from '../../game/types';
 import type { ToyTruckRig } from '../../game/meshes';
 import { buildCityActors } from './actors';
@@ -55,6 +55,7 @@ export interface LevelStageHandles {
   levelRef: { current: number };
   vehicleRef: { current: VehicleId };
   topperRef: { current: TopperId };
+  liveryRef: { current: LiveryId };
   walletCoinsRef: { current: number };
   startShieldRef: { current: boolean };
   customCityConfigRef: { current: LevelConfig | null | undefined };
@@ -91,6 +92,7 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
     levelRef,
     vehicleRef,
     topperRef,
+    liveryRef,
     walletCoinsRef,
     startShieldRef,
     customCityConfigRef,
@@ -117,6 +119,9 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
       S.boatRigs = [];
       S.birdRigs = [];
       S.rampBeaconGroups = [];
+      S.landmarkBeacons = [];
+      S.discoveredLandmarkIds.clear();
+      S.lastPromptedStopId = null;
       for (const fc of flyingCoins) {
         fc.active = false;
         fc.mesh.visible = false;
@@ -342,6 +347,9 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
       const activeTop = S.demoState.active
         ? S.demoState.topperId
         : topperRef.current;
+      const activeLiv = S.demoState.active
+        ? LiveryId.Standard
+        : liveryRef.current;
       S.truckState = createInitialTruckState(
         S.currentCity,
         activeVeh,
@@ -352,7 +360,12 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
       }
       truckRig.setVehicleStyle(activeVeh);
       truckRig.setTopper(activeTop);
+      truckRig.setLivery(activeLiv);
       applyAtmosphereRig(S.currentCity.config.atmosphere);
+      pokoAudio.setDistrictAtmosphere(
+        S.currentCity.config.atmosphere,
+        S.currentCity.config.customCity,
+      );
       pokoAudio.setFeverMode(false);
 
       if (resetScore) {
@@ -427,6 +440,7 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
           boat: S.boatRigs,
           bird: S.birdRigs,
           rampBeacons: S.rampBeaconGroups,
+          landmarkBeacons: S.landmarkBeacons,
         },
       });
       S.rivalRig = actorResult.rival;

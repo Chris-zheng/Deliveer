@@ -55,9 +55,15 @@ export function updateCameraFraming(dt: number, S: RuntimeState, deps: CameraFra
           viewBlend.up *
           zoomScale;
         const baseFov = isPortraitMobile ? 42 : CHASE_BASE_FOV;
-        const targetFov = baseFov * viewBlend.fov;
-        if (Math.abs(camera.fov - targetFov) > 0.01) {
-          camera.fov = targetFov;
+        const speedNorm = Math.min(1, Math.max(0, S.truckState.speed / 10));
+        const boostFovKick = S.truckState.boostTimer > 0 ? 2.4 : 0;
+        const targetFov =
+          baseFov * viewBlend.fov +
+          (S.demoState.active ? 0 : speedNorm * 1.8 + boostFovKick);
+        const fovDamp = 1 - Math.exp(-7.5 * Math.max(dt, 0.001));
+        const nextFov = camera.fov + (targetFov - camera.fov) * fovDamp;
+        if (Math.abs(camera.fov - nextFov) > 0.01) {
+          camera.fov = nextFov;
           camera.updateProjectionMatrix();
         }
         const targetLookY = isPortraitMobile ? -0.45 : 0.35;

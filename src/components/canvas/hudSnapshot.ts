@@ -1,5 +1,7 @@
 import {
   BOOST_COOLDOWN_MAX_SEC,
+  DRIFT_TIER1_SEC,
+  DRIFT_TIER2_SEC,
   WRONG_WAY_LIMIT_SEC,
   checkDeliveryEligibility,
   getActiveStop,
@@ -15,6 +17,7 @@ import {
   TruckState,
 } from '../../game/types';
 import type { DemoDirectorState as DemoState } from '../../game/demoDirector';
+import type { WeatherKind } from '../../game/weather';
 import type { RoadPathNode } from './navigation';
 
 export interface HudSnapshotDeps {
@@ -44,6 +47,7 @@ export interface HudSnapshotDeps {
   refreshForwardRoadPath: () => void;
   syncMinimapSnapshot: () => void;
   rushPromiseSec: number;
+  weatherKind: WeatherKind;
 }
 
 /**
@@ -80,6 +84,7 @@ export function buildRunHudState(deps: HudSnapshotDeps): HudState {
     refreshForwardRoadPath,
     syncMinimapSnapshot,
     rushPromiseSec,
+    weatherKind,
   } = deps;
 
   const activeStop = getActiveStop(currentCity.stops);
@@ -210,6 +215,14 @@ export function buildRunHudState(deps: HudSnapshotDeps): HudState {
     boostCharge,
     isBoosting: truckState.boostTimer > 0,
     isDrifting: truckState.isDrifting,
+    driftTier: (
+      truckState.isDrifting && truckState.driftChargeAccum >= DRIFT_TIER2_SEC
+        ? 2
+        : truckState.isDrifting && truckState.driftChargeAccum >= DRIFT_TIER1_SEC
+          ? 1
+          : 0
+    ) as 0 | 1 | 2,
+    weatherKind,
     speedKmh: Math.round(truckState.speed * 6.5),
     bannerEvent,
     countdownStage: countdownState.stage,

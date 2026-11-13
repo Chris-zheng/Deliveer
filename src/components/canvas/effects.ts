@@ -123,6 +123,17 @@ export interface EffectsSystem {
   spawnFlyingCoin(options: SpawnFlyingCoinOptions): void;
   /** The van roof moves every frame, so the live target is pushed in by the caller. */
   setCoinTarget(x: number, y: number, z: number): void;
+  updateTossArc(
+    visible: boolean,
+    sx: number,
+    sy: number,
+    sz: number,
+    tx: number,
+    ty: number,
+    tz: number,
+    colorHex: number,
+    visualClock: number,
+  ): void;
   updateBreadcrumbs(path: readonly BreadcrumbNode[], visualClock: number): void;
   /** Advances every pooled effect pool in one deterministic order. */
   update(dt: number, camYaw: number): void;
@@ -323,6 +334,55 @@ export function createEffectsSystem({
     coinTarget.z = z;
   }
 
+  // ---- Pooled 3D Parcel Toss Trajectory Arc -----------------------------------
+  const ARC_DOT_COUNT = 8;
+  const arcDotMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.88,
+    depthWrite: false,
+    toneMapped: false,
+  });
+  const arcDotMesh = new THREE.InstancedMesh(assets.particleSphere, arcDotMat, ARC_DOT_COUNT);
+  arcDotMesh.frustumCulled = false;
+  arcDotMesh.visible = false;
+  scene.add(arcDotMesh);
+
+  function updateTossArc(
+    visible: boolean,
+    sx: number,
+    sy: number,
+    sz: number,
+    tx: number,
+    ty: number,
+    tz: number,
+    colorHex: number,
+    visualClock: number,
+  ) {
+    if (!visible) {
+      arcDotMesh.visible = false;
+      return;
+    }
+    arcDotMesh.visible = true;
+    arcDotMat.color.setHex(colorHex);
+    const flowPhase = (visualClock * 1.45) % 1;
+    for (let i = 0; i < ARC_DOT_COUNT; i++) {
+      const u = ((i + flowPhase) / ARC_DOT_COUNT) * 0.94 + 0.04;
+      const arcLift = Math.sin(u * Math.PI) * 1.65;
+      _pos.set(
+        sx + (tx - sx) * u,
+        sy + (ty - sy) * u + arcLift,
+        sz + (tz - sz) * u,
+      );
+      const pulseScale = 0.42 + Math.sin(u * Math.PI) * 0.34;
+      _quat.identity();
+      _scale.setScalar(pulseScale);
+      _mat4.compose(_pos, _quat, _scale);
+      arcDotMesh.setMatrixAt(i, _mat4);
+    }
+    arcDotMesh.instanceMatrix.needsUpdate = true;
+  }
+
   function updateBreadcrumbs(path: readonly BreadcrumbNode[], visualClock: number) {
     for (let i = 0; i < BREADCRUMB_MAX; i++) {
       if (i + 1 < path.length) {
@@ -462,6 +522,8 @@ export function createEffectsSystem({
   function dispose() {
     scene.remove(particleMesh);
     scene.remove(breadcrumbMesh);
+    scene.remove(arcDotMesh);
+    arcDotMat.dispose();
     for (const fp of flyingParcels) scene.remove(fp.mesh);
     for (const fc of flyingCoins) scene.remove(fc.mesh);
     for (const cb of crashBursts) {
@@ -481,6 +543,7 @@ export function createEffectsSystem({
     spawnCrashBurstEffect,
     spawnFlyingCoin,
     setCoinTarget,
+    updateTossArc,
     updateBreadcrumbs,
     update,
     dispose,

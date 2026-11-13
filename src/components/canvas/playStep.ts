@@ -32,6 +32,7 @@ import {
 import { HazardKind, OutcomeKind, ParcelKind, ShiftAtmosphere, VehicleId } from '../../game/types';
 import type {
   CrashEvent,
+  DiscoveryLorePayload,
   QuestKind,
   RiderShiftReceipt,
   RunSnapshot,
@@ -67,6 +68,7 @@ export interface PlayStepDeps {
   triggerParcelDelivery: (viaExpressToss: boolean, isBullseye?: boolean) => void;
   startDemoReel: () => void;
   stopDemoReel: () => void;
+  onDiscoverLoreRef: HasCurrent<(payload: DiscoveryLorePayload) => void>;
 }
 
 // The "Playing" branch of the frame: input, traffic, hazards, deliveries, scoring and HUD push.
@@ -96,6 +98,7 @@ export function stepPlay(
     triggerParcelDelivery,
     startDemoReel,
     stopDemoReel,
+    onDiscoverLoreRef,
   } = deps;
         // Toggle 45-second Choreographed Demo Reel [Bottom HUD Timer Button or T]
         if (touchControls.demoTogglePulse || input.keysJustPressed.has('KeyT')) {
@@ -108,13 +111,14 @@ export function stepPlay(
           }
         }
 
-        // Rush promise [R]: gamble that the current parcel lands in the window.
+        // Rush promise [F]: gamble that the current parcel lands in the window.
         if (
-          input.keysJustPressed.has('KeyR') &&
+          (input.keysJustPressed.has('KeyF') || touchControls.rushPulse) &&
           S.rushPromiseSec < 0 &&
           getActiveStop(S.currentCity.stops)
         ) {
-          input.keysJustPressed.delete('KeyR');
+          input.keysJustPressed.delete('KeyF');
+          touchControls.rushPulse = false;
           S.rushPromiseSec = RUSH_PROMISE_WINDOW_SEC;
           S.bannerEvent = {
             id: ++S.bannerSeq,
@@ -124,6 +128,7 @@ export function stepPlay(
           };
           S.bannerTimer = 1.8;
         }
+        touchControls.rushPulse = false;
         // The promise ticks down; reaching zero is the loss condition.
         if (S.rushPromiseSec >= 0 && !S.demoState.active) {
           S.rushPromiseSec -= cdDt;
@@ -409,6 +414,37 @@ export function stepPlay(
           S.elapsedSec += simDt;
           S.timeRemainingSec = Math.max(0, S.timeRemainingSec - simDt);
 
+          // Trigger Cultural Discovery Information Modal when picking up a newly active parcel!
+          if (!S.demoState.active) {
+            const curStopForLore = getActiveStop(S.currentCity.stops);
+            if (curStopForLore && curStopForLore.id !== S.lastPromptedStopId && curStopForLore.loreId) {
+              S.lastPromptedStopId = curStopForLore.id;
+              const cityMeta = S.currentCity.config.customCity;
+              clearAllInputs();
+              onDiscoverLoreRef.current({
+                kind: 'parcel',
+                loreId: curStopForLore.loreId,
+                cityNameZh: cityMeta?.cityName ?? S.currentCity.config.districtName,
+                cityNameEn: cityMeta?.cityNameEn ?? S.currentCity.config.districtName,
+                districtZh: cityMeta?.districtName ?? S.currentCity.config.districtName,
+                districtEn: cityMeta?.districtNameEn ?? S.currentCity.config.districtName,
+                titleZh: curStopForLore.parcelLabel,
+                titleEn: curStopForLore.parcelLabel,
+                subtitleZh: curStopForLore.loreCategoryZh ?? '地方特色外卖',
+                subtitleEn: curStopForLore.loreCategoryEn ?? 'Local Specialty',
+                factZh: curStopForLore.loreFactZh ?? '',
+                factEn: curStopForLore.loreFactEn ?? '',
+                tipZh: curStopForLore.loreTipZh,
+                tipEn: curStopForLore.loreTipEn,
+                icon: curStopForLore.loreIcon ?? '📦',
+                parcelKind: curStopForLore.parcelKind,
+                merchantName: curStopForLore.merchantName ?? curStopForLore.customerName,
+                streetName: curStopForLore.streetName,
+                streetNameEn: curStopForLore.streetNameEn,
+              });
+            }
+          }
+
           // Countdown tick audio cue on final 10 seconds
           const ceilSec = Math.ceil(S.timeRemainingSec);
           if (ceilSec > 0 && ceilSec <= 10 && ceilSec !== S.lastTickedSecond) {
@@ -577,11 +613,71 @@ export function stepPlay(
               wantsBoost,
               wantsDrift: S.demoState.active
                 ? Boolean(demoOut?.wantsDrift)
-                : input.keysHeld.has('KeyC'),
+                : input.keysHeld.has('KeyC') || touchControls.drift,
+              rawAnalogSteer: !S.demoState.active && touchControls.steerTouchActive,
             },
             S.currentCity,
             simDt,
           );
+
+          if (physEvents.driftMiniTurbo > 0) {
+            const tier: 1 | 2 = physEvents.driftMiniTurbo === 2 ? 2 : 1;
+            pokoAudio.playDriftMiniTurbo(tier);
+            S.windStreakTimer = Math.max(S.windStreakTimer, tier === 2 ? 0.55 : 0.35);
+            S.cameraTrauma = Math.max(S.cameraTrauma, tier === 2 ? 0.26 : 0.15);
+            const bonusPts = tier === 2 ? 40 : 20;
+            S.score += bonusPts;
+            spawnParticleBurst(
+              S.truckState.x - Math.sin(S.truckState.yaw) * 0.9,
+              0.42,
+              S.truckState.z - Math.cos(S.truckState.yaw) * 0.9,
+              tier === 2 ? 18 : 12,
+              tier === 2
+                ? [0xfacc15, 0xf97316, 0xffffff]
+                : [0x38bdf8, 0x7dd3fc, 0xffffff],
+              tier === 2 ? 1.2 : 0.9,
+            );
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
+              label: tier === 2 ? '黄金超级涡轮!' : '蓝色迷你涡轮!',
+              detail: `+${bonusPts} pts · ${tier === 2 ? 'Super Drift Boost!' : 'Drift Mini-Turbo!'}`,
+              tone: 'emerald',
+            };
+            S.bannerTimer = 1.25;
+            emitHudSnapshot();
+          }
+
+          // Proximity Landmark Cultural Discovery!
+          if (!S.demoState.active && S.currentCity.landmarks) {
+            for (const lm of S.currentCity.landmarks) {
+              if (S.discoveredLandmarkIds.has(lm.id)) continue;
+              const dLm = Math.hypot(S.truckState.x - lm.x, S.truckState.z - lm.z);
+              if (dLm < 5.6) {
+                S.discoveredLandmarkIds.add(lm.id);
+                S.score += 120;
+                awardRunCoins(35);
+                spawnParticleBurst(lm.x, 2.8, lm.z, 22, [0xfde047, 0x38bdf8, 0xffffff], 1.3);
+                const cityMeta = S.currentCity.config.customCity;
+                clearAllInputs();
+                onDiscoverLoreRef.current({
+                  kind: 'landmark',
+                  loreId: lm.loreId,
+                  cityNameZh: cityMeta?.cityName ?? S.currentCity.config.districtName,
+                  cityNameEn: cityMeta?.cityNameEn ?? S.currentCity.config.districtName,
+                  districtZh: cityMeta?.districtName ?? S.currentCity.config.districtName,
+                  districtEn: cityMeta?.districtNameEn ?? S.currentCity.config.districtName,
+                  titleZh: lm.nameZh,
+                  titleEn: lm.nameEn,
+                  subtitleZh: lm.eraZh,
+                  subtitleEn: lm.eraEn,
+                  factZh: lm.factZh,
+                  factEn: lm.factEn,
+                  icon: lm.icon ?? '🏛️',
+                });
+                break;
+              }
+            }
+          }
 
           // Leafy boulevard breeze & songbird flutter when zooming past park trees!
           if (S.truckState.speed > 6.2 && S.treeFlutterCooldown <= 0) {

@@ -4,7 +4,18 @@ import * as THREE from 'three';
 import { BuildingTheme, type BuildingLot } from './types';
 import { createLandmarkMesh, landmarkKindForLevel, type LandmarkKind } from './meshes';
 
-const KINDS: LandmarkKind[] = ['clock-tower', 'radio-mast', 'grand-arch'];
+const KINDS: LandmarkKind[] = [
+  'clock-tower',
+  'radio-mast',
+  'grand-arch',
+  'pearl-tower',
+  'palace-gate',
+  'colosseum-ring',
+  'pyramid',
+  'sail-opera',
+  'liberty-spire',
+  'windmill-gable',
+];
 
 function makeLot(): BuildingLot {
   return {

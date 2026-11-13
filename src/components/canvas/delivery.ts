@@ -61,7 +61,7 @@ export function triggerParcelDelivery(
       vipRole: activeStop.vipRole,
       ticketsCount: S.truckState.ticketsCount,
       archetype: activeStop.archetype,
-      rushPromise: S.rushPromiseSec >= 0,
+      rushPromise: rushPromiseLanded,
     },
   );
   S.score += reward.pointsAwarded;

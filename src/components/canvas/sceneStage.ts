@@ -9,7 +9,7 @@ import {
   createToyTruckMesh,
   createWindStreakMesh,
 } from '../../game/meshes';
-import { TILE_SIZE, TopperId, VehicleId } from '../../game/types';
+import { LiveryId, TILE_SIZE, TopperId, VehicleId } from '../../game/types';
 
 const CHASE_BASE_FOV = CAMERA.baseFov;
 const CHASE_BACK_DIST = CAMERA.backDist;
@@ -19,6 +19,7 @@ export interface SceneStageDeps {
   container: HTMLDivElement;
   vehicle: VehicleId;
   topper: TopperId;
+  livery: LiveryId;
 }
 
 /**
@@ -29,7 +30,7 @@ export interface SceneStageDeps {
  *
  * Nothing here is rebuilt per level; the caller owns teardown.
  */
-export function createSceneStage({ container, vehicle, topper }: SceneStageDeps) {
+export function createSceneStage({ container, vehicle, topper, livery }: SceneStageDeps) {
 // 1. Software WebGL Detection (per threejs & ultra-mode directives)
 const isSoftwareGl = (() => {
   const gl = document.createElement('canvas').getContext('webgl2');
@@ -226,6 +227,7 @@ const truckRig: ToyTruckRig = createToyTruckMesh(
   9,
   vehicle,
   topper,
+  livery,
 );
 const windStreakRig: WindStreakRig = createWindStreakMesh();
 truckRig.root.add(windStreakRig.root);

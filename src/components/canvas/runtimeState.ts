@@ -73,6 +73,10 @@ export function createRuntimeState({
     let boatRigs: { data: CanalBoat; mesh: THREE.Group }[] = [];
     let birdRigs: SpawnedIslandBird[] = [];
     let rampBeaconGroups: THREE.Group[] = [];
+    let landmarkBeacons: { id: string; mesh: THREE.Group }[] = [];
+    let discoveredLandmarkIds = new Set<string>();
+    let lastPromptedStopId: string | null = null;
+    let driftSparkAccum = 0;
 
     // Simulation state
     let score = 0;
@@ -152,6 +156,10 @@ let ghostSamples: GhostSample[] = [];
     boatRigs,
     birdRigs,
     rampBeaconGroups,
+    landmarkBeacons,
+    discoveredLandmarkIds,
+    lastPromptedStopId: lastPromptedStopId as string | null,
+    driftSparkAccum,
     score,
     combo,
     comboTimer,

@@ -1,13 +1,15 @@
 import { useEffect, useRef } from 'react';
 import type { MinimapSnapshot } from './GameHud';
-import type {
-  GamePhase,
-  HudState,
-  LevelConfig,
-  QuestKind,
-  RunSnapshot,
-  TopperId,
-  VehicleId,
+import {
+  type DiscoveryLorePayload,
+  type GamePhase,
+  type HudState,
+  type LevelConfig,
+  LiveryId,
+  type QuestKind,
+  type RunSnapshot,
+  type TopperId,
+  type VehicleId,
 } from '../game/types';
 import { createCanvasRuntime } from './canvas/runtime';
 
@@ -20,6 +22,7 @@ export interface GameCanvasProps {
   bestScore: number;
   selectedVehicle: VehicleId;
   selectedTopper: TopperId;
+  selectedLivery?: LiveryId;
   walletCoins: number;
   startWithShield: boolean;
   minimapRef: React.RefObject<MinimapSnapshot>;
@@ -30,6 +33,7 @@ export interface GameCanvasProps {
   onAwardLiveCoins: (delta: number) => void;
   onQuestEvent: (kind: QuestKind, amount?: number) => void;
   onConsumeStartShield: () => void;
+  onDiscoverLore?: (payload: DiscoveryLorePayload) => void;
 }
 
 export function GameCanvas({
@@ -39,6 +43,7 @@ export function GameCanvas({
   bestScore,
   selectedVehicle,
   selectedTopper,
+  selectedLivery = LiveryId.Standard,
   walletCoins,
   startWithShield,
   minimapRef,
@@ -49,6 +54,7 @@ export function GameCanvas({
   onAwardLiveCoins,
   onQuestEvent,
   onConsumeStartShield,
+  onDiscoverLore,
 }: GameCanvasProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const minimapSnapRef = useRef(minimapRef);
@@ -60,6 +66,7 @@ export function GameCanvas({
   const bestScoreRef = useRef(bestScore);
   const vehicleRef = useRef(selectedVehicle);
   const topperRef = useRef(selectedTopper);
+  const liveryRef = useRef(selectedLivery);
   const walletCoinsRef = useRef(walletCoins);
   const startShieldRef = useRef(startWithShield);
   const customCityConfigRef = useRef(customCityConfig);
@@ -69,12 +76,14 @@ export function GameCanvas({
   const onAwardLiveCoinsRef = useRef(onAwardLiveCoins);
   const onQuestEventRef = useRef(onQuestEvent);
   const onConsumeStartShieldRef = useRef(onConsumeStartShield);
+  const onDiscoverLoreRef = useRef(onDiscoverLore ?? (() => {}));
 
   phaseRef.current = phase;
   levelRef.current = activeLevel;
   bestScoreRef.current = bestScore;
   vehicleRef.current = selectedVehicle;
   topperRef.current = selectedTopper;
+  liveryRef.current = selectedLivery;
   walletCoinsRef.current = walletCoins;
   startShieldRef.current = startWithShield;
   customCityConfigRef.current = customCityConfig;
@@ -84,13 +93,14 @@ export function GameCanvas({
   onAwardLiveCoinsRef.current = onAwardLiveCoins;
   onQuestEventRef.current = onQuestEvent;
   onConsumeStartShieldRef.current = onConsumeStartShield;
+  onDiscoverLoreRef.current = onDiscoverLore ?? (() => {});
 
   // Function pointers to rebuild level scene or swap cosmetics cleanly without tearing down WebGL
   const loadLevelFnRef = useRef<((lvl: number, resetScore: boolean, customCfg?: LevelConfig | null) => void) | null>(
     null,
   );
   const syncCosmeticsFnRef = useRef<
-    ((veh: VehicleId, top: TopperId) => void) | null
+    ((veh: VehicleId, top: TopperId, liv: LiveryId) => void) | null
   >(null);
   const prevLevelRef = useRef<number>(activeLevel);
   const prevNonceRef = useRef<number>(runNonce);
@@ -108,6 +118,7 @@ export function GameCanvas({
         bestScoreRef,
         vehicleRef,
         topperRef,
+        liveryRef,
         walletCoinsRef,
         startShieldRef,
         customCityConfigRef,
@@ -117,6 +128,7 @@ export function GameCanvas({
         onAwardLiveCoinsRef,
         onQuestEventRef,
         onConsumeStartShieldRef,
+        onDiscoverLoreRef,
         minimapSnapRef,
         loadLevelFnRef,
         syncCosmeticsFnRef,
@@ -146,10 +158,10 @@ export function GameCanvas({
     }
   }, [activeLevel, runNonce, customCityConfig]);
 
-  // Swap 3D vehicle body & roof topper live when equipped in Garage Shop!
+  // Swap 3D vehicle body, roof topper, & paint livery live when equipped in Garage Shop!
   useEffect(() => {
-    syncCosmeticsFnRef.current?.(selectedVehicle, selectedTopper);
-  }, [selectedVehicle, selectedTopper]);
+    syncCosmeticsFnRef.current?.(selectedVehicle, selectedTopper, selectedLivery);
+  }, [selectedVehicle, selectedTopper, selectedLivery]);
 
   return (
     <div

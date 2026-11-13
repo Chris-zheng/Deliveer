@@ -6,8 +6,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  advanceChallengeStreak,
+  canCheckInToday,
+  claimDailyCheckIn,
+  createDefaultDailyStreak,
   getDailyChallenge,
   getDailyDateKey,
+  getDailyMedalForScore,
+  getDisplayCheckInStreak,
   recordDailyRun,
   loadDailyProgress,
 } from './dailyChallenge';
@@ -30,6 +36,8 @@ test('the daily challenge stays inside the playable envelope', () => {
     assert.ok(challenge.timeLimitSec >= 60);
     assert.ok(challenge.targetScore >= 1000);
     assert.ok(challenge.rewardCoins > 0);
+    assert.ok(challenge.silverScore > challenge.bronzeScore);
+    assert.ok(challenge.goldScore > challenge.silverScore);
   }
 });
 
@@ -64,4 +72,63 @@ test('a stale record from yesterday does not block today reward', () => {
 
 test('daily progress storage degrades to null without a browser', () => {
   assert.equal(loadDailyProgress(), null);
+});
+
+test('bronze, silver, and gold daily medal tiers pay incrementally once per day', () => {
+  const challenge = getDailyChallenge(new Date(2026, 6, 15, 10, 0, 0));
+  assert.equal(getDailyMedalForScore(challenge, challenge.bronzeScore - 1), 'none');
+  assert.equal(getDailyMedalForScore(challenge, challenge.bronzeScore), 'bronze');
+  assert.equal(getDailyMedalForScore(challenge, challenge.silverScore), 'silver');
+  assert.equal(getDailyMedalForScore(challenge, challenge.goldScore), 'gold');
+
+  const silverRun = recordDailyRun(challenge, null, challenge.silverScore);
+  assert.equal(silverRun.medalEarned, 'silver');
+  assert.equal(silverRun.rewardCoins, challenge.rewardCoins + challenge.silverBonusCoins);
+  assert.equal(silverRun.spinTokensAwarded, 0);
+  assert.deepEqual(silverRun.newlyUnlockedMedals, ['bronze', 'silver']);
+
+  const goldRun = recordDailyRun(challenge, silverRun.progress, challenge.goldScore + 100);
+  assert.equal(goldRun.medalEarned, 'gold');
+  assert.equal(goldRun.rewardCoins, challenge.goldBonusCoins);
+  assert.equal(goldRun.spinTokensAwarded, challenge.goldSpinTokens);
+  assert.deepEqual(goldRun.newlyUnlockedMedals, ['gold']);
+
+  const repeatGold = recordDailyRun(challenge, goldRun.progress, challenge.goldScore + 500);
+  assert.equal(repeatGold.rewardCoins, 0);
+  assert.equal(repeatGold.spinTokensAwarded, 0);
+});
+
+test('7-day check-in streak and consecutive daily clear streak grant escalating bonuses', () => {
+  let streak = createDefaultDailyStreak();
+  const d1 = new Date(2026, 7, 1, 9, 0, 0);
+  const d2 = new Date(2026, 7, 2, 9, 0, 0);
+  const d4 = new Date(2026, 7, 4, 9, 0, 0);
+
+  assert.equal(canCheckInToday(streak, d1), true);
+  const c1 = claimDailyCheckIn(streak, d1);
+  assert.equal(c1.claimed, true);
+  assert.equal(c1.daySlot, 1);
+  assert.equal(canCheckInToday(c1.nextStreak, d1), false);
+
+  const dup = claimDailyCheckIn(c1.nextStreak, d1);
+  assert.equal(dup.claimed, false);
+
+  const c2 = claimDailyCheckIn(c1.nextStreak, d2);
+  assert.equal(c2.claimed, true);
+  assert.equal(c2.nextStreak.streakDays, 2);
+  assert.equal(getDisplayCheckInStreak(c2.nextStreak, d2), 2);
+
+  // Missed d3 -> streak resets to 1 on d4
+  assert.equal(getDisplayCheckInStreak(c2.nextStreak, d4), 0);
+  const c4 = claimDailyCheckIn(c2.nextStreak, d4);
+  assert.equal(c4.nextStreak.streakDays, 1);
+
+  // Challenge streak advances on consecutive cleared days
+  const s1 = advanceChallengeStreak(streak, '2026-08-01', 'bronze');
+  assert.equal(s1.nextStreak.challengeStreakDays, 1);
+  assert.equal(s1.streakBonusCoins, 0);
+
+  const s2 = advanceChallengeStreak(s1.nextStreak, '2026-08-02', 'gold');
+  assert.equal(s2.nextStreak.challengeStreakDays, 2);
+  assert.equal(s2.streakBonusCoins, 40);
 });

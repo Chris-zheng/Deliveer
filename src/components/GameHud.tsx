@@ -605,6 +605,18 @@ export const GameHud: React.FC<GameHudProps> = ({
               </div>
             )}
 
+            {(hud.driftTier ?? 0) > 0 && (
+              <div
+                className={`border-2 border-[#1d1205] rounded-full px-4 py-1 flex items-center gap-2 shadow-sm ${
+                  hud.driftTier === 2 ? 'bg-[#facc15]' : 'bg-[#38bdf8]'
+                }`}
+              >
+                <span className="font-display text-xs sm:text-sm text-[#140c04] leading-none">
+                  {hud.driftTier === 2 ? `🔥 ${t.driftSparkT2}` : `⚡ ${t.driftSparkT1}`}
+                </span>
+              </div>
+            )}
+
             {hud.bannerEvent && (
               <div
                 key={hud.bannerEvent.id}
@@ -1538,42 +1550,70 @@ export const GameHud: React.FC<GameHudProps> = ({
               </button>
             </div>
 
-            {/* Center Thumb Turbo Boost Pill */}
-            <button
-              type="button"
-              tabIndex={-1}
-              aria-label="Activate mobile turbo boost"
-              onPointerDown={(e) => {
-                e.preventDefault();
-                touchControls.boostPulse = true;
-              }}
-              className="arcade-boost-rim rounded-2xl p-1 min-w-[62px] sm:min-w-[78px] h-[56px] flex items-stretch cursor-pointer shrink-0"
-            >
-              <div className="bg-[#493214] border-2 border-[#1d1205] rounded-xl px-2 w-full relative overflow-hidden flex flex-col items-center justify-center">
-                {!hud.boostReady && !hud.isBoosting && (
-                  <div
-                    className="absolute left-0 top-0 bottom-0 bg-amber-400/30 transition-all duration-100"
-                    style={{ width: `${boostPct}%` }}
-                  />
-                )}
-                <span className="relative z-10 arcade-stroke-sm text-white text-[10px] sm:text-[11px] leading-none">
-                  x{streakMultiplier}
+            {/* Center Thumb Drift + Turbo Boost Stack */}
+            <div className="flex flex-col gap-1 shrink-0 min-w-[62px] sm:min-w-[78px]">
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-label="Hold drift for mini-turbo"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  touchControls.drift = true;
+                }}
+                onPointerUp={() => {
+                  touchControls.drift = false;
+                }}
+                onPointerCancel={() => {
+                  touchControls.drift = false;
+                }}
+                onPointerLeave={() => {
+                  touchControls.drift = false;
+                }}
+                className={`rounded-xl border-2 border-[#1d1205] h-[22px] flex items-center justify-center cursor-pointer transition ${
+                  hud.driftTier === 2
+                    ? 'bg-[#facc15] text-[#140c04]'
+                    : hud.driftTier === 1
+                      ? 'bg-[#38bdf8] text-[#082f49]'
+                      : 'bg-[#493214] text-amber-100'
+                }`}
+              >
+                <span className="text-[9px] font-extrabold leading-none">
+                  {hud.driftTier === 2 ? 'MAX DRIFT' : hud.driftTier === 1 ? 'TURBO!' : 'DRIFT'}
                 </span>
-                <span
-                  className={`relative z-10 arcade-stroke-sm text-[10px] sm:text-xs leading-tight whitespace-nowrap ${
-                    hud.isFever
-                      ? 'text-[#ff70a6]'
-                      : hud.isBoosting
-                        ? 'text-[#6bf25c]'
-                        : hud.boostReady
-                          ? 'text-[#ffee1f]'
-                          : 'text-amber-200/80'
-                  }`}
-                >
-                  {hud.isFever ? 'FEVER!' : 'BOOST'}
-                </span>
-              </div>
-            </button>
+              </button>
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-label="Activate mobile turbo boost"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  touchControls.boostPulse = true;
+                }}
+                className="arcade-boost-rim rounded-xl p-0.5 h-[30px] flex items-stretch cursor-pointer"
+              >
+                <div className="bg-[#493214] border-2 border-[#1d1205] rounded-lg px-2 w-full relative overflow-hidden flex items-center justify-center gap-1">
+                  {!hud.boostReady && !hud.isBoosting && (
+                    <div
+                      className="absolute left-0 top-0 bottom-0 bg-amber-400/30 transition-all duration-100"
+                      style={{ width: `${boostPct}%` }}
+                    />
+                  )}
+                  <span
+                    className={`relative z-10 arcade-stroke-sm text-[10px] leading-none whitespace-nowrap ${
+                      hud.isFever
+                        ? 'text-[#ff70a6]'
+                        : hud.isBoosting
+                          ? 'text-[#6bf25c]'
+                          : hud.boostReady
+                            ? 'text-[#ffee1f]'
+                            : 'text-amber-200/80'
+                    }`}
+                  >
+                    {hud.isFever ? 'FEVER' : `x${streakMultiplier} BOOST`}
+                  </span>
+                </div>
+              </button>
+            </div>
 
             {/* Right Thumb Brake & Gas Pedals */}
             <div className="flex-[1.2] grid grid-cols-2 gap-1.5 touch-none">

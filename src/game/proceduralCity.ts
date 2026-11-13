@@ -14,6 +14,7 @@ import {
   HazardKind,
   HazardPhase,
   JumpRamp,
+  LandmarkSpot,
   LevelConfig,
   MechanicGarage,
   ParcelKind,
@@ -37,6 +38,8 @@ import {
 import { pickArchetype } from './archetypes';
 import { pickFairStarts } from './hazardWarning';
 import { PRESET_CITIES, buildCustomCitySeed, getRealStreetsEnForCity, getRealStreetsForCity } from './customCity';
+import { getWorldCityById } from './worldCities';
+import { landmarkKindForLevel, type LandmarkKind } from './meshes';
 
 export function createRng(seed: number): () => number {
   let a = seed >>> 0;
@@ -491,7 +494,7 @@ export function generateProceduralCity(
           config.customCity.cityName,
           config.customCity.lat ?? 0,
           config.customCity.lng ?? 0,
-        )
+        ) + (config.customCity.worldStage ?? 0) * 1013
       : level * 9173 + 214747);
   const rng = createRng(seed);
 
@@ -821,38 +824,103 @@ export function generateProceduralCity(
     return true;
   })();
 
-  const matchedPreset = config.customCity
-    ? PRESET_CITIES.find(
-        (p) =>
-          p.nameZh === config.customCity?.cityName ||
-          p.nameEn.toLowerCase() === config.customCity?.cityName.toLowerCase() ||
-          config.customCity?.cityName.includes(p.nameZh) ||
-          p.nameZh.includes(config.customCity?.cityName ?? ''),
-      )
-    : null;
+  const worldCity = config.customCity?.worldCityId
+    ? getWorldCityById(config.customCity.worldCityId)
+    : undefined;
+
+  const matchedPreset =
+    !worldCity && config.customCity
+      ? PRESET_CITIES.find(
+          (p) =>
+            p.nameZh === config.customCity?.cityName ||
+            p.nameEn.toLowerCase() === config.customCity?.cityName.toLowerCase() ||
+            config.customCity?.cityName.includes(p.nameZh) ||
+            p.nameZh.includes(config.customCity?.cityName ?? ''),
+        )
+      : null;
 
   const activeStreets =
     config.customCity?.streets && config.customCity.streets.length > 0
       ? config.customCity.streets
-      : matchedPreset && matchedPreset.streetsZh && matchedPreset.streetsZh.length > 0
-        ? matchedPreset.streetsZh
-        : getRealStreetsForCity(config.districtName || '北京');
+      : worldCity && worldCity.streetsZh.length > 0
+        ? worldCity.streetsZh
+        : matchedPreset && matchedPreset.streetsZh && matchedPreset.streetsZh.length > 0
+          ? matchedPreset.streetsZh
+          : getRealStreetsForCity(config.districtName || '北京');
   const activeStreetsEn =
     config.customCity?.streetsEn && config.customCity.streetsEn.length > 0
       ? config.customCity.streetsEn
-      : matchedPreset && matchedPreset.streetsEn && matchedPreset.streetsEn.length > 0
-        ? matchedPreset.streetsEn
-        : getRealStreetsEnForCity(config.districtName || '北京');
+      : worldCity && worldCity.streetsEn.length > 0
+        ? worldCity.streetsEn
+        : matchedPreset && matchedPreset.streetsEn && matchedPreset.streetsEn.length > 0
+          ? matchedPreset.streetsEn
+          : getRealStreetsEnForCity(config.districtName || '北京');
+
   const stops: DeliveryStop[] = orderedRaw.map((item, idx) => {
     const pool = isZh ? CUSTOMER_PROFILES_ZH : CUSTOMER_PROFILES;
     const baseProfile = pool[(idx + (level - 1) * 2) % pool.length];
 
     let parcelLabel = baseProfile.parcel;
-    if (matchedPreset) {
-      const specialties = isZh ? matchedPreset.specialtiesZh : matchedPreset.specialtiesEn;
-      if (idx < specialties.length) {
-        parcelLabel = specialties[idx];
+    let parcelKind = baseProfile.kind;
+    let merchantName: string | undefined;
+    let loreId: string | undefined;
+    let loreCategoryZh: string | undefined;
+    let loreCategoryEn: string | undefined;
+    let loreFactZh: string | undefined;
+    let loreFactEn: string | undefined;
+    let loreTipZh: string | undefined;
+    let loreTipEn: string | undefined;
+    let loreIcon: string | undefined;
+
+    if (worldCity && worldCity.dishes.length > 0) {
+      const dish = worldCity.dishes[idx % worldCity.dishes.length];
+      parcelLabel = isZh ? dish.nameZh : dish.nameEn;
+      parcelKind = dish.kind;
+      merchantName = isZh ? dish.merchantZh : dish.merchantEn;
+      loreId = dish.loreId;
+      loreCategoryZh = dish.categoryZh;
+      loreCategoryEn = dish.categoryEn;
+      loreFactZh = dish.factZh;
+      loreFactEn = dish.factEn;
+      loreTipZh = dish.tipZh;
+      loreTipEn = dish.tipEn;
+      loreIcon = dish.icon;
+    } else {
+      if (matchedPreset) {
+        const specialties = isZh ? matchedPreset.specialtiesZh : matchedPreset.specialtiesEn;
+        if (idx < specialties.length) {
+          parcelLabel = specialties[idx];
+        }
       }
+      loreId = `std-parcel-${baseProfile.kind}-${idx % pool.length}`;
+      loreCategoryZh = '特色急送件';
+      loreCategoryEn = 'Express Parcel';
+      loreFactZh = `本单为「${parcelLabel}」，请沿着街区绿灯路网准时送达收件点。`;
+      loreFactEn = `Special courier dispatch: ${parcelLabel}. Follow the main avenues for an on-time drop.`;
+      loreTipZh =
+        parcelKind === ParcelKind.Large
+          ? '大件重箱无法空中飞掷，请减速至低速停靠投递！'
+          : parcelKind === ParcelKind.Fragile
+            ? '易碎物品害怕猛烈碰撞，过弯或贴近车流请多加小心！'
+            : parcelKind === ParcelKind.HotExpress
+              ? '热食特快建议按 F 触发加急承诺或用漂移喷射抢秒送达！'
+              : '轻便包裹支持中距离飞掷，瞄准金色靶心还能赚取 2x 连击！';
+      loreTipEn =
+        parcelKind === ParcelKind.Large
+          ? 'Heavy crates require slowing down to deliver safely.'
+          : parcelKind === ParcelKind.Fragile
+            ? 'Fragile parcel! Avoid hard crashes or your cargo takes damage.'
+            : parcelKind === ParcelKind.HotExpress
+              ? 'Hot meal rush — press F to pledge Express Rush or drift-boost to beat the clock!'
+              : 'Light parcel ready for toss — aim for the center bullseye for 2x Fever combo!';
+      loreIcon =
+        parcelKind === ParcelKind.HotExpress
+          ? '🍜'
+          : parcelKind === ParcelKind.Fragile
+            ? '🏺'
+            : parcelKind === ParcelKind.Large
+              ? '📦'
+              : '🧋';
     }
 
     tiles[item.citizenCoord.row][item.citizenCoord.col] = TileType.Courtyard;
@@ -868,7 +936,7 @@ export function generateProceduralCity(
       id: `stop-${level}-${idx + 1}`,
       customerName: baseProfile.name,
       parcelLabel,
-      parcelKind: baseProfile.kind,
+      parcelKind,
       vipRole: baseProfile.vip,
       archetype: pickArchetype(idx, level),
       isBoomerangTrigger: idx === 1 && orderedRaw.length >= 4,
@@ -886,6 +954,15 @@ export function generateProceduralCity(
       deliveredViaToss: false,
       streetName: stopStreet,
       streetNameEn: activeStreetsEn[idx % activeStreetsEn.length],
+      merchantName,
+      loreId,
+      loreCategoryZh,
+      loreCategoryEn,
+      loreFactZh,
+      loreFactEn,
+      loreTipZh,
+      loreTipEn,
+      loreIcon,
     };
   });
 
@@ -1902,6 +1979,37 @@ export function generateProceduralCity(
     }
   }
 
+  const landmarks: LandmarkSpot[] = [];
+  if (buildings.length >= 10) {
+    const cx = buildings.reduce((sum, b) => sum + b.coord.col, 0) / buildings.length;
+    const cz = buildings.reduce((sum, b) => sum + b.coord.row, 0) / buildings.length;
+    const ranked = buildings
+      .map((b, i) => ({ i, score: Math.hypot(b.coord.col - cx, b.coord.row - cz) - b.floors * 0.4 }))
+      .sort((a, b) => a.score - b.score);
+    const wanted = buildings.length >= 24 ? 2 : 1;
+    for (let slot = 0; slot < Math.min(wanted, ranked.length); slot += 1) {
+      const lot = buildings[ranked[slot].i];
+      const wp = gridToWorld(lot.coord, totalGridSize);
+      const worldLm = worldCity?.landmarks[slot % worldCity.landmarks.length];
+      const lmKind: LandmarkKind = worldLm ? worldLm.kind : landmarkKindForLevel(level, slot);
+      landmarks.push({
+        id: `lm-${level}-${slot}`,
+        loreId: worldLm?.loreId ?? `stage-lm-${level}-${slot}`,
+        kind: lmKind,
+        coord: lot.coord,
+        x: wp.x,
+        z: wp.z,
+        nameZh: worldLm?.nameZh ?? (slot === 0 ? '中央历史地标' : '城市钟楼广场'),
+        nameEn: worldLm?.nameEn ?? (slot === 0 ? 'Central Historic Monument' : 'Civic Spire Square'),
+        eraZh: worldLm?.eraZh ?? '城市文化地标',
+        eraEn: worldLm?.eraEn ?? 'Civic Heritage Site',
+        factZh: worldLm?.factZh ?? '这座地标建筑是当地街头派送最显眼的方位坐标，记得绕行避让车流。',
+        factEn: worldLm?.factEn ?? 'A signature civic monument guiding courier routes across the district.',
+        icon: worldLm?.icon ?? '🏛️',
+      });
+    }
+  }
+
   return {
     config,
     seed,
@@ -1932,6 +2040,7 @@ export function generateProceduralCity(
     waterClouds,
     boostPads,
     hazards,
+    landmarks,
   };
 }
 

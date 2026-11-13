@@ -11,9 +11,11 @@ export interface TouchControlState {
   steerTouchActive: boolean;
   gas: boolean;
   brake: boolean;
+  drift: boolean;
   boostPulse: boolean;
   deliverPulse: boolean;
   hornPulse: boolean;
+  rushPulse: boolean;
   demoTogglePulse: boolean;
 }
 
@@ -24,9 +26,11 @@ export const touchControls: TouchControlState = {
   steerTouchActive: false,
   gas: false,
   brake: false,
+  drift: false,
   boostPulse: false,
   deliverPulse: false,
   hornPulse: false,
+  rushPulse: false,
   demoTogglePulse: false,
 };
 
@@ -37,7 +41,9 @@ export function resetTouchControls(): void {
   touchControls.steerTouchActive = false;
   touchControls.gas = false;
   touchControls.brake = false;
+  touchControls.drift = false;
   touchControls.boostPulse = false;
   touchControls.deliverPulse = false;
   touchControls.hornPulse = false;
+  touchControls.rushPulse = false;
 }

@@ -18,6 +18,10 @@ import {
 
 import {
   BOOST_COOLDOWN_MAX_SEC,
+  DRIFT_BOOST_TIER1_SEC,
+  DRIFT_BOOST_TIER2_SEC,
+  DRIFT_TIER1_SEC,
+  DRIFT_TIER2_SEC,
   RIGHT_LANE_OFFSET,
   TILE_SIZE,
   TRUCK_BOOST_SPEED,
@@ -52,6 +56,7 @@ export interface TruckInput {
   steer: number; // -1 (turn left) .. +1 (turn right)
   wantsBoost: boolean;
   wantsDrift?: boolean;
+  rawAnalogSteer?: boolean;
 }
 
 export function createInitialTruckState(
@@ -115,6 +120,7 @@ export interface PhysicsStepResult {
   splashedHydrantPos: WorldPos | null;
   issuedTicket: TicketKind | null;
   crashEvents: CrashEvent[];
+  driftMiniTurbo: 0 | 1 | 2;
 }
 
 export function stepTruckPhysics(
@@ -132,6 +138,7 @@ export function stepTruckPhysics(
   let pickedGreenWave = false;
   let splashedHydrantPos: WorldPos | null = null;
   let issuedTicket: TicketKind | null = null;
+  let driftMiniTurbo: 0 | 1 | 2 = 0;
   const crashEvents: CrashEvent[] = [];
 
   const spec = resolveVehicleSpec(truck.vehicleId);
@@ -194,9 +201,10 @@ export function stepTruckPhysics(
   const throttleIn = Math.max(-1, Math.min(1, input.throttle));
   const rawSteerIn = Math.max(-1, Math.min(1, input.steer));
   const handling = getHandling();
-  // Keyboard steering is a 0..1 step; ramp it so a tap is a gentle nudge.
+  // Keyboard steering is a 0..1 step; ramp it so a tap is a gentle nudge,
+  // while raw analog touch rocker bypasses the exponential lag for instant feel.
   truck.steerSmooth =
-    handling.steerSmoothSec <= 0
+    input.rawAnalogSteer || handling.steerSmoothSec <= 0
       ? rawSteerIn
       : truck.steerSmooth +
         (rawSteerIn - truck.steerSmooth) * (1 - Math.exp(-clampedDt / handling.steerSmoothSec));
@@ -204,7 +212,9 @@ export function stepTruckPhysics(
   const isBraking = throttleIn < -0.05;
   truck.isBraking = isBraking;
 
-  // Corner Drift-Charge: carving a sharp turn at speed recharges Turbo faster!
+  // Corner Drift-Charge + 2-Stage Drift Mini-Turbo release:
+  const wasDrifting = truck.isDrifting;
+  const prevDriftAccum = truck.driftChargeAccum;
   const canDrift =
     !isBraking &&
     Math.abs(steerIn) > 0.45 &&
@@ -216,20 +226,48 @@ export function stepTruckPhysics(
     truck.boostCooldown = Math.max(0, truck.boostCooldown - clampedDt * 1.35);
   } else {
     truck.isDrifting = false;
-    truck.driftChargeAccum = Math.max(0, truck.driftChargeAccum - clampedDt * 1.5);
+    if (wasDrifting && !isBraking) {
+      if (prevDriftAccum >= DRIFT_TIER2_SEC) {
+        driftMiniTurbo = 2;
+        truck.boostTimer = Math.max(truck.boostTimer, DRIFT_BOOST_TIER2_SEC);
+        truck.squashY = 0.76;
+        truck.squashVel = 4.6;
+        truck.pitchAngle = -0.095;
+        truck.driftChargeAccum = 0;
+      } else if (prevDriftAccum >= DRIFT_TIER1_SEC) {
+        driftMiniTurbo = 1;
+        truck.boostTimer = Math.max(truck.boostTimer, DRIFT_BOOST_TIER1_SEC);
+        truck.squashY = 0.8;
+        truck.squashVel = 3.8;
+        truck.pitchAngle = -0.065;
+        truck.driftChargeAccum = 0;
+      } else {
+        truck.driftChargeAccum = Math.max(0, truck.driftChargeAccum - clampedDt * 1.5);
+      }
+    } else {
+      truck.driftChargeAccum = Math.max(0, truck.driftChargeAccum - clampedDt * 1.5);
+    }
   }
 
-  // 1. Vehicle-Relative Forward Steering + Intersection Corner-Entry Assist:
+  // 1. Vehicle-Relative Forward Steering + Trail Braking + Intersection Corner-Entry Assist:
   //    steer < 0 = Turn Left (+yaw), steer > 0 = Turn Right (-yaw).
   //    Reverse is strictly prohibited — S / ArrowDown only applies wheel brakes!
+  //    While moving (>0.35), braking allows trail-braking turn-in at 0.62x rate.
   const halfPi = Math.PI * 0.5;
-  if (Math.abs(steerIn) > 0.01 && !isBraking) {
+  const trailBraking = isBraking && truck.speed > 0.35;
+  if (Math.abs(steerIn) > 0.01 && (!isBraking || trailBraking)) {
     const turnDir = -steerIn;
     const driftTurnBonus = truck.isDrifting ? 1.14 : 1.0;
+    const trailBrakeMult = trailBraking ? 0.62 : 1.0;
     // Speed-sensitive yaw: nimble in tight lots, calm at full tilt.
     const speedRatio = Math.min(1, Math.abs(truck.speed) / Math.max(0.01, TRUCK_MAX_SPEED));
     const turnFalloff = 1 + (handling.highSpeedTurnMult - 1) * speedRatio;
-    const turnSpeedRad = handling.turnSpeedRad * spec.turnSpeedMult * driftTurnBonus * turnFalloff;
+    const turnSpeedRad =
+      handling.turnSpeedRad *
+      spec.turnSpeedMult *
+      driftTurnBonus *
+      trailBrakeMult *
+      turnFalloff;
     let nextYaw = wrapAngleRad(truck.yaw + turnDir * turnSpeedRad * clampedDt);
 
     const cardinalYaw = Math.round(truck.yaw / halfPi) * halfPi;
@@ -620,11 +658,10 @@ export function stepTruckPhysics(
         truck.lastSignalCellKey = sig.id;
         if (truck.speed > 2.3 && truck.ticketCooldown <= 0 && !issuedTicket) {
           const movingEW = Math.abs(fwdX) >= Math.abs(fwdZ);
+          // Yellow phase acts as a forgiving amber clearance buffer; only true cross-green triggers a ticket.
           const runningRed = movingEW
-            ? sig.state === SignalAxisState.NSGreen ||
-              sig.state === SignalAxisState.NSYellow
-            : sig.state === SignalAxisState.EWGreen ||
-              sig.state === SignalAxisState.EWYellow;
+            ? sig.state === SignalAxisState.NSGreen
+            : sig.state === SignalAxisState.EWGreen;
           if (runningRed) {
             issuedTicket = 'red_light';
             truck.ticketsCount += 1;
@@ -739,5 +776,6 @@ export function stepTruckPhysics(
     splashedHydrantPos,
     issuedTicket,
     crashEvents,
+    driftMiniTurbo,
   };
 }

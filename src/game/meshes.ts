@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { LIVERY_SPECS } from './career';
 import {
   BuildingLot,
   BuildingTheme,
@@ -9,6 +10,7 @@ import {
   GreenWavePickup,
   HazardKind,
   JumpRamp,
+  LiveryId,
   MechanicGarage,
   ParcelKind,
   PersonAppearance,
@@ -371,11 +373,12 @@ export interface ToyTruckRig {
   topperPivot: THREE.Group;
   setVehicleStyle: (vehicleId: VehicleId) => void;
   setTopper: (topperId: TopperId) => void;
+  setLivery: (liveryId: LiveryId) => void;
 }
 
 /**
  * High-detail sculpted courier vehicle rig supporting 4 distinct Fleet Livery/Body packages,
- * 4 swap-ready 3D Roof Toppers, Twilight Headlight Cones, and Bumper Shield Aura Ring!
+ * 5 swap-ready 3D Roof Toppers, custom Paint Liveries, Twilight Headlight Cones, and Bumper Shield Aura Ring!
  */
 export function createToyTruckMesh(
   shadowTex: THREE.CanvasTexture,
@@ -383,6 +386,7 @@ export function createToyTruckMesh(
   maxParcels: number = 9,
   initialVehicle: VehicleId = VehicleId.ClassicVan,
   initialTopper: TopperId = TopperId.Beacon,
+  initialLivery: LiveryId = LiveryId.Standard,
 ): ToyTruckRig {
   const root = new THREE.Group();
 
@@ -639,6 +643,39 @@ export function createToyTruckMesh(
       });
       return g;
     })(),
+    [TopperId.NeonLightbox]: (() => {
+      const g = new THREE.Group();
+      const mountMat = getCachedStandardMat(0x1f2937, 0.45, 0.35);
+      const neonCyanMat = getCachedStandardMat(0x22d3ee, 0.18, 0.08, 0x06b6d4, 1.05);
+      const neonPinkMat = getCachedStandardMat(0xf43f5e, 0.18, 0.08, 0xe11d48, 0.9);
+
+      const baseRail = new THREE.Mesh(
+        createBeveledBlockGeometry(0.62, 0.055, 0.24, 0.03, 0.01),
+        mountMat,
+      );
+      baseRail.position.y = 0.02;
+
+      const housing = new THREE.Mesh(
+        createBeveledBlockGeometry(0.56, 0.22, 0.2, 0.04, 0.015),
+        mountMat,
+      );
+      housing.position.y = 0.14;
+
+      const frontGlow = new THREE.Mesh(
+        getSharedGeo('top_neon_face', () => new THREE.BoxGeometry(0.48, 0.15, 0.215)),
+        neonCyanMat,
+      );
+      frontGlow.position.y = 0.14;
+
+      const sideTrim = new THREE.Mesh(
+        getSharedGeo('top_neon_trim', () => new THREE.BoxGeometry(0.575, 0.055, 0.14)),
+        neonPinkMat,
+      );
+      sideTrim.position.y = 0.245;
+
+      g.add(baseRail, housing, frontGlow, sideTrim);
+      return g;
+    })(),
   };
 
   Object.values(topperMeshes).forEach((m) => {
@@ -819,7 +856,50 @@ export function createToyTruckMesh(
     parcelBoxes.push(pGroup);
   }
 
+  let currentVehicleId: VehicleId = initialVehicle;
+  let currentLiveryId: LiveryId = initialLivery;
+
+  const setLivery = (lid: LiveryId) => {
+    currentLiveryId = lid;
+    if (lid === LiveryId.Standard) {
+      if (currentVehicleId === VehicleId.KeiTruck) {
+        cabMat.color.setHex(0x2ec4b6);
+        cargoMat.color.setHex(0xfff9ef);
+        stripeMat.color.setHex(0xffbe0b);
+      } else if (currentVehicleId === VehicleId.VespaTrike) {
+        cabMat.color.setHex(0xe63946);
+        cargoMat.color.setHex(0xfff4e6);
+        stripeMat.color.setHex(0xffd166);
+      } else if (currentVehicleId === VehicleId.ArmoredVan) {
+        cabMat.color.setHex(0x2b59c3);
+        cargoMat.color.setHex(0xeef4ff);
+        stripeMat.color.setHex(0xffbe0b);
+      } else {
+        cabMat.color.setHex(0xf48836);
+        cargoMat.color.setHex(0xfff6e6);
+        stripeMat.color.setHex(0xffb703);
+      }
+      stripeMat.emissive.setHex(0x000000);
+      stripeMat.emissiveIntensity = 0;
+      return;
+    }
+
+    const spec = LIVERY_SPECS[lid];
+    if (!spec) return;
+    cabMat.color.setHex(spec.cabHex);
+    cargoMat.color.setHex(spec.cargoHex);
+    stripeMat.color.setHex(spec.stripeHex);
+    if (spec.emissiveHex) {
+      stripeMat.emissive.setHex(spec.emissiveHex);
+      stripeMat.emissiveIntensity = 0.7;
+    } else {
+      stripeMat.emissive.setHex(0x000000);
+      stripeMat.emissiveIntensity = 0;
+    }
+  };
+
   const setVehicleStyle = (vid: VehicleId) => {
+    currentVehicleId = vid;
     const isKei = vid === VehicleId.KeiTruck;
     const isTrike = vid === VehicleId.VespaTrike;
     const isArmored = vid === VehicleId.ArmoredVan;
@@ -841,23 +921,7 @@ export function createToyTruckMesh(
       pGroup.position.y = nextBaseY;
     });
 
-    if (vid === VehicleId.KeiTruck) {
-      cabMat.color.setHex(0x2ec4b6);
-      cargoMat.color.setHex(0xfff9ef);
-      stripeMat.color.setHex(0xffbe0b);
-    } else if (vid === VehicleId.VespaTrike) {
-      cabMat.color.setHex(0xe63946);
-      cargoMat.color.setHex(0xfff4e6);
-      stripeMat.color.setHex(0xffd166);
-    } else if (vid === VehicleId.ArmoredVan) {
-      cabMat.color.setHex(0x2b59c3);
-      cargoMat.color.setHex(0xeef4ff);
-      stripeMat.color.setHex(0xffbe0b);
-    } else {
-      cabMat.color.setHex(0xf48836);
-      cargoMat.color.setHex(0xfff6e6);
-      stripeMat.color.setHex(0xffb703);
-    }
+    setLivery(currentLiveryId);
   };
 
   const setTopper = (tid: TopperId) => {
@@ -868,6 +932,7 @@ export function createToyTruckMesh(
 
   setVehicleStyle(initialVehicle);
   setTopper(initialTopper);
+  setLivery(initialLivery);
 
   return {
     root,
@@ -883,6 +948,7 @@ export function createToyTruckMesh(
     topperPivot,
     setVehicleStyle,
     setTopper,
+    setLivery,
   };
 }
 
@@ -3609,7 +3675,17 @@ export function createStreetSignMesh(
 /* as a real place instead of interchangeable pastel blocks.                  */
 /* ------------------------------------------------------------------------- */
 
-export type LandmarkKind = 'clock-tower' | 'radio-mast' | 'grand-arch';
+export type LandmarkKind =
+  | 'clock-tower'
+  | 'radio-mast'
+  | 'grand-arch'
+  | 'pearl-tower'
+  | 'palace-gate'
+  | 'colosseum-ring'
+  | 'pyramid'
+  | 'sail-opera'
+  | 'liberty-spire'
+  | 'windmill-gable';
 
 const LANDMARK_ROTATION: LandmarkKind[] = ['clock-tower', 'radio-mast', 'grand-arch'];
 
@@ -3636,6 +3712,10 @@ export function createLandmarkMesh(
   const goldMat = getCachedStandardMat(0xf7c948, 0.34, 0.6);
   const glassMat = getCachedStandardMat(0x5c7fa6, 0.18, 0.32, 0x9fd8ff, 0.18);
   const redMat = getCachedStandardMat(0xe23b3b, 0.4, 0.1, 0xff2f2f, 0.6);
+  const magentaMat = getCachedStandardMat(0xec4899, 0.35, 0.25, 0xf472b6, 0.25);
+  const crimsonMat = getCachedStandardMat(0xb91c1c, 0.55, 0.08);
+  const sandMat = getCachedStandardMat(0xe7c68d, 0.78, 0.04);
+  const brickMat = getCachedStandardMat(0xb45339, 0.72, 0.05);
 
   const block = (
     bw: number,
@@ -3669,7 +3749,6 @@ export function createLandmarkMesh(
       block(w * tier.s * 1.08, 0.09, w * tier.s * 1.08, y + tier.h, creamMat, 0.08);
       y += tier.h + 0.09;
     }
-    // Civic clock faces on the two street-facing sides.
     const r = w * 0.24;
     const faceGeo = getSharedGeo(`lm_clock_${r.toFixed(3)}`, () => new THREE.CylinderGeometry(r, r, 0.08, 20));
     for (const dir of [1, -1]) {
@@ -3685,7 +3764,6 @@ export function createLandmarkMesh(
       hub.position.set(0, y - 0.62, dir * (w * 0.34 + 0.02));
       g.add(hub);
     }
-    // Copper spire + gilded finial.
     const spire = new THREE.Mesh(
       getSharedGeo('lm_clock_spire', () => new THREE.ConeGeometry(1, 1, 4)),
       copperMat,
@@ -3706,7 +3784,6 @@ export function createLandmarkMesh(
     doorPlate.position.z = -w * 0.48;
     doorPlate.position.y = 0.65;
 
-    // Tapering lattice mast built from three stacked octagonal drums.
     const drums: Array<{ r1: number; r2: number; h: number; mat: THREE.Material }> = [
       { r1: 0.36, r2: 0.27, h: 1.9, mat: copperMat },
       { r1: 0.27, r2: 0.18, h: 1.7, mat: stoneMat },
@@ -3724,12 +3801,10 @@ export function createLandmarkMesh(
       g.add(seg);
       y += drum.h;
     }
-    // Cross arms + satellite dish + aviation beacon.
     for (const armY of [y - 1.65, y - 0.85]) {
       const arm = block(1.7, 0.07, 0.07, armY, creamMat, 0.02);
       arm.rotation.y = Math.PI * 0.25;
     }
-    // Observation deck collar between the drums so the silhouette reads as a tower.
     block(1.0, 0.16, 1.0, y - 2.05, creamMat, 0.06);
     const dish = new THREE.Mesh(
       getSharedGeo('lm_dish', () => new THREE.CylinderGeometry(0.42, 0.42, 0.06, 14)),
@@ -3741,6 +3816,185 @@ export function createLandmarkMesh(
     const beacon = new THREE.Mesh(getSharedGeo('lm_beacon', () => new THREE.SphereGeometry(0.15, 10, 8)), redMat);
     beacon.position.y = y + 0.08;
     g.add(beacon);
+    return g;
+  }
+
+  if (kind === 'pearl-tower') {
+    block(w * 0.92, 0.45, w * 0.92, 0.26, stoneMat);
+    // Tripod-style inclined legs around central shaft
+    const shaft = new THREE.Mesh(
+      getSharedGeo('lm_pearl_shaft', () => new THREE.CylinderGeometry(0.14, 0.22, 4.6, 12)),
+      creamMat,
+    );
+    shaft.position.y = 2.8;
+    shaft.castShadow = true;
+    g.add(shaft);
+    // Lower and upper glowing spheres
+    const lowerSphere = new THREE.Mesh(
+      getSharedGeo('lm_pearl_low', () => new THREE.SphereGeometry(0.56, 16, 12)),
+      magentaMat,
+    );
+    lowerSphere.position.y = 1.9;
+    lowerSphere.castShadow = true;
+    g.add(lowerSphere);
+    const upperSphere = new THREE.Mesh(
+      getSharedGeo('lm_pearl_high', () => new THREE.SphereGeometry(0.38, 16, 12)),
+      magentaMat,
+    );
+    upperSphere.position.y = 3.85;
+    upperSphere.castShadow = true;
+    g.add(upperSphere);
+    const spire = new THREE.Mesh(
+      getSharedGeo('lm_pearl_spire', () => new THREE.CylinderGeometry(0.03, 0.09, 1.45, 8)),
+      glassMat,
+    );
+    spire.position.y = 4.9;
+    g.add(spire);
+    return g;
+  }
+
+  if (kind === 'palace-gate') {
+    block(w * 1.08, 1.35, w * 0.65, 0.26, crimsonMat);
+    block(w * 0.44, 0.85, w * 0.72, 0.26, stoneMat);
+    // Multi-tiered sweeping imperial eaves
+    for (let tier = 0; tier < 2; tier++) {
+      const tw = w * (1.26 - tier * 0.28);
+      const td = w * (0.86 - tier * 0.22);
+      const ey = 1.62 + tier * 0.92;
+      block(tw * 0.82, 0.68, td * 0.78, ey, crimsonMat, 0.08);
+      const eave = block(tw, 0.18, td, ey + 0.62, goldMat, 0.06);
+      eave.castShadow = true;
+    }
+    const ridge = block(w * 0.78, 0.16, 0.18, 3.38, goldMat, 0.05);
+    ridge.castShadow = true;
+    const lanternL = new THREE.Mesh(
+      getSharedGeo('lm_palace_lantern', () => new THREE.SphereGeometry(0.16, 10, 8)),
+      goldMat,
+    );
+    lanternL.position.set(-w * 0.36, 1.4, w * 0.36);
+    g.add(lanternL);
+    const lanternR = lanternL.clone();
+    lanternR.position.x = w * 0.36;
+    g.add(lanternR);
+    return g;
+  }
+
+  if (kind === 'colosseum-ring') {
+    for (let tier = 0; tier < 3; tier++) {
+      const rOuter = w * (0.56 - tier * 0.03);
+      const tierH = 0.85;
+      const geo = getSharedGeo(
+        `lm_col_ring_${tier}`,
+        () => new THREE.CylinderGeometry(rOuter, rOuter, tierH, 16, 1, true),
+      );
+      const wall = new THREE.Mesh(geo, tier % 2 === 0 ? stoneMat : sandMat);
+      wall.position.y = 0.26 + tier * 0.88 + tierH * 0.5;
+      wall.castShadow = true;
+      g.add(wall);
+    }
+    const crownRing = new THREE.Mesh(
+      getSharedGeo('lm_col_crown', () => new THREE.TorusGeometry(w * 0.51, 0.11, 8, 18)),
+      creamMat,
+    );
+    crownRing.rotation.x = Math.PI / 2;
+    crownRing.position.y = 3.05;
+    g.add(crownRing);
+    const obelisk = new THREE.Mesh(
+      getSharedGeo('lm_col_obel', () => new THREE.ConeGeometry(0.24, 2.2, 4)),
+      goldMat,
+    );
+    obelisk.position.y = 2.6;
+    g.add(obelisk);
+    return g;
+  }
+
+  if (kind === 'pyramid') {
+    for (let step = 0; step < 5; step++) {
+      const sw = w * (1.06 - step * 0.18);
+      block(sw, 0.68, sw, 0.26 + step * 0.68, step === 4 ? goldMat : sandMat, 0.05);
+    }
+    const apex = new THREE.Mesh(
+      getSharedGeo('lm_pyr_apex', () => new THREE.ConeGeometry(w * 0.24, 1.05, 4)),
+      goldMat,
+    );
+    apex.rotation.y = Math.PI / 4;
+    apex.position.y = 0.26 + 5 * 0.68 + 0.52;
+    apex.castShadow = true;
+    g.add(apex);
+    return g;
+  }
+
+  if (kind === 'sail-opera') {
+    block(w * 1.08, 0.68, w * 1.04, 0.26, sandMat, 0.12);
+    const shells = [
+      { sx: 0.62, sy: 2.3, sz: 0.45, px: -0.25, pz: -0.1, rot: -0.28 },
+      { sx: 0.75, sy: 3.1, sz: 0.52, px: 0.05, pz: 0.05, rot: -0.18 },
+      { sx: 0.55, sy: 2.1, sz: 0.42, px: 0.34, pz: 0.16, rot: -0.1 },
+    ];
+    for (const sh of shells) {
+      const sail = new THREE.Mesh(
+        getSharedGeo('lm_sail_shell', () => new THREE.ConeGeometry(1, 1, 6, 1, false, 0, Math.PI)),
+        creamMat,
+      );
+      sail.scale.set(sh.sx, sh.sy, sh.sz);
+      sail.position.set(sh.px, 0.94 + sh.sy * 0.45, sh.pz);
+      sail.rotation.x = sh.rot;
+      sail.castShadow = true;
+      g.add(sail);
+    }
+    const glassWall = block(w * 0.68, 0.95, 0.1, 0.94, glassMat, 0.03);
+    glassWall.position.z = w * 0.34;
+    return g;
+  }
+
+  if (kind === 'liberty-spire') {
+    block(w * 0.88, 1.25, w * 0.88, 0.26, stoneMat, 0.1);
+    block(w * 0.66, 0.72, w * 0.66, 1.51, creamMat, 0.08);
+    const torso = new THREE.Mesh(
+      getSharedGeo('lm_lib_torso', () => new THREE.CylinderGeometry(0.24, 0.34, 1.75, 10)),
+      copperMat,
+    );
+    torso.position.y = 3.1;
+    torso.castShadow = true;
+    g.add(torso);
+    const crown = new THREE.Mesh(
+      getSharedGeo('lm_lib_head', () => new THREE.SphereGeometry(0.22, 10, 8)),
+      copperMat,
+    );
+    crown.position.y = 4.1;
+    g.add(crown);
+    const torchArm = block(0.14, 0.95, 0.14, 3.65, copperMat, 0.04);
+    torchArm.position.x = 0.28;
+    const flame = new THREE.Mesh(
+      getSharedGeo('lm_lib_flame', () => new THREE.SphereGeometry(0.16, 10, 8)),
+      goldMat,
+    );
+    flame.position.set(0.28, 4.72, 0);
+    g.add(flame);
+    return g;
+  }
+
+  if (kind === 'windmill-gable') {
+    block(w * 0.86, 1.2, w * 0.86, 0.26, brickMat, 0.08);
+    const body = new THREE.Mesh(
+      getSharedGeo('lm_mill_body', () => new THREE.CylinderGeometry(0.38, 0.56, 2.35, 8)),
+      creamMat,
+    );
+    body.position.y = 2.62;
+    body.castShadow = true;
+    g.add(body);
+    const cap = new THREE.Mesh(
+      getSharedGeo('lm_mill_cap', () => new THREE.ConeGeometry(0.45, 0.85, 8)),
+      copperMat,
+    );
+    cap.position.y = 4.22;
+    g.add(cap);
+    // Crisp 4-blade cross vane
+    for (const rotZ of [0, Math.PI / 2]) {
+      const vane = block(0.16, 2.55, 0.08, 2.05, goldMat, 0.02);
+      vane.position.set(0, 3.25, w * 0.44);
+      vane.rotation.z = rotZ + 0.35;
+    }
     return g;
   }
 
@@ -3777,3 +4031,28 @@ export function createLandmarkMesh(
   g.add(crown);
   return g;
 }
+
+/** Floating rotating golden/cyan discovery beacon hovering above landmark buildings. */
+export function createLandmarkBeaconMesh(): THREE.Group {
+  const g = new THREE.Group();
+  const goldGlowMat = getCachedStandardMat(0xfde047, 0.2, 0.65, 0xfacc15, 0.75);
+  const cyanRingMat = getCachedStandardMat(0x38bdf8, 0.25, 0.45, 0x38bdf8, 0.65);
+
+  const diamond = new THREE.Mesh(
+    getSharedGeo('lm_beacon_diamond', () => new THREE.OctahedronGeometry(0.42, 0)),
+    goldGlowMat,
+  );
+  diamond.position.y = 0.55;
+  g.add(diamond);
+
+  const ring = new THREE.Mesh(
+    getSharedGeo('lm_beacon_halo', () => new THREE.TorusGeometry(0.7, 0.06, 8, 24)),
+    cyanRingMat,
+  );
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = 0.55;
+  g.add(ring);
+
+  return g;
+}
+

@@ -3,10 +3,92 @@
  * - Master DynamicsCompressor + gentle warm tone bus
  * - Speed-reactive purring twin-oscillator courier van engine + turbo whine (silenced on pause/menu/mute)
  * - Cozy sunlit marimba/kalimba background groove + upbeat Fever Shift overdrive
+ * - Region- and atmosphere-driven ambient soundscapes (coastal waves, bustling streets,
+ *   European canal plazas, Americas metro boulevards, desert oasis breeze)
  * - Layered foley + harmonic chimes for cardboard tosses, bullseye bells, musical horns,
  *   near-miss slipstreams, canal jump launches, wrench repairs, duck quacks, hydrant splashes,
- *   scooter/drawbridge telegraphs, tickets, and Lucky Spin rewards.
+ *   scooter/drawbridge telegraphs, tickets, Discovery chimes, and Lucky Spin rewards.
  */
+import { ShiftAtmosphere } from './types';
+
+export type AmbientSoundscapeRegion =
+  | 'mediterranean_coast'
+  | 'asian_metropolis'
+  | 'european_plaza'
+  | 'americas_metro'
+  | 'desert_oasis';
+
+export interface SoundscapeHint {
+  worldCityId?: string;
+  cityName?: string;
+  cityNameEn?: string;
+  lat?: number;
+  lng?: number;
+}
+
+const CITY_REGION_MAP: Record<string, AmbientSoundscapeRegion> = {
+  // Coastal / Mediterranean & ocean harbors
+  barcelona: 'mediterranean_coast',
+  rome: 'mediterranean_coast',
+  cape_town: 'mediterranean_coast',
+  rio: 'mediterranean_coast',
+  sydney: 'mediterranean_coast',
+  // Asian metropolises
+  beijing: 'asian_metropolis',
+  shanghai: 'asian_metropolis',
+  hangzhou: 'asian_metropolis',
+  chengdu: 'asian_metropolis',
+  tokyo: 'asian_metropolis',
+  seoul: 'asian_metropolis',
+  singapore: 'asian_metropolis',
+  // European old-town & canal plazas
+  paris: 'european_plaza',
+  london: 'european_plaza',
+  amsterdam: 'european_plaza',
+  // Americas boulevards
+  newyork: 'americas_metro',
+  sanfrancisco: 'americas_metro',
+  mexico_city: 'americas_metro',
+  buenos_aires: 'americas_metro',
+  // Desert / Nile oasis
+  cairo: 'desert_oasis',
+};
+
+export function resolveAmbientSoundscape(
+  atmosphere: ShiftAtmosphere,
+  hint?: SoundscapeHint,
+): { region: AmbientSoundscapeRegion; atmosphere: ShiftAtmosphere } {
+  const id = hint?.worldCityId?.toLowerCase();
+  if (id && CITY_REGION_MAP[id]) {
+    return { region: CITY_REGION_MAP[id], atmosphere };
+  }
+
+  const label = `${hint?.cityName ?? ''} ${hint?.cityNameEn ?? ''}`.toLowerCase();
+  if (/rome|roma|barcelona|nice|marseille|athens|lisbon|sydney|rio|cape\s*town|罗马|巴塞罗那|尼斯|雅典|里斯本|悉尼|里约|开普敦|地中海|海滨|港/.test(label)) {
+    return { region: 'mediterranean_coast', atmosphere };
+  }
+  if (/beijing|shanghai|hangzhou|chengdu|tokyo|seoul|singapore|hong\s*kong|taipei|osaka|bangkok|北京|上海|杭州|成都|东京|首尔|新加坡|香港|台北|大阪|曼谷/.test(label)) {
+    return { region: 'asian_metropolis', atmosphere };
+  }
+  if (/paris|london|amsterdam|vienna|prague|berlin|zurich|巴黎|伦敦|阿姆斯特丹|维也纳|布拉格|柏林/.test(label)) {
+    return { region: 'european_plaza', atmosphere };
+  }
+  if (/new\s*york|san\s*francisco|chicago|los\s*angeles|mexico|buenos\s*aires|toronto|纽约|旧金山|芝加哥|洛杉矶|墨西哥城|布宜诺斯艾利斯/.test(label)) {
+    return { region: 'americas_metro', atmosphere };
+  }
+  if (/cairo|dubai|marrakech|istanbul|开罗|迪拜|马拉喀什|埃及/.test(label)) {
+    return { region: 'desert_oasis', atmosphere };
+  }
+
+  // Fallback by district atmosphere setting
+  if (atmosphere === ShiftAtmosphere.SunnyHarbor) {
+    return { region: 'mediterranean_coast', atmosphere };
+  }
+  if (atmosphere === ShiftAtmosphere.GoldenSunset) {
+    return { region: 'european_plaza', atmosphere };
+  }
+  return { region: 'asian_metropolis', atmosphere };
+}
 class PokoAudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
@@ -24,11 +106,25 @@ class PokoAudioEngine {
   private feverActive: boolean = false;
   private musicTimerId: number | null = null;
   private musicStep: number = 0;
+
+  // Regional & atmosphere-driven ambient soundscape nodes
+  private ambientNoiseBuffer: AudioBuffer | null = null;
+  private ambientNoiseSrc: AudioBufferSourceNode | null = null;
+  private ambientFilter: BiquadFilterNode | null = null;
+  private ambientLfo: OscillatorNode | null = null;
+  private ambientLfoGain: GainNode | null = null;
+  private ambientBedGain: GainNode | null = null;
+  private ambientTimerId: number | null = null;
+  private ambientStep: number = 0;
+  private activeRegion: AmbientSoundscapeRegion = 'mediterranean_coast';
+  private activeAtmosphere: ShiftAtmosphere = ShiftAtmosphere.SunnyHarbor;
+
   private lastAiCrashAtMs: number = 0;
   private lastPlayerCrashAtMs: number = 0;
   private lastAmbientHornAtMs: number = 0;
   private lastBirdChirpAtMs: number = 0;
   private lastRevAtMs: number = 0;
+  private lastDiscoveryChimeAtMs: number = 0;
 
   public isMuted(): boolean {
     return this.muted;
@@ -45,6 +141,9 @@ class PokoAudioEngine {
     }
     if (mute) {
       this.silenceEngineImmediate();
+      this.silenceAmbientImmediate();
+    } else if (this.musicActive) {
+      this.syncAmbientSoundscapeState();
     }
   }
 
@@ -102,11 +201,76 @@ class PokoAudioEngine {
         data[i] = (b0 + b1 + b2 + white * 0.1848) * 0.18;
       }
       this.noiseBuffer = buf;
+
+      // Pre-build seamless 3.0s crossfaded pink noise buffer for regional ambient soundscapes
+      const ambLen = Math.floor(sampleRate * 3.0);
+      const ambBuf = this.ctx.createBuffer(1, ambLen, sampleRate);
+      const ambData = ambBuf.getChannelData(0);
+      let a0 = 0;
+      let a1 = 0;
+      let a2 = 0;
+      for (let i = 0; i < ambLen; i++) {
+        const white = Math.random() * 2 - 1;
+        a0 = 0.99765 * a0 + white * 0.099046;
+        a1 = 0.963 * a1 + white * 0.2965164;
+        a2 = 0.57 * a2 + white * 1.0526913;
+        ambData[i] = (a0 + a1 + a2 + white * 0.1848) * 0.2;
+      }
+      const xfade = Math.floor(sampleRate * 0.15);
+      for (let i = 0; i < xfade; i++) {
+        const t = i / xfade;
+        const head = ambData[i];
+        const tail = ambData[ambLen - xfade + i];
+        ambData[i] = tail * (1 - t) + head * t;
+      }
+      this.ambientNoiseBuffer = ambBuf;
     }
     if (this.ctx.state === 'suspended') {
       this.ctx.resume().catch(() => {});
     }
     return this.ctx;
+  }
+
+  private ensureAmbientNodes(ctx: AudioContext): void {
+    if (this.ambientBedGain || !this.masterGain || !this.ambientNoiseBuffer) return;
+
+    this.ambientNoiseSrc = ctx.createBufferSource();
+    this.ambientNoiseSrc.buffer = this.ambientNoiseBuffer;
+    this.ambientNoiseSrc.loop = true;
+
+    this.ambientFilter = ctx.createBiquadFilter();
+    this.ambientFilter.type = 'lowpass';
+    this.ambientFilter.frequency.value = 380;
+    this.ambientFilter.Q.value = 0.9;
+
+    this.ambientLfo = ctx.createOscillator();
+    this.ambientLfo.type = 'sine';
+    this.ambientLfo.frequency.value = 0.16;
+
+    this.ambientLfoGain = ctx.createGain();
+    this.ambientLfoGain.gain.value = 210;
+
+    this.ambientBedGain = ctx.createGain();
+    this.ambientBedGain.gain.value = 0.0001;
+
+    this.ambientNoiseSrc.connect(this.ambientFilter);
+    this.ambientLfo.connect(this.ambientLfoGain);
+    this.ambientLfoGain.connect(this.ambientFilter.frequency);
+    this.ambientFilter.connect(this.ambientBedGain);
+    this.ambientBedGain.connect(this.masterGain);
+
+    this.ambientNoiseSrc.start();
+    this.ambientLfo.start();
+  }
+
+  private silenceAmbientImmediate(): void {
+    if (this.ambientBedGain && this.ctx) {
+      this.ambientBedGain.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.08);
+    }
+    if (this.ambientTimerId !== null && typeof window !== 'undefined') {
+      window.clearInterval(this.ambientTimerId);
+      this.ambientTimerId = null;
+    }
   }
 
   private ensureEngineNodes(ctx: AudioContext): void {
@@ -207,6 +371,211 @@ class PokoAudioEngine {
     }, stepMs);
   }
 
+  public setDistrictAtmosphere(
+    atmosphere: ShiftAtmosphere,
+    hint?: SoundscapeHint,
+  ): void {
+    const resolved = resolveAmbientSoundscape(atmosphere, hint);
+    this.activeRegion = resolved.region;
+    this.activeAtmosphere = resolved.atmosphere;
+    if (this.musicActive) {
+      this.syncAmbientSoundscapeState();
+    }
+  }
+
+  public getActiveSoundscape(): {
+    region: AmbientSoundscapeRegion;
+    atmosphere: ShiftAtmosphere;
+  } {
+    return {
+      region: this.activeRegion,
+      atmosphere: this.activeAtmosphere,
+    };
+  }
+
+  private applyAmbientBedProfile(): void {
+    const ctx = this.ctx;
+    if (!ctx || !this.ambientFilter || !this.ambientLfo || !this.ambientLfoGain || !this.ambientBedGain) {
+      return;
+    }
+    const now = ctx.currentTime;
+    const isNight = this.activeAtmosphere === ShiftAtmosphere.TwilightNeon;
+    const isSunset = this.activeAtmosphere === ShiftAtmosphere.GoldenSunset;
+
+    let filterType: BiquadFilterType = 'lowpass';
+    let centerFreq = 360;
+    let qVal = 0.9;
+    let lfoHz = 0.15;
+    let lfoDepth = 220;
+    let bedVol = 0.036;
+
+    switch (this.activeRegion) {
+      case 'mediterranean_coast':
+        filterType = 'lowpass';
+        centerFreq = isNight ? 310 : isSunset ? 410 : 480;
+        qVal = 1.05;
+        lfoHz = isNight ? 0.12 : 0.16; // Slow rolling surf & coastal waves
+        lfoDepth = isNight ? 180 : 270;
+        bedVol = isNight ? 0.034 : 0.044;
+        break;
+      case 'asian_metropolis':
+        filterType = 'bandpass';
+        centerFreq = isNight ? 540 : isSunset ? 640 : 720; // Bustling avenue murmur
+        qVal = 0.72;
+        lfoHz = 0.28;
+        lfoDepth = 150;
+        bedVol = isNight ? 0.03 : 0.038;
+        break;
+      case 'european_plaza':
+        filterType = 'lowpass';
+        centerFreq = isNight ? 340 : 450; // Canal ripples & warm piazza air
+        qVal = 0.85;
+        lfoHz = 0.21;
+        lfoDepth = 135;
+        bedVol = 0.032;
+        break;
+      case 'americas_metro':
+        filterType = 'bandpass';
+        centerFreq = isNight ? 420 : 510; // Deep boulevard rush & distant subway air
+        qVal = 0.65;
+        lfoHz = 0.19;
+        lfoDepth = 175;
+        bedVol = 0.035;
+        break;
+      case 'desert_oasis':
+        filterType = 'bandpass';
+        centerFreq = isNight ? 390 : isSunset ? 520 : 610; // Warm dune breeze
+        qVal = 1.15;
+        lfoHz = 0.13;
+        lfoDepth = 240;
+        bedVol = 0.034;
+        break;
+    }
+
+    this.ambientFilter.type = filterType;
+    this.ambientFilter.Q.setTargetAtTime(qVal, now, 0.25);
+    this.ambientFilter.frequency.setTargetAtTime(centerFreq, now, 0.35);
+    this.ambientLfo.frequency.setTargetAtTime(lfoHz, now, 0.35);
+    this.ambientLfoGain.gain.setTargetAtTime(lfoDepth, now, 0.35);
+    this.ambientBedGain.gain.setTargetAtTime(
+      this.muted || !this.musicActive ? 0.0001 : bedVol,
+      now,
+      0.35,
+    );
+  }
+
+  private playAmbientRegionalDetail(): void {
+    if (!this.musicActive || this.muted || !this.ctx || this.ctx.state !== 'running') {
+      return;
+    }
+    this.ambientStep++;
+    const step = this.ambientStep;
+    const isNight = this.activeAtmosphere === ShiftAtmosphere.TwilightNeon;
+    const isSunny = this.activeAtmosphere === ShiftAtmosphere.SunnyHarbor;
+
+    switch (this.activeRegion) {
+      case 'mediterranean_coast': {
+        // Gentle breaking wave wash every ~2 steps + sunny coastal gull / night buoy
+        if (step % 2 === 0) {
+          this.playFilteredNoise(
+            1.25,
+            'lowpass',
+            isNight ? 240 : 320,
+            isNight ? 620 : 940,
+            1.1,
+            isNight ? 0.024 : 0.034,
+            0,
+          );
+        }
+        if (isSunny && step % 5 === 1) {
+          // Soft distant sea-breeze gull call
+          const base = 1480 + Math.random() * 240;
+          this.playTone(base, 0.16, 'sine', 0.016, 0, base * 1.18);
+          this.playTone(base * 1.12, 0.18, 'sine', 0.014, 0.18, base * 0.92);
+        } else if (isNight && step % 6 === 3) {
+          // Subtle harbor buoy bell shimmer
+          this.playTone(659.25, 0.42, 'sine', 0.015, 0);
+        }
+        break;
+      }
+      case 'asian_metropolis': {
+        // Bustling street energy: rhythmic scooter/bicycle bell & soft metro crosswalk chime
+        if (step % 3 === 1) {
+          const pitch = 1567.98 * (0.96 + Math.random() * 0.08);
+          this.playTone(pitch, 0.075, 'triangle', 0.016, 0);
+          this.playTone(pitch * 1.25, 0.095, 'sine', 0.014, 0.085);
+        } else if (step % 4 === 2) {
+          // Warm bustling avenue whoosh or night-market buzz
+          this.playFilteredNoise(
+            0.55,
+            'bandpass',
+            isNight ? 680 : 920,
+            isNight ? 420 : 1450,
+            1.4,
+            0.022,
+            0,
+          );
+        }
+        if (isNight && step % 6 === 0) {
+          // Soft pentatonic street-corner lantern chime
+          this.playTone(783.99, 0.22, 'sine', 0.014, 0);
+          this.playTone(1046.5, 0.25, 'sine', 0.012, 0.14);
+        }
+        break;
+      }
+      case 'european_plaza': {
+        // Piazza fountain splash + distant cathedral/town-hall chime echo
+        if (step % 2 === 1) {
+          this.playFilteredNoise(0.75, 'bandpass', 1100, 2100, 1.8, 0.016, 0);
+        }
+        if (step % 6 === 2) {
+          const root = isNight ? 392.0 : 440.0;
+          this.playTone(root, 0.48, 'triangle', 0.016, 0);
+          this.playTone(root * 1.5, 0.36, 'sine', 0.01, 0.18);
+        }
+        break;
+      }
+      case 'americas_metro': {
+        // Boulevard traffic gust + distant transit air brake / ferry tone
+        if (step % 3 === 0) {
+          this.playFilteredNoise(0.85, 'bandpass', 260, 740, 1.1, 0.026, 0);
+        }
+        if (step % 5 === 2) {
+          this.playTone(196.0, 0.35, 'triangle', 0.018, 0, 174.61);
+        }
+        break;
+      }
+      case 'desert_oasis': {
+        // Warm wind gust over stone + quiet atmospheric harmonic fifth
+        if (step % 2 === 0) {
+          this.playFilteredNoise(1.05, 'bandpass', 380, 980, 1.9, 0.022, 0);
+        }
+        if (step % 5 === 3) {
+          this.playTone(293.66, 0.38, 'triangle', 0.015, 0);
+          this.playTone(466.16, 0.34, 'sine', 0.012, 0.16);
+        }
+        break;
+      }
+    }
+  }
+
+  private syncAmbientSoundscapeState(): void {
+    if (!this.musicActive || this.muted) {
+      this.silenceAmbientImmediate();
+      return;
+    }
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    this.ensureAmbientNodes(ctx);
+    this.applyAmbientBedProfile();
+
+    if (typeof window !== 'undefined' && this.ambientTimerId === null) {
+      this.ambientTimerId = window.setInterval(() => {
+        this.playAmbientRegionalDetail();
+      }, 1750);
+    }
+  }
+
   public setMusicPlaying(active: boolean): void {
     if (this.musicActive === active) return;
     this.musicActive = active;
@@ -218,10 +587,12 @@ class PokoAudioEngine {
       }
       this.feverActive = false;
       this.silenceEngineImmediate();
+      this.silenceAmbientImmediate();
       return;
     }
 
     this.restartMusicInterval();
+    this.syncAmbientSoundscapeState();
   }
 
   private playMarimbaPluck(freq: number, gainPeak: number): void {
@@ -707,6 +1078,97 @@ class PokoAudioEngine {
     const stepMult = Math.pow(2, (coinIdx % 4) * (2 / 12));
     this.playTone(1567.98 * stepMult, 0.09, 'sine', 0.065, 0);
     this.playTone(2349.32 * stepMult, 0.13, 'triangle', 0.05, 0.025);
+  }
+
+  /**
+   * 2-Stage Drift Mini-Turbo release burst (Tier 1 cyan snap / Tier 2 gold chord).
+   */
+  public playDriftMiniTurbo(tier: 1 | 2): void {
+    const base = tier === 2 ? 420 : 310;
+    this.playFilteredNoise(
+      tier === 2 ? 0.24 : 0.16,
+      'bandpass',
+      480,
+      tier === 2 ? 2400 : 1750,
+      1.7,
+      tier === 2 ? 0.16 : 0.12,
+      0,
+    );
+    this.playTone(base, 0.18, 'triangle', 0.11, 0, base * 1.8);
+    this.playTone(base * 1.5, 0.16, 'sine', 0.08, 0.03, base * 2.4);
+    if (tier === 2) {
+      this.playTone(1046.5, 0.2, 'triangle', 0.1, 0.06);
+      this.playTone(1318.5, 0.22, 'sine', 0.08, 0.09);
+    }
+  }
+
+  /**
+   * Unique 'Discovery' chime triggered when DiscoveryModal reveals a city landmark
+   * or new cultural dish. First-time landmarks play a resonant celesta + brass fifths
+   * shimmer with an airy bell bloom.
+   */
+  public playDiscoveryChime(
+    kind: 'landmark' | 'parcel' = 'landmark',
+    isFirstDiscovery: boolean = true,
+  ): void {
+    const nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    if (nowMs - this.lastDiscoveryChimeAtMs < 250) return;
+    this.lastDiscoveryChimeAtMs = nowMs;
+
+    if (kind === 'landmark') {
+      // Soft sparkling air swell
+      this.playFilteredNoise(
+        0.34,
+        'bandpass',
+        1650,
+        3600,
+        2.6,
+        isFirstDiscovery ? 0.068 : 0.042,
+        0,
+      );
+
+      if (isFirstDiscovery) {
+        // Warm foundational fifth (D4 + A4) for monumental discovery weight
+        this.playTone(293.66, 0.45, 'triangle', 0.085, 0);
+        this.playTone(440.0, 0.42, 'sine', 0.06, 0.04);
+      }
+
+      // Celestial ascending D-major arpeggio
+      const chord = isFirstDiscovery
+        ? [587.33, 739.99, 880.0, 1174.66, 1479.98, 1760.0]
+        : [587.33, 739.99, 880.0, 1174.66];
+      chord.forEach((f, idx) => {
+        const delay = idx * 0.052;
+        this.playTone(f, 0.34, 'triangle', isFirstDiscovery ? 0.11 : 0.08, delay);
+        this.playTone(
+          f * 2,
+          0.24,
+          'sine',
+          isFirstDiscovery ? 0.05 : 0.032,
+          delay + 0.012,
+        );
+      });
+
+      if (isFirstDiscovery) {
+        // Crowning bell sparkle on a brand-new city landmark!
+        this.playTone(2349.32, 0.36, 'sine', 0.065, 0.3, 2489.02);
+      }
+      return;
+    }
+
+    // Lighter cozy postcard chime for a newly discovered dish / parcel
+    const parcelNotes = isFirstDiscovery ? [783.99, 987.77, 1174.66, 1567.98] : [783.99, 987.77, 1174.66];
+    parcelNotes.forEach((f, idx) => {
+      this.playTone(f, 0.2, 'triangle', 0.08, idx * 0.045);
+      this.playTone(f * 2, 0.13, 'sine', 0.028, idx * 0.045 + 0.01);
+    });
+  }
+
+  /**
+   * Cultural Landmark Discovery harp/marimba shimmer when finding a historic monument!
+   */
+  public playLandmarkDiscovery(): void {
+    this.playDiscoveryChime('landmark', true);
   }
 }
 

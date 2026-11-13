@@ -13,11 +13,28 @@ interface StatusModalProps {
   snapshot: RunSnapshot | null;
   currentLevel: number;
   lang: SupportedLanguage;
+  careerRankInfo?: {
+    badge: string;
+    nameZh: string;
+    nameEn: string;
+    exchangeRate: number;
+    xpGained: number;
+    unconvertedYuan: number;
+  };
+  dailyMedalResult?: {
+    medalEarned: 'none' | 'bronze' | 'silver' | 'gold';
+    rewardCoins: number;
+    spinTokensAwarded: number;
+    streakBonusCoins: number;
+  } | null;
   onResume: () => void;
   onRestart: () => void;
   onNextLevel: () => void;
   onOpenShop: () => void;
   onOpenCustomCity?: () => void;
+  onOpenWorldTour?: () => void;
+  onOpenCareerLedger?: () => void;
+  onExchangeEarnings?: () => void;
   onBackToTitle: () => void;
 }
 
@@ -26,11 +43,16 @@ export const StatusModal: React.FC<StatusModalProps> = ({
   snapshot,
   currentLevel,
   lang,
+  careerRankInfo,
+  dailyMedalResult,
   onResume,
   onRestart,
   onNextLevel,
   onOpenShop,
   onOpenCustomCity,
+  onOpenWorldTour,
+  onOpenCareerLedger,
+  onExchangeEarnings,
   onBackToTitle,
 }) => {
   if (phase !== GamePhase.Paused && phase !== GamePhase.GameOver) {
@@ -43,6 +65,14 @@ export const StatusModal: React.FC<StatusModalProps> = ({
   const isBreakdown = snapshot?.outcome === OutcomeKind.Breakdown;
   const starsEarned = snapshot?.starsEarned ?? 0;
   const isCustomCity = Boolean(snapshot?.customCity);
+  const worldCityId = snapshot?.customCity?.worldCityId;
+  const worldStage = snapshot?.customCity?.worldStage ?? 1;
+  const canAdvanceNextStage = !isCustomCity || (Boolean(worldCityId) && worldStage < 10);
+  const exchangeRate = careerRankInfo?.exchangeRate ?? 5;
+  const shiftYuan = snapshot?.riderReceipt?.netEarningsYuan ?? 0;
+  const shiftCoinValue = Math.max(0, Math.round(shiftYuan * exchangeRate));
+  const pendingYuan = careerRankInfo?.unconvertedYuan ?? 0;
+  const pendingExchangeCoins = pendingYuan >= 0.2 ? Math.max(1, Math.round(pendingYuan * exchangeRate)) : 0;
 
   return (
     <div
@@ -298,7 +328,9 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                 )}
                 <div className="flex items-center justify-between border-t border-[#1d1205]/15 pt-1.5 font-extrabold text-sm">
                   <span className="text-[#2b1b08]">
-                    {lang === 'zh' ? '本趟实得净收入' : 'Net Rider Earnings'}
+                    {lang === 'zh'
+                      ? `本趟实得净收入 (当前 ¥1=${exchangeRate} 🪙)`
+                      : `Net Pay (Rank Rate ¥1=${exchangeRate} Coins)`}
                   </span>
                   <span
                     className={`tabular-nums ${
@@ -307,8 +339,60 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                         : 'text-[#e11d48]'
                     }`}
                   >
-                    ¥{snapshot.riderReceipt.netEarningsYuan.toFixed(1)}
+                    ¥{snapshot.riderReceipt.netEarningsYuan.toFixed(1)} (≈{shiftCoinValue}🪙)
                   </span>
+                </div>
+
+                {careerRankInfo && (
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-dashed border-[#1d1205]/15">
+                    <div className="text-[11px] font-bold text-[#92400e]">
+                      {careerRankInfo.badge}{' '}
+                      {lang === 'zh' ? careerRankInfo.nameZh : careerRankInfo.nameEn}
+                      {careerRankInfo.xpGained > 0 && ` (+${careerRankInfo.xpGained} XP)`}
+                    </div>
+                    {onExchangeEarnings && pendingExchangeCoins > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          pokoAudio.playCoinTossClink(0);
+                          onExchangeEarnings();
+                        }}
+                        className="arcade-btn-green px-2.5 py-1 rounded-lg cursor-pointer shrink-0"
+                      >
+                        <span className="arcade-stroke-sm text-white text-[11px]">
+                          {lang === 'zh'
+                            ? `立即兑换 ¥${pendingYuan.toFixed(1)} → +${pendingExchangeCoins}🪙`
+                            : `Convert +${pendingExchangeCoins}🪙`}
+                        </span>
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-extrabold text-[#16a34a]">
+                        {lang === 'zh' ? '✓ 已全部兑换为金币' : '✓ Converted'}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {dailyMedalResult && (
+              <div className="arcade-pill-brown rounded-2xl px-3.5 py-2 flex items-center justify-between gap-2">
+                <div className="text-xs font-extrabold text-[#ffee1f]">
+                  {dailyMedalResult.medalEarned === 'gold'
+                    ? '🥇 ' + (lang === 'zh' ? '每日挑战 · 夺得金牌！' : 'Daily Challenge: GOLD!')
+                    : dailyMedalResult.medalEarned === 'silver'
+                      ? '🥈 ' + (lang === 'zh' ? '每日挑战 · 夺得银牌！' : 'Daily Challenge: SILVER!')
+                      : dailyMedalResult.medalEarned === 'bronze'
+                        ? '🥉 ' + (lang === 'zh' ? '每日挑战 · 夺得铜牌！' : 'Daily Challenge: BRONZE!')
+                        : lang === 'zh'
+                          ? '📅 每日挑战完成（再冲高分夺牌！）'
+                          : '📅 Daily Run Complete'}
+                </div>
+                <div className="text-xs font-extrabold text-[#6bf25c] tabular-nums">
+                  {dailyMedalResult.rewardCoins > 0 && `+${dailyMedalResult.rewardCoins}🪙 `}
+                  {dailyMedalResult.streakBonusCoins > 0 &&
+                    `+${dailyMedalResult.streakBonusCoins}🔥 `}
+                  {dailyMedalResult.spinTokensAwarded > 0 && `+${dailyMedalResult.spinTokensAwarded}券`}
                 </div>
               </div>
             )}
@@ -336,7 +420,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
             <div className="flex flex-col gap-2.5">
               {isVictory ? (
                 <>
-                  {!isCustomCity && (
+                  {canAdvanceNextStage && (
                     <button
                       type="button"
                       data-start="true"
@@ -347,7 +431,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                       className="arcade-btn-gold w-full py-3.5 px-5 rounded-2xl cursor-pointer whitespace-nowrap"
                     >
                       <span className="arcade-stroke text-white text-lg sm:text-xl">
-                        {t.nextStage} (STAGE {(snapshot?.level ?? currentLevel) + 1})
+                        {t.nextStage} ({worldCityId ? `STAGE ${worldStage + 1}/10` : `STAGE ${(snapshot?.level ?? currentLevel) + 1}`})
                       </span>
                     </button>
                   )}
@@ -420,6 +504,36 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                     </button>
                   </div>
                 </>
+              )}
+
+              {onOpenCareerLedger && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    pokoAudio.playUiClick();
+                    onOpenCareerLedger();
+                  }}
+                  className="arcade-btn-cream w-full py-2.5 px-4 rounded-2xl cursor-pointer whitespace-nowrap"
+                >
+                  <span className="arcade-stroke-sm text-white text-base">
+                    {t.careerLedgerBtn}
+                  </span>
+                </button>
+              )}
+
+              {onOpenWorldTour && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    pokoAudio.playUiClick();
+                    onOpenWorldTour();
+                  }}
+                  className="arcade-btn-cream w-full py-2.5 px-4 rounded-2xl cursor-pointer whitespace-nowrap"
+                >
+                  <span className="arcade-stroke-sm text-white text-base">
+                    {t.worldTourBtn}
+                  </span>
+                </button>
               )}
 
               {onOpenCustomCity && (

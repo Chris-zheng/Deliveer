@@ -1,6 +1,8 @@
 import type * as THREE from 'three';
+import { DRIFT_TIER1_SEC, DRIFT_TIER2_SEC } from '../../config/balance';
+import { gridToWorld } from '../../game/proceduralCity';
 import type { TrafficHazard } from '../../game/types';
-import { pokoAudio } from '../../game/audio';
+import { ParcelKind } from '../../game/types';
 import { getActiveStop, stepParcelStackWobble } from '../../game/rules';
 import { GamePhase, HazardKind, HazardPhase, SignalAxisState } from '../../game/types';
 import type { ToyTruckRig, WindStreakRig } from '../../game/meshes';
@@ -85,6 +87,31 @@ export function updateVisuals(
       // Glow brake taillights bright crimson when braking!
       truckRig.taillightMat.emissiveIntensity = S.truckState.isBraking ? 1.9 : 0.45;
 
+      // Drift Tire Smoke + Tier 1 Cyan / Tier 2 Gold Mini-Turbo Sparks!
+      if (S.truckState.isDrifting && currentPhase === GamePhase.Playing) {
+        S.driftSparkAccum += dt;
+        if (S.driftSparkAccum >= 0.065) {
+          S.driftSparkAccum = 0;
+          const rearX = S.truckState.x - Math.sin(S.truckState.yaw) * 0.72;
+          const rearZ = S.truckState.z - Math.cos(S.truckState.yaw) * 0.72;
+          const tier =
+            S.truckState.driftChargeAccum >= DRIFT_TIER2_SEC
+              ? 2
+              : S.truckState.driftChargeAccum >= DRIFT_TIER1_SEC
+                ? 1
+                : 0;
+          const sparkPalette =
+            tier === 2
+              ? [0xffe524, 0xf97316, 0xffffff]
+              : tier === 1
+                ? [0x38bdf8, 0x70e4ff, 0xe0f2fe]
+                : [0xe2e8f0, 0xcbd5e1, 0xf8fafc];
+          fx.spawnParticleBurst(rearX, 0.34, rearZ, tier > 0 ? 4 : 2, sparkPalette, tier > 0 ? 0.65 : 0.38);
+        }
+      } else {
+        S.driftSparkAccum = 0;
+      }
+
       // Wobbly Roof-Rack Parcel Stack Spring-Damper Sway!
       stepParcelStackWobble(S.parcelWobble, S.truckState, dt);
       for (let pi = 0; pi < truckRig.parcelBoxes.length; pi++) {
@@ -124,6 +151,16 @@ export function updateVisuals(
             0.25 + overviewVisibilityFactor * 0.95,
             0.78,
           );
+        }
+      }
+
+      // Spin & Bob Cultural Landmark Discovery Beacons until discovered!
+      for (const lb of S.landmarkBeacons) {
+        const found = S.discoveredLandmarkIds.has(lb.id);
+        lb.mesh.visible = !found;
+        if (!found) {
+          lb.mesh.rotation.y = S.visualClock * 1.9;
+          lb.mesh.position.y = 4.9 + Math.sin(S.visualClock * 3.1) * 0.22;
         }
       }
 
@@ -196,6 +233,42 @@ export function updateVisuals(
           cr.overviewBeam.visible = false;
         }
       });
+
+      // Live 3D Parcel Toss Trajectory Arc Preview when approaching active customer!
+      if (activeStop && currentPhase === GamePhase.Playing && !S.countdownState.isFrozen) {
+        const cw = gridToWorld(activeStop.citizenCoord, S.currentCity.totalGridSize);
+        const tx = activeStop.liveCitizenX ?? cw.x;
+        const tz = activeStop.liveCitizenZ ?? cw.z;
+        const distToCustomer = Math.hypot(S.truckState.x - tx, S.truckState.z - tz);
+        if (distToCustomer <= 7.8) {
+          const rw = gridToWorld(activeStop.roadCoord, S.currentCity.totalGridSize);
+          const distToRing = Math.hypot(S.truckState.x - rw.x, S.truckState.z - rw.z);
+          const needsStop =
+            activeStop.parcelKind === ParcelKind.Large && S.truckState.speed > 1.8;
+          const arcColor = needsStop
+            ? 0xf97316
+            : distToRing < 0.72
+              ? 0xfacc15
+              : distToRing <= 2.35
+                ? 0x22c55e
+                : 0x38bdf8;
+          fx.updateTossArc(
+            true,
+            S.truckState.x,
+            1.28 + S.truckState.y,
+            S.truckState.z,
+            tx,
+            0.68,
+            tz,
+            arcColor,
+            S.visualClock,
+          );
+        } else {
+          fx.updateTossArc(false, 0, 0, 0, 0, 0, 0, 0xffffff, 0);
+        }
+      } else {
+        fx.updateTossArc(false, 0, 0, 0, 0, 0, 0, 0xffffff, 0);
+      }
 
       // Animate Obstacle-Free Sidewalk & Plaza Pedestrians (distance-synced stride, zero skating!)
       for (const item of S.pedestrianRigs) {

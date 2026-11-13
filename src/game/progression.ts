@@ -1,4 +1,5 @@
 import {
+  LiveryId,
   OutcomeKind,
   PlayerProgression,
   QuestItem,
@@ -6,6 +7,7 @@ import {
   TopperId,
   VehicleId,
 } from './types';
+import { createDefaultCareerState, LIVERY_SPECS, normalizeCareerState } from './career';
 
 export interface VehicleSpec {
   id: VehicleId;
@@ -108,6 +110,12 @@ export const TOPPER_SPECS: Record<TopperId, TopperSpec> = {
     tagline: 'Bobbing pastel sky balloons',
     costCoins: 600,
   },
+  [TopperId.NeonLightbox]: {
+    id: TopperId.NeonLightbox,
+    name: 'Courier Neon Lightbox',
+    tagline: 'Glowing dual-color dispatch roof sign',
+    costCoins: 750,
+  },
 };
 
 const QUEST_TEMPLATES: {
@@ -173,10 +181,17 @@ export function createDefaultProgression(): PlayerProgression {
     selectedVehicle: VehicleId.ClassicVan,
     unlockedToppers: [TopperId.Beacon],
     selectedTopper: TopperId.Beacon,
+    unlockedLiveries: [LiveryId.Standard],
+    selectedLivery: LiveryId.Standard,
     districtStars: {},
+    unlockedWorldCities: ['beijing', 'paris'],
+    worldCityStars: {},
+    discoveredLoreIds: [],
+    alwaysShowDiscoveryModal: true,
     quests: createInitialQuests(0),
     nextFreeShield: false,
     upgrades: { engine: 0, tires: 0, cargo: 0 },
+    career: createDefaultCareerState(),
   };
 }
 
@@ -209,10 +224,34 @@ export function loadProgression(): PlayerProgression {
         parsed.selectedTopper && TOPPER_SPECS[parsed.selectedTopper]
           ? parsed.selectedTopper
           : base.selectedTopper,
+      unlockedLiveries:
+        Array.isArray(parsed.unlockedLiveries) && parsed.unlockedLiveries.length > 0
+          ? (parsed.unlockedLiveries as LiveryId[])
+          : base.unlockedLiveries,
+      selectedLivery:
+        parsed.selectedLivery && LIVERY_SPECS[parsed.selectedLivery]
+          ? parsed.selectedLivery
+          : base.selectedLivery,
       districtStars:
         parsed.districtStars && typeof parsed.districtStars === 'object'
           ? parsed.districtStars
           : {},
+      unlockedWorldCities:
+        Array.isArray(parsed.unlockedWorldCities) && parsed.unlockedWorldCities.length > 0
+          ? (parsed.unlockedWorldCities as string[])
+          : base.unlockedWorldCities,
+      worldCityStars:
+        parsed.worldCityStars && typeof parsed.worldCityStars === 'object'
+          ? (parsed.worldCityStars as Record<string, number>)
+          : {},
+      discoveredLoreIds:
+        Array.isArray(parsed.discoveredLoreIds)
+          ? (parsed.discoveredLoreIds as string[])
+          : [],
+      alwaysShowDiscoveryModal:
+        typeof parsed.alwaysShowDiscoveryModal === 'boolean'
+          ? parsed.alwaysShowDiscoveryModal
+          : true,
       quests:
         Array.isArray(parsed.quests) && parsed.quests.length === 3
           ? parsed.quests
@@ -223,10 +262,45 @@ export function loadProgression(): PlayerProgression {
         tires: Math.min(3, Math.max(0, Math.floor(Number(parsed.upgrades && parsed.upgrades.tires) || 0))),
         cargo: Math.min(3, Math.max(0, Math.floor(Number(parsed.upgrades && parsed.upgrades.cargo) || 0))),
       },
+      career: normalizeCareerState(parsed.career),
     };
   } catch {
     return createDefaultProgression();
   }
+}
+
+export function recordWorldStageStars(
+  prog: PlayerProgression,
+  cityId: string,
+  stage: number,
+  stars: number,
+): PlayerProgression {
+  const key = `${cityId}:${stage}`;
+  const prev = prog.worldCityStars[key] ?? 0;
+  if (stars <= prev) return prog;
+  return {
+    ...prog,
+    worldCityStars: {
+      ...prog.worldCityStars,
+      [key]: stars,
+    },
+  };
+}
+
+export function recordLoreDiscovery(
+  prog: PlayerProgression,
+  loreId: string,
+): { next: PlayerProgression; isFirstDiscovery: boolean } {
+  if (!loreId || prog.discoveredLoreIds.includes(loreId)) {
+    return { next: prog, isFirstDiscovery: false };
+  }
+  return {
+    next: {
+      ...prog,
+      discoveredLoreIds: [...prog.discoveredLoreIds, loreId],
+    },
+    isFirstDiscovery: true,
+  };
 }
 
 export function saveProgression(prog: PlayerProgression): void {
@@ -338,6 +412,34 @@ export function purchaseOrSelectTopper(
       coins: prog.coins - spec.costCoins,
       unlockedToppers: [...prog.unlockedToppers, topperId],
       selectedTopper: topperId,
+    },
+    purchased: true,
+    success: true,
+  };
+}
+
+export function purchaseOrSelectLivery(
+  prog: PlayerProgression,
+  liveryId: LiveryId,
+): { next: PlayerProgression; purchased: boolean; success: boolean } {
+  const spec = LIVERY_SPECS[liveryId];
+  if (!spec) return { next: prog, purchased: false, success: false };
+  if (prog.unlockedLiveries.includes(liveryId)) {
+    return {
+      next: { ...prog, selectedLivery: liveryId },
+      purchased: false,
+      success: true,
+    };
+  }
+  if (spec.milestoneOnly || prog.coins < spec.costCoins) {
+    return { next: prog, purchased: false, success: false };
+  }
+  return {
+    next: {
+      ...prog,
+      coins: prog.coins - spec.costCoins,
+      unlockedLiveries: [...prog.unlockedLiveries, liveryId],
+      selectedLivery: liveryId,
     },
     purchased: true,
     success: true,

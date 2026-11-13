@@ -26,6 +26,7 @@ import {
   createHazardMesh,
   createIslandBirdMesh,
   createJumpRampMesh,
+  createLandmarkBeaconMesh,
   createMechanicGarageMesh,
   createRivalCourierMesh,
   createSkyBalloonMesh,
@@ -63,6 +64,7 @@ export interface CityActorRigs {
   boat: { data: CanalBoat; mesh: THREE.Group }[];
   bird: SpawnedIslandBird[];
   rampBeacons: THREE.Group[];
+  landmarkBeacons: { id: string; mesh: THREE.Group }[];
 }
 
 export interface CityActorDeps {
@@ -219,6 +221,14 @@ export function buildCityActors({
     });
   }
 
+
+  // 14. Landmark Floating Discovery Beacons
+  for (const lm of currentCity.landmarks ?? []) {
+    const bMesh = createLandmarkBeaconMesh();
+    bMesh.position.set(lm.x, 5.4, lm.z);
+    levelGroup.add(bMesh);
+    rigs.landmarkBeacons.push({ id: lm.id, mesh: bMesh });
+  }
 
   return { rival: rivalRig };
 }

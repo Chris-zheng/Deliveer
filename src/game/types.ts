@@ -35,6 +35,15 @@ export enum TopperId {
   RubberDuck = 'rubber_duck',
   EspressoCup = 'espresso_cup',
   PartyBalloons = 'party_balloons',
+  NeonLightbox = 'neon_lightbox',
+}
+
+export enum LiveryId {
+  Standard = 'standard',
+  JadeExpress = 'jade_express',
+  SakuraRush = 'sakura_rush',
+  CyberNeon = 'cyber_neon',
+  GoldChampion = 'gold_champion',
 }
 
 export enum GamePhase {
@@ -183,6 +192,16 @@ export interface DeliveryStop {
   /** English twin of streetName so the HUD can stay in one language. */
   streetNameEn?: string;
   foodCategory?: string;
+  /** Phase 2: World city item lore metadata for Information Modal & Almanac. */
+  loreId?: string;
+  loreCategoryZh?: string;
+  loreCategoryEn?: string;
+  loreFactZh?: string;
+  loreFactEn?: string;
+  loreTipZh?: string;
+  loreTipEn?: string;
+  loreIcon?: string;
+  merchantName?: string;
 }
 
 export interface BuildingLot {
@@ -379,13 +398,58 @@ export interface TrafficHazard {
 
 export interface CustomCityMetadata {
   cityName: string;
+  cityNameEn?: string;
   districtName: string;
+  districtNameEn?: string;
   lat?: number;
   lng?: number;
   isCustom: boolean;
   addressDetails?: string;
   streets?: string[];
   streetsEn?: string[];
+  pois?: string[];
+  worldCityId?: string;
+  worldStage?: number;
+}
+
+export interface LandmarkSpot {
+  id: string;
+  loreId: string;
+  coord: GridCoord;
+  x: number;
+  z: number;
+  kind: string;
+  nameZh: string;
+  nameEn: string;
+  eraZh: string;
+  eraEn: string;
+  factZh: string;
+  factEn: string;
+  icon?: string;
+}
+
+export interface DiscoveryLorePayload {
+  loreId: string;
+  kind: 'parcel' | 'landmark';
+  cityNameZh: string;
+  cityNameEn: string;
+  districtZh: string;
+  districtEn: string;
+  titleZh: string;
+  titleEn: string;
+  subtitleZh: string;
+  subtitleEn: string;
+  factZh: string;
+  factEn: string;
+  tipZh?: string;
+  tipEn?: string;
+  icon: string;
+  parcelKind?: ParcelKind;
+  stopIndex?: number;
+  merchantName?: string;
+  streetName?: string;
+  streetNameEn?: string;
+  isFirstDiscovery?: boolean;
 }
 
 export interface StreetSign {
@@ -445,6 +509,7 @@ export interface GeneratedCity {
   waterClouds: WorldPos[];
   boostPads: BoostPad[];
   hazards: TrafficHazard[];
+  landmarks?: LandmarkSpot[];
 }
 
 export interface TruckState {
@@ -509,6 +574,18 @@ export type UpgradeTrack = 'engine' | 'tires' | 'cargo';
 
 export type UpgradeLevels = Record<UpgradeTrack, number>;
 
+export interface RiderCareerState {
+  careerXp: number;
+  totalDeliveries: number;
+  totalEarningsYuan: number;
+  unconvertedYuan: number;
+  totalExchangedCoins: number;
+  shiftsCompleted: number;
+  cleanShifts: number;
+  bestPraiseRate: number;
+  claimedMilestones: string[];
+}
+
 export interface PlayerProgression {
   coins: number;
   spinTokens: number;
@@ -516,10 +593,17 @@ export interface PlayerProgression {
   selectedVehicle: VehicleId;
   unlockedToppers: TopperId[];
   selectedTopper: TopperId;
+  unlockedLiveries: LiveryId[];
+  selectedLivery: LiveryId;
   districtStars: Record<number, number>; // level -> 1..3 stars
   quests: QuestItem[];
   nextFreeShield: boolean;
   upgrades: UpgradeLevels;
+  career: RiderCareerState;
+  unlockedWorldCities: string[];
+  worldCityStars: Record<string, number>; // "${cityId}:${stage}" -> stars (1..3)
+  discoveredLoreIds: string[];
+  alwaysShowDiscoveryModal?: boolean;
 }
 
 export interface RiderShiftReceipt {
@@ -604,6 +688,8 @@ export interface HudState {
   boostCharge: number;
   isBoosting: boolean;
   isDrifting: boolean;
+  driftTier: 0 | 1 | 2;
+  weatherKind: 'clear' | 'rain' | 'fog';
   speedKmh: number;
   bannerEvent: HudBannerEvent | null;
   countdownStage?: CountdownStage;

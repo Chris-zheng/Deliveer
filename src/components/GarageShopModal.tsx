@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { pokoAudio } from '../game/audio';
 import { I18N, SupportedLanguage } from '../game/i18n';
+import { LIVERY_SPECS } from '../game/career';
 import {
   SPIN_COST_COINS,
   SPIN_WHEEL_SLICES,
@@ -13,7 +14,7 @@ import {
   TOPPER_SPECS,
   VEHICLE_SPECS,
 } from '../game/progression';
-import { PlayerProgression, TopperId, UpgradeTrack, VehicleId } from '../game/types';
+import { LiveryId, PlayerProgression, TopperId, UpgradeTrack, VehicleId } from '../game/types';
 import {
   MAX_UPGRADE_LEVEL,
   nextUpgradeTier,
@@ -28,12 +29,13 @@ interface GarageShopModalProps {
   lang?: SupportedLanguage;
   onSelectOrBuyVehicle: (id: VehicleId) => void;
   onSelectOrBuyTopper: (id: TopperId) => void;
+  onSelectOrBuyLivery?: (id: LiveryId) => void;
   onSpinWheel: () => { slice: SpinWheelSlice | null; usedToken: boolean };
   onPurchaseUpgrade: (track: UpgradeTrack) => boolean;
   onClose: () => void;
 }
 
-type ShopTab = 'fleet' | 'toppers' | 'upgrades' | 'spin';
+type ShopTab = 'fleet' | 'toppers' | 'liveries' | 'upgrades' | 'spin';
 
 const VEHICLE_ZH: Record<VehicleId, { name: string; tagline: string }> = {
   [VehicleId.ClassicVan]: {
@@ -71,6 +73,10 @@ const TOPPER_ZH: Record<TopperId, { name: string; tagline: string }> = {
     name: '马卡龙节日气球',
     tagline: '随风摇曳的三色轻盈氢气球',
   },
+  [TopperId.NeonLightbox]: {
+    name: '幻夜霓虹灯箱',
+    tagline: '双色发光快递灯箱 · 里程碑或商城解锁',
+  },
 };
 
 const WHEEL_ZH: Record<number, { label: string; detail: string }> = {
@@ -88,6 +94,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
   lang = 'zh',
   onSelectOrBuyVehicle,
   onSelectOrBuyTopper,
+  onSelectOrBuyLivery,
   onSpinWheel,
   onPurchaseUpgrade,
   onClose,
@@ -164,9 +171,9 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
           </div>
         </div>
 
-        {/* 3 Category Tabs */}
+        {/* 5 Category Tabs */}
         <div
-          className="grid grid-cols-4 gap-2"
+          className="grid grid-cols-5 gap-1.5"
           role="tablist"
           aria-label="Shop categories"
         >
@@ -174,6 +181,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
             [
               { id: 'fleet', label: t.vehicleTab },
               { id: 'toppers', label: t.topperTab },
+              { id: 'liveries', label: t.paintTab },
               { id: 'upgrades', label: lang === 'zh' ? '升级' : 'Upgrades' },
               { id: 'spin', label: t.wheelTab },
             ] as { id: ShopTab; label: string }[]
@@ -191,9 +199,9 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                 }}
                 className={`${
                   active ? 'arcade-btn-gold' : 'arcade-pill-brown'
-                } py-2 px-2 rounded-xl cursor-pointer text-center relative`}
+                } py-2 px-1 rounded-xl cursor-pointer text-center relative`}
               >
-                <span className="arcade-stroke-sm text-white text-xs sm:text-sm">
+                <span className="arcade-stroke-sm text-white text-[11px] sm:text-xs">
                   {item.label}
                 </span>
               </button>
@@ -315,6 +323,76 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                           : owned
                             ? t.equip
                             : `${t.buyFor} · ${tp.costCoins}`}
+                      </span>
+                    </button>
+                  </div>
+                );
+              },
+            )}
+          </div>
+        )}
+
+        {/* Tab 3: Exclusive Paint Liveries */}
+        {tab === 'liveries' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {(Object.values(LIVERY_SPECS) as (typeof LIVERY_SPECS)[LiveryId][]).map(
+              (lv) => {
+                const owned = (progression.unlockedLiveries ?? [LiveryId.Standard]).includes(lv.id);
+                const equipped = (progression.selectedLivery ?? LiveryId.Standard) === lv.id;
+                const displayName = lang === 'zh' ? lv.nameZh : lv.nameEn;
+                const displayTag = lang === 'zh' ? lv.taglineZh : lv.taglineEn;
+
+                return (
+                  <div
+                    key={lv.id}
+                    className="arcade-pill-brown rounded-2xl p-3 flex flex-col justify-between gap-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="arcade-stroke-sm text-white text-base leading-snug">
+                          {displayName}
+                        </div>
+                        <div className="text-[11px] font-bold text-[#ffe8a3] mt-0.5">
+                          {displayTag}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-0.5 shrink-0 mt-0.5">
+                        <span
+                          className="w-4 h-4 rounded-l-md border-2 border-[#140c04]"
+                          style={{ backgroundColor: `#${lv.cabHex.toString(16).padStart(6, '0')}` }}
+                          aria-hidden="true"
+                        />
+                        <span
+                          className="w-4 h-4 rounded-r-md border-2 border-l-0 border-[#140c04]"
+                          style={{ backgroundColor: `#${lv.stripeHex.toString(16).padStart(6, '0')}` }}
+                          aria-hidden="true"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={!owned}
+                      onClick={() => {
+                        pokoAudio.playUiClick();
+                        onSelectOrBuyLivery?.(lv.id);
+                      }}
+                      className={`${
+                        equipped
+                          ? 'arcade-btn-green'
+                          : owned
+                            ? 'arcade-btn-cream'
+                            : 'bg-stone-700 border-2 border-[#140c04] opacity-70 cursor-not-allowed'
+                      } w-full py-2 px-3 rounded-xl cursor-pointer text-center`}
+                    >
+                      <span className="arcade-stroke-sm text-white text-xs sm:text-sm">
+                        {equipped
+                          ? t.equipped
+                          : owned
+                            ? t.equip
+                            : lang === 'zh'
+                              ? '职业里程碑解锁'
+                              : 'Unlock via Career Ledger'}
                       </span>
                     </button>
                   </div>

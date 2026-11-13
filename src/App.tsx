@@ -19,20 +19,49 @@ import {
   executeLuckySpin,
   incrementQuestProgress,
   loadProgression,
+  purchaseOrSelectLivery,
   purchaseOrSelectTopper,
   purchaseOrSelectVehicle,
   saveProgression,
 } from './game/progression';
 import { applyUpgradeLevels, purchaseUpgrade } from './game/upgrades';
-import { getDailyChallenge, loadDailyProgress, recordDailyRun, saveDailyProgress } from './game/dailyChallenge';
-import type { DailyChallenge, DailyProgress } from './game/dailyChallenge';
+import {
+  advanceChallengeStreak,
+  canCheckInToday,
+  claimDailyCheckIn,
+  getDailyChallenge,
+  getDisplayCheckInStreak,
+  loadDailyProgress,
+  loadDailyStreak,
+  recordDailyRun,
+  saveDailyProgress,
+  saveDailyStreak,
+} from './game/dailyChallenge';
+import type { DailyChallenge, DailyProgress, DailyStreakState } from './game/dailyChallenge';
+import {
+  claimCareerMilestone,
+  computeShiftCareerXp,
+  exchangeEarningsToCoins,
+  getRiderRankInfo,
+  hasClaimableMilestone,
+  normalizeCareerState,
+  recordCareerShift,
+} from './game/career';
 import { getRunMode, setRunMode } from './game/runMode';
 import { CustomCityModal } from './components/CustomCityModal';
+import { WorldMapModal } from './components/WorldMapModal';
+import { AlmanacModal } from './components/AlmanacModal';
+import { CareerLedgerModal, type CareerLedgerTab } from './components/CareerLedgerModal';
+import { DiscoveryModal, type ActiveDiscoveryModalState } from './components/DiscoveryModal';
+import { buildWorldCityLevelConfig, getWorldCityById } from './game/worldCities';
+import { recordLoreDiscovery, recordWorldStageStars } from './game/progression';
 import { SupportedLanguage, getInitialLanguage, saveLanguagePreference } from './game/i18n';
+import type { DiscoveryLorePayload } from './game/types';
 import {
   GamePhase,
   HudState,
   LevelConfig,
+  LiveryId,
   OutcomeKind,
   ParcelKind,
   PlayerProgression,
@@ -79,8 +108,21 @@ export default function App() {
   const [customCityConfig, setCustomCityConfig] =
     useState<LevelConfig | null>(null);
   const [customCityOpen, setCustomCityOpen] = useState<boolean>(false);
+  const [worldTourOpen, setWorldTourOpen] = useState<boolean>(false);
+  const [almanacOpen, setAlmanacOpen] = useState<boolean>(false);
+  const [careerLedgerOpen, setCareerLedgerOpen] = useState<boolean>(false);
+  const [careerLedgerTab, setCareerLedgerTab] = useState<CareerLedgerTab>('career');
+  const [activeDiscovery, setActiveDiscovery] = useState<ActiveDiscoveryModalState | null>(null);
   const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge>(() => getDailyChallenge());
   const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(() => loadDailyProgress());
+  const [dailyStreak, setDailyStreak] = useState<DailyStreakState>(() => loadDailyStreak());
+  const [lastShiftXp, setLastShiftXp] = useState<number>(0);
+  const [lastDailyMedalResult, setLastDailyMedalResult] = useState<{
+    medalEarned: 'none' | 'bronze' | 'silver' | 'gold';
+    rewardCoins: number;
+    spinTokensAwarded: number;
+    streakBonusCoins: number;
+  } | null>(null);
 
   const minimapRef = useRef<MinimapSnapshot>({
     city: null,
@@ -143,6 +185,8 @@ export default function App() {
     boostCharge: 1,
     isBoosting: false,
     isDrifting: false,
+    driftTier: 0,
+    weatherKind: 'clear',
     speedKmh: 0,
     bannerEvent: null,
     countdownStage: null,
@@ -151,11 +195,17 @@ export default function App() {
     demoRemainingSec: 0,
   });
 
-  // Pause simulation cleanly while Garage Shop, Quests, or Custom City modal is open
+  // Pause simulation cleanly while any modal is open
+  const anySubModalOpen =
+    shopOpen ||
+    questsOpen ||
+    customCityOpen ||
+    worldTourOpen ||
+    almanacOpen ||
+    careerLedgerOpen ||
+    activeDiscovery !== null;
   const effectiveCanvasPhase =
-    (shopOpen || questsOpen || customCityOpen) && phase === GamePhase.Playing
-      ? GamePhase.Paused
-      : phase;
+    anySubModalOpen && phase === GamePhase.Playing ? GamePhase.Paused : phase;
 
   // Mirror state machine to document.body.dataset.state & sync background music loop
   useEffect(() => {
@@ -168,6 +218,12 @@ export default function App() {
       document.activeElement.blur();
     }
     setShopOpen(false);
+    setWorldTourOpen(false);
+    setAlmanacOpen(false);
+    setCareerLedgerOpen(false);
+    setActiveDiscovery(null);
+    setLastShiftXp(0);
+    setLastDailyMedalResult(null);
     setRunMode({ kind: 'free', level: targetLevel !== undefined ? targetLevel : activeLevel });
     setCustomCityOpen(false);
     document.body.dataset.state = GamePhase.Playing;
@@ -204,7 +260,17 @@ export default function App() {
   }, [activeLevel, startPlaying]);
 
   const handleNextLevel = useCallback(() => {
-    // If we're on a custom city, next level can clear custom city or re-run
+    const worldId = snapshot?.customCity?.worldCityId;
+    const worldStage = snapshot?.customCity?.worldStage ?? 1;
+    if (worldId && worldStage < 10) {
+      const worldCity = getWorldCityById(worldId);
+      if (worldCity) {
+        const nextCfg = buildWorldCityLevelConfig(worldCity, worldStage + 1);
+        setCustomCityConfig(nextCfg);
+        startPlaying(nextCfg.level);
+        return;
+      }
+    }
     setCustomCityConfig(null);
     const nextLvl = (snapshot?.level ?? activeLevel) + 1;
     setHighestUnlockedLevel((prev) => Math.max(prev, nextLvl));
@@ -228,9 +294,23 @@ export default function App() {
     (cfg: LevelConfig) => {
       setCustomCityConfig(cfg);
       setCustomCityOpen(false);
+      setWorldTourOpen(false);
       startPlaying(cfg.level);
     },
     [startPlaying],
+  );
+
+  const handleDiscoverLore = useCallback(
+    (payload: DiscoveryLorePayload) => {
+      setProgression((prev) => {
+        const res = recordLoreDiscovery(prev, payload.loreId);
+        if (res.isFirstDiscovery || prev.alwaysShowDiscoveryModal) {
+          setActiveDiscovery({ ...payload, isFirstDiscovery: res.isFirstDiscovery });
+        }
+        return res.next;
+      });
+    },
+    [],
   );
 
   const handleClearCustomCity = useCallback(() => {
@@ -266,6 +346,31 @@ export default function App() {
     setProgression((prev) => purchaseOrSelectTopper(prev, id).next);
   }, []);
 
+  const handleSelectOrBuyLivery = useCallback((id: LiveryId) => {
+    setProgression((prev) => purchaseOrSelectLivery(prev, id).next);
+  }, []);
+
+  const handleExchangeEarnings = useCallback(() => {
+    setProgression((prev) => exchangeEarningsToCoins(prev).next);
+  }, []);
+
+  const handleClaimMilestone = useCallback((milestoneId: string) => {
+    setProgression((prev) => claimCareerMilestone(prev, milestoneId).next);
+  }, []);
+
+  const handleDailyCheckIn = useCallback(() => {
+    const res = claimDailyCheckIn(dailyStreak);
+    if (!res.claimed) return;
+    saveDailyStreak(res.nextStreak);
+    setDailyStreak(res.nextStreak);
+    setProgression((prev) => ({
+      ...prev,
+      coins: prev.coins + res.rewardCoins,
+      spinTokens: prev.spinTokens + res.spinTokens,
+      nextFreeShield: prev.nextFreeShield || res.freeShield,
+    }));
+  }, [dailyStreak]);
+
   const handlePurchaseUpgrade = useCallback((track: UpgradeTrack): boolean => {
     let bought = false;
     setProgression((prev) => {
@@ -299,55 +404,91 @@ export default function App() {
   const handleRunFinished = useCallback((snap: RunSnapshot) => {
     setSnapshot(snap);
     setBestScore((prev) => Math.max(prev, snap.score));
+    const xpGained = computeShiftCareerXp(snap);
+    setLastShiftXp(xpGained);
+
+    let dailyCoinsBonus = 0;
+    let dailySpinTokensBonus = 0;
+    if (getRunMode().kind === 'daily') {
+      const result = recordDailyRun(dailyChallenge, dailyProgress, snap.score);
+      saveDailyProgress(result.progress);
+      setDailyProgress(result.progress);
+      const streakRes = advanceChallengeStreak(
+        dailyStreak,
+        dailyChallenge.dateKey,
+        result.medalEarned,
+      );
+      saveDailyStreak(streakRes.nextStreak);
+      setDailyStreak(streakRes.nextStreak);
+      dailyCoinsBonus = result.rewardCoins + streakRes.streakBonusCoins;
+      dailySpinTokensBonus = result.spinTokensAwarded;
+      setLastDailyMedalResult({
+        medalEarned: result.medalEarned,
+        rewardCoins: result.rewardCoins,
+        spinTokensAwarded: result.spinTokensAwarded,
+        streakBonusCoins: streakRes.streakBonusCoins,
+      });
+    } else {
+      setLastDailyMedalResult(null);
+    }
+
     setProgression((prev) => {
       const prevStars = prev.districtStars[snap.level] ?? 0;
       const nextStars = Math.max(prevStars, snap.starsEarned);
-      return {
+      let updated: PlayerProgression = {
         ...prev,
-        coins: prev.coins + snap.coinsEarned,
-        spinTokens: prev.spinTokens + (snap.earnedSpinToken ? 1 : 0),
+        coins: prev.coins + snap.coinsEarned + dailyCoinsBonus,
+        spinTokens:
+          prev.spinTokens + (snap.earnedSpinToken ? 1 : 0) + dailySpinTokensBonus,
         districtStars:
-          nextStars > prevStars
+          !snap.customCity && nextStars > prevStars
             ? { ...prev.districtStars, [snap.level]: nextStars }
             : prev.districtStars,
       };
+      updated = recordCareerShift(updated, snap).next;
+      if (snap.customCity?.worldCityId && snap.customCity?.worldStage) {
+        updated = recordWorldStageStars(
+          updated,
+          snap.customCity.worldCityId,
+          snap.customCity.worldStage,
+          snap.starsEarned,
+        );
+      }
+      return updated;
     });
-    if (snap.outcome === OutcomeKind.Victory) {
+    if (snap.outcome === OutcomeKind.Victory && !snap.customCity) {
       setHighestUnlockedLevel((prev) => Math.max(prev, snap.level + 1));
     }
     setShopOpen(false);
     setQuestsOpen(false);
     pokoAudio.setMusicPlaying(false);
-    if (getRunMode().kind === 'daily') {
-      const result = recordDailyRun(dailyChallenge, dailyProgress, snap.score);
-      saveDailyProgress(result.progress);
-      setDailyProgress(result.progress);
-      if (result.rewardCoins > 0) {
-        setProgression((prev) => ({ ...prev, coins: prev.coins + result.rewardCoins }));
-      }
-    }
     document.body.dataset.state = GamePhase.GameOver;
     setPhase(GamePhase.GameOver);
-  }, [dailyChallenge, dailyProgress]);
+  }, [dailyChallenge, dailyProgress, dailyStreak]);
 
   // Global keyboard shortcuts for Title Start, Mute [M], Restart [R], Garage [G], Quests [J], and Modal Escape
   useEffect(() => {
     const onGlobalKey = (e: KeyboardEvent) => {
       if (e.repeat) return;
 
-      if (e.code === 'Escape' && (shopOpen || questsOpen)) {
+      if (e.code === 'Escape' && (shopOpen || questsOpen || worldTourOpen || almanacOpen || careerLedgerOpen)) {
         e.preventDefault();
         e.stopImmediatePropagation();
         pokoAudio.playUiClick();
         setShopOpen(false);
         setQuestsOpen(false);
+        setWorldTourOpen(false);
+        setAlmanacOpen(false);
+        setCareerLedgerOpen(false);
+        return;
+      }
+
+      if (anySubModalOpen) {
         return;
       }
 
       if (
         phase === GamePhase.Title &&
-        !shopOpen &&
-        !questsOpen &&
         (e.code === 'Enter' || e.code === 'Space')
       ) {
         e.preventDefault();
@@ -357,8 +498,6 @@ export default function App() {
       }
       if (
         phase === GamePhase.GameOver &&
-        !shopOpen &&
-        !questsOpen &&
         (e.code === 'Enter' || e.code === 'Space')
       ) {
         e.preventDefault();
@@ -390,9 +529,7 @@ export default function App() {
         setQuestsOpen((v) => !v);
       } else if (
         e.code === 'KeyR' &&
-        phase === GamePhase.Playing &&
-        !shopOpen &&
-        !questsOpen
+        phase === GamePhase.Playing
       ) {
         handleRestart();
       }
@@ -405,6 +542,10 @@ export default function App() {
     snapshot,
     shopOpen,
     questsOpen,
+    worldTourOpen,
+    almanacOpen,
+    careerLedgerOpen,
+    anySubModalOpen,
     startPlaying,
     handleNextLevel,
     handleRestart,
@@ -415,6 +556,17 @@ export default function App() {
     (q) => q.progress >= q.target && !q.claimed,
   );
   const hasFreeSpin = progression.spinTokens > 0;
+  const careerState = normalizeCareerState(progression.career);
+  const rankInfo = getRiderRankInfo(careerState.careerXp);
+  const checkInAvailable = canCheckInToday(dailyStreak);
+  const displayCheckInStreak = getDisplayCheckInStreak(dailyStreak);
+  const hasLedgerNotice =
+    hasClaimableMilestone(progression) ||
+    careerState.unconvertedYuan >= 1 ||
+    checkInAvailable;
+  const isTodayDaily = Boolean(
+    dailyProgress && dailyProgress.dateKey === dailyChallenge.dateKey,
+  );
   const syncedHud: HudState = {
     ...hud,
     coins: hud.demoActive ? hud.coins : progression.coins,
@@ -430,6 +582,7 @@ export default function App() {
         bestScore={bestScore}
         selectedVehicle={progression.selectedVehicle}
         selectedTopper={progression.selectedTopper}
+        selectedLivery={progression.selectedLivery ?? LiveryId.Standard}
         walletCoins={progression.coins}
         startWithShield={progression.nextFreeShield}
         minimapRef={minimapRef}
@@ -439,6 +592,7 @@ export default function App() {
         onAwardLiveCoins={handleAwardLiveCoins}
         onQuestEvent={handleQuestEvent}
         onConsumeStartShield={handleConsumeStartShield}
+        onDiscoverLore={handleDiscoverLore}
       />
 
       {phase === GamePhase.Title && (
@@ -450,6 +604,12 @@ export default function App() {
           customCityConfig={customCityConfig}
           onToggleLang={handleToggleLang}
           onOpenCustomCity={() => setCustomCityOpen(true)}
+          onOpenWorldTour={() => setWorldTourOpen(true)}
+          onOpenAlmanac={() => setAlmanacOpen(true)}
+          onOpenCareerLedger={(tab = 'career') => {
+            setCareerLedgerTab(tab);
+            setCareerLedgerOpen(true);
+          }}
           onClearCustomCity={handleClearCustomCity}
           onSelectLevel={(lvl) => {
             setCustomCityConfig(null);
@@ -457,12 +617,29 @@ export default function App() {
           }}
           onStart={() => startPlaying(activeLevel)}
           onStartDaily={handleStartDaily}
+          careerSummary={{
+            rankBadge: rankInfo.current.badge,
+            rankName: lang === 'zh' ? rankInfo.current.nameZh : rankInfo.current.nameEn,
+            unconvertedYuan: careerState.unconvertedYuan,
+            exchangeRate: rankInfo.current.exchangeRate,
+            hasLedgerNotice,
+          }}
           daily={{
             dateKey: dailyChallenge.dateKey,
             targetScore: dailyChallenge.targetScore,
+            silverScore: dailyChallenge.silverScore,
+            goldScore: dailyChallenge.goldScore,
             rewardCoins: dailyChallenge.rewardCoins,
-            bestScore: dailyProgress && dailyProgress.dateKey === dailyChallenge.dateKey ? dailyProgress.bestScore : 0,
-            cleared: Boolean(dailyProgress && dailyProgress.dateKey === dailyChallenge.dateKey && dailyProgress.claimed),
+            bestScore: isTodayDaily && dailyProgress ? dailyProgress.bestScore : 0,
+            bestMedal: isTodayDaily && dailyProgress ? dailyProgress.bestMedal : 'none',
+            claimedMedals:
+              isTodayDaily && dailyProgress?.claimedMedals
+                ? dailyProgress.claimedMedals
+                : { bronze: false, silver: false, gold: false },
+            cleared: Boolean(isTodayDaily && dailyProgress?.claimed),
+            checkInStreakDays: displayCheckInStreak,
+            challengeStreakDays: dailyStreak.challengeStreakDays,
+            canCheckInToday: checkInAvailable,
           }}
           onToggleMute={handleToggleMute}
         />
@@ -498,13 +675,28 @@ export default function App() {
         />
       )}
 
-      {!shopOpen && !questsOpen && !customCityOpen && (
+      {!anySubModalOpen && (
         <StatusModal
           phase={phase}
           snapshot={snapshot}
           currentLevel={activeLevel}
           lang={lang}
+          careerRankInfo={{
+            badge: rankInfo.current.badge,
+            nameZh: rankInfo.current.nameZh,
+            nameEn: rankInfo.current.nameEn,
+            exchangeRate: rankInfo.current.exchangeRate,
+            xpGained: lastShiftXp,
+            unconvertedYuan: careerState.unconvertedYuan,
+          }}
+          dailyMedalResult={lastDailyMedalResult}
+          onExchangeEarnings={handleExchangeEarnings}
+          onOpenCareerLedger={() => {
+            setCareerLedgerTab('career');
+            setCareerLedgerOpen(true);
+          }}
           onOpenCustomCity={() => setCustomCityOpen(true)}
+          onOpenWorldTour={() => setWorldTourOpen(true)}
           onResume={() => {
             document.body.dataset.state = GamePhase.Playing;
             setPhase(GamePhase.Playing);
@@ -528,9 +720,25 @@ export default function App() {
         lang={lang}
         onSelectOrBuyVehicle={handleSelectOrBuyVehicle}
         onSelectOrBuyTopper={handleSelectOrBuyTopper}
+        onSelectOrBuyLivery={handleSelectOrBuyLivery}
         onSpinWheel={handleSpinWheel}
         onPurchaseUpgrade={handlePurchaseUpgrade}
         onClose={() => setShopOpen(false)}
+      />
+
+      <CareerLedgerModal
+        open={careerLedgerOpen}
+        initialTab={careerLedgerTab}
+        lang={lang}
+        progression={progression}
+        dailyChallenge={dailyChallenge}
+        dailyProgress={dailyProgress}
+        dailyStreak={dailyStreak}
+        onExchangeEarnings={handleExchangeEarnings}
+        onClaimMilestone={handleClaimMilestone}
+        onDailyCheckIn={handleDailyCheckIn}
+        onStartDaily={handleStartDaily}
+        onClose={() => setCareerLedgerOpen(false)}
       />
 
       <QuestsRulesModal
@@ -546,6 +754,34 @@ export default function App() {
         lang={lang}
         onClose={() => setCustomCityOpen(false)}
         onSelectCustomCity={handleSelectCustomCity}
+      />
+
+      <WorldMapModal
+        open={worldTourOpen}
+        lang={lang}
+        progression={progression}
+        onSelectWorldStage={handleSelectCustomCity}
+        onClose={() => setWorldTourOpen(false)}
+      />
+
+      <AlmanacModal
+        open={almanacOpen}
+        lang={lang}
+        progression={progression}
+        onClose={() => setAlmanacOpen(false)}
+      />
+
+      <DiscoveryModal
+        item={activeDiscovery}
+        lang={lang}
+        alwaysShowEveryStop={progression.alwaysShowDiscoveryModal ?? true}
+        onToggleAlwaysShow={(nextVal) =>
+          setProgression((prev) => ({
+            ...prev,
+            alwaysShowDiscoveryModal: nextVal,
+          }))
+        }
+        onConfirmDeliver={() => setActiveDiscovery(null)}
       />
     </main>
   );

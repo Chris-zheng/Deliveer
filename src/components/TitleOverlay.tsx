@@ -31,14 +31,31 @@ interface TitleOverlayProps {
   daily?: {
     dateKey: string;
     targetScore: number;
+    silverScore?: number;
+    goldScore?: number;
     rewardCoins: number;
     bestScore: number;
+    bestMedal?: 'none' | 'bronze' | 'silver' | 'gold';
+    claimedMedals?: { bronze: boolean; silver: boolean; gold: boolean };
     cleared: boolean;
+    checkInStreakDays?: number;
+    challengeStreakDays?: number;
+    canCheckInToday?: boolean;
   } | null;
+  careerSummary?: {
+    rankBadge: string;
+    rankName: string;
+    unconvertedYuan: number;
+    exchangeRate: number;
+    hasLedgerNotice: boolean;
+  };
   onStartDaily?: () => void;
+  onOpenCareerLedger?: (tab?: 'career' | 'daily') => void;
   onToggleMute: () => void;
   onToggleLang: () => void;
   onOpenCustomCity: () => void;
+  onOpenWorldTour: () => void;
+  onOpenAlmanac: () => void;
   onClearCustomCity?: () => void;
 }
 
@@ -79,10 +96,14 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
   onSelectLevel,
   onStart,
   daily,
+  careerSummary,
   onStartDaily,
+  onOpenCareerLedger,
   onToggleMute,
   onToggleLang,
   onOpenCustomCity,
+  onOpenWorldTour,
+  onOpenAlmanac,
   onClearCustomCity,
 }) => {
   const t = I18N[lang];
@@ -540,7 +561,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
         <div className="relative z-10 flex sm:hidden items-center justify-center text-center text-[11px] font-extrabold text-[#4B1C08]">
           <span>{t.controlsTouch}</span>
         </div>
-        <div className="relative z-10 hidden sm:flex flex-nowrap items-center justify-center gap-x-2 text-center text-xs font-extrabold text-[#4B1C08]">
+        <div className="relative z-10 hidden sm:flex flex-wrap items-center justify-center gap-x-2 text-center text-xs font-extrabold text-[#4B1C08]">
           <span>
             <span className="text-[#9E2B0A]">W/↑</span> {t.controlsDesktopDrive}
           </span>
@@ -551,6 +572,14 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
           <span className="text-[#8B4C20]">·</span>
           <span>
             <span className="text-[#9E2B0A]">A/D</span> {t.controlsDesktopTurn}
+          </span>
+          <span className="text-[#8B4C20]">·</span>
+          <span>
+            <span className="text-[#9E2B0A]">C</span> {lang === 'zh' ? '漂移喷射' : 'Drift'}
+          </span>
+          <span className="text-[#8B4C20]">·</span>
+          <span>
+            <span className="text-[#9E2B0A]">F</span> {lang === 'zh' ? '加急' : 'Rush'}
           </span>
           <span className="text-[#8B4C20]">·</span>
           <span>
@@ -617,44 +646,143 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
           </div>
         </div>
 
-        {/* Row 4: Daily challenge */}
+        {/* Row 4: Daily challenge with Bronze / Silver / Gold medals & Check-In streak */}
         {daily ? (
-          <div className="relative z-10 flex items-center justify-between gap-2 rounded-[18px] border-[3px] border-[#8B290D]/50 bg-[#FFF3D6]/90 px-3 py-2">
-            <div className="flex flex-col leading-tight">
-              <span className="text-[11px] font-extrabold text-[#9E2B0A]">
-                {(lang === 'zh' ? '每日挑战' : 'Daily Challenge') + ' · ' + daily.dateKey}
-              </span>
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-[18px] border-[3px] border-[#8B290D]/50 bg-[#FFF3D6]/90 px-3 py-2">
+            <div className="flex flex-col leading-tight gap-0.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] font-extrabold text-[#9E2B0A]">
+                  {(lang === 'zh' ? '每日挑战' : 'Daily Challenge') + ' · ' + daily.dateKey}
+                </span>
+                <span className="text-[11px] font-extrabold text-[#b45309]">
+                  <span className={daily.claimedMedals?.bronze ? '' : 'opacity-35 grayscale'}>🥉</span>
+                  <span className={daily.claimedMedals?.silver ? '' : 'opacity-35 grayscale'}>🥈</span>
+                  <span className={daily.claimedMedals?.gold ? '' : 'opacity-35 grayscale'}>🥇</span>
+                </span>
+                {(daily.checkInStreakDays ?? 0) > 0 && (
+                  <span className="text-[10px] font-extrabold text-[#d97706]">
+                    🔥 {daily.checkInStreakDays}{lang === 'zh' ? '天连签' : 'd streak'}
+                  </span>
+                )}
+              </div>
               <span className="text-[11px] font-extrabold text-[#4B1C08]">
                 {(lang === 'zh'
-                  ? '目标 ' + daily.targetScore + ' 分 · 奖励 ' + daily.rewardCoins + ' 币'
-                  : 'Target ' + daily.targetScore + ' pts · Reward ' + daily.rewardCoins + ' coins') +
-                  (daily.cleared
-                    ? lang === 'zh'
-                      ? ' · 今日已达成'
-                      : ' · cleared today'
-                    : daily.bestScore > 0
-                      ? (lang === 'zh' ? ' · 最佳 ' : ' · best ') + daily.bestScore
-                      : '')}
+                  ? `铜 ${daily.targetScore} / 银 ${daily.silverScore ?? daily.targetScore} / 金 ${daily.goldScore ?? daily.targetScore} 分`
+                  : `🥉${daily.targetScore} · 🥈${daily.silverScore ?? daily.targetScore} · 🥇${daily.goldScore ?? daily.targetScore}`) +
+                  (daily.bestScore > 0
+                    ? (lang === 'zh' ? ' · 最佳 ' : ' · Best ') + daily.bestScore
+                    : '')}
               </span>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                pokoAudio.playUiClick();
-                onStartDaily?.();
-              }}
-              className="arcade-btn-green h-[42px] px-4 rounded-[16px] flex items-center justify-center cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
-            >
-              <span
-                style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
-                className="text-[#FFF8E3] text-sm font-bold tracking-wide"
+            <div className="flex items-center gap-1.5 shrink-0">
+              {onOpenCareerLedger && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    pokoAudio.playUiClick();
+                    onOpenCareerLedger('daily');
+                  }}
+                  className="arcade-btn-gold relative h-[40px] px-3 rounded-[14px] flex items-center justify-center cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
+                >
+                  <span className="arcade-stroke-sm text-white text-xs font-bold">
+                    {daily.canCheckInToday
+                      ? lang === 'zh'
+                        ? '🎁 签到领奖'
+                        : '🎁 Check-In'
+                      : lang === 'zh'
+                        ? '奖牌与连胜'
+                        : 'Medals'}
+                  </span>
+                  {daily.canCheckInToday && (
+                    <span
+                      className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#ff3b30] border border-[#140c04] animate-pulse"
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  pokoAudio.playUiClick();
+                  onStartDaily?.();
+                }}
+                className="arcade-btn-green h-[40px] px-4 rounded-[14px] flex items-center justify-center cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
               >
-                {lang === 'zh' ? '挑战' : 'Play'}
-              </span>
-            </button>
+                <span
+                  style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+                  className="text-[#FFF8E3] text-sm font-bold tracking-wide"
+                >
+                  {lang === 'zh' ? '挑战' : 'Play'}
+                </span>
+              </button>
+            </div>
           </div>
         ) : null}
-        {/* Row 4: Action Buttons (Custom Map Generator & Start Game) */}
+
+        {/* Row 4: World Tour, Almanac & Career Ledger Quick Access */}
+        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              pokoAudio.playUiClick();
+              onOpenWorldTour();
+            }}
+            className="arcade-btn-gold h-[48px] rounded-[18px] flex items-center justify-center gap-1.5 px-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
+          >
+            <span
+              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+              className="arcade-stroke-sm text-white text-xs sm:text-sm font-bold tracking-wide"
+            >
+              {t.worldTourBtn}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              pokoAudio.playUiClick();
+              onOpenAlmanac();
+            }}
+            className="arcade-btn-green h-[48px] rounded-[18px] flex items-center justify-center gap-1.5 px-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
+          >
+            <span
+              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+              className="arcade-stroke-sm text-white text-xs sm:text-sm font-bold tracking-wide"
+            >
+              {t.almanacBtn}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              pokoAudio.playUiClick();
+              onOpenCareerLedger?.('career');
+            }}
+            className="arcade-btn-cream relative h-[48px] rounded-[18px] flex flex-col items-center justify-center px-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
+          >
+            <span
+              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+              className="arcade-stroke-sm text-white text-xs sm:text-sm font-bold tracking-wide leading-tight"
+            >
+              {t.careerLedgerBtn}
+            </span>
+            {careerSummary && (
+              <span className="text-[10px] font-extrabold text-[#fef08a] leading-none mt-0.5">
+                {careerSummary.rankBadge} {careerSummary.rankName} · ¥1={careerSummary.exchangeRate}
+              </span>
+            )}
+            {careerSummary?.hasLedgerNotice && (
+              <span
+                className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#ff3b30] border-2 border-[#140c04] animate-pulse"
+                aria-hidden="true"
+              />
+            )}
+          </button>
+        </div>
+
+        {/* Row 5: Action Buttons (Custom Map Generator & Start Game) */}
         <div className="relative z-10 flex flex-col sm:flex-row gap-2.5 mt-0.5">
           {/* Custom City Generator Modal Trigger Button */}
           <button
@@ -663,7 +791,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
               pokoAudio.playUiClick();
               onOpenCustomCity();
             }}
-            className="arcade-btn-cream sm:w-1/2 h-[56px] sm:h-[62px] rounded-[22px] flex items-center justify-center gap-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-1"
+            className="arcade-btn-cream sm:w-1/2 h-[54px] sm:h-[60px] rounded-[22px] flex items-center justify-center gap-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-1"
           >
             <span className="text-xl">🗺️</span>
             <span
@@ -683,7 +811,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
               pokoAudio.playUiClick();
               onStart();
             }}
-            className="group relative sm:w-1/2 h-[56px] sm:h-[62px] rounded-[22px] bg-gradient-to-b from-[#F8843E] via-[#E85D25] to-[#CE4316] border-[3.5px] border-[#8B290D] shadow-[inset_0_3px_0_rgba(255,198,150,0.62),inset_0_-5px_0_#A33210,0_5px_0_rgba(88,28,8,0.38)] flex items-center justify-center cursor-pointer whitespace-nowrap transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:brightness-105 active:translate-y-1"
+            className="group relative sm:w-1/2 h-[54px] sm:h-[60px] rounded-[22px] bg-gradient-to-b from-[#F8843E] via-[#E85D25] to-[#CE4316] border-[3.5px] border-[#8B290D] shadow-[inset_0_3px_0_rgba(255,198,150,0.62),inset_0_-5px_0_#A33210,0_5px_0_rgba(88,28,8,0.38)] flex items-center justify-center cursor-pointer whitespace-nowrap transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:brightness-105 active:translate-y-1"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               <span className="text-xl">🚗</span>

@@ -334,7 +334,16 @@ export function buildStaticCityGeometry({
 
   // 8. Architectural Buildings, Lush Trees, Street Furniture & Canal Boats
   const landmarkSlots = new Map<number, ReturnType<typeof landmarkKindForLevel>>();
-  if (currentCity.buildings.length >= 10) {
+  if (currentCity.landmarks && currentCity.landmarks.length > 0) {
+    currentCity.buildings.forEach((lot, i) => {
+      const matchedLm = currentCity.landmarks?.find(
+        (lm) => lm.coord.col === lot.coord.col && lm.coord.row === lot.coord.row,
+      );
+      if (matchedLm) {
+        landmarkSlots.set(i, matchedLm.kind as ReturnType<typeof landmarkKindForLevel>);
+      }
+    });
+  } else if (currentCity.buildings.length >= 10) {
     const cx = currentCity.buildings.reduce((sum, b) => sum + b.coord.col, 0) / currentCity.buildings.length;
     const cz = currentCity.buildings.reduce((sum, b) => sum + b.coord.row, 0) / currentCity.buildings.length;
     const ranked = currentCity.buildings

@@ -102,3 +102,12 @@ export const RUSH_PROMISE_POINT_MULT = 1.3;
 export const RUSH_PROMISE_COIN_BONUS = 25;
 export const RUSH_PROMISE_FAIL_TIME_PENALTY_SEC = 5.0;
 export const RUSH_PROMISE_FAIL_REVIEW_PENALTY = 0.1;
+
+/** 2-Stage Drift Mini-Turbo thresholds & boost durations. */
+export const DRIFT_TIER1_SEC = 0.55;
+export const DRIFT_TIER2_SEC = 1.25;
+export const DRIFT_BOOST_TIER1_SEC = 0.52;
+export const DRIFT_BOOST_TIER2_SEC = 0.85;
+
+/** World-unit proximity radius to trigger landmark discovery. */
+export const LANDMARK_DISCOVERY_RADIUS = 3.4;

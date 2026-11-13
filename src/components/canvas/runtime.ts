@@ -95,6 +95,7 @@ import { resetTouchControls, touchControls } from '../../game/touchControls';
 import {
   CanalBoat,
   CrashEvent,
+  DiscoveryLorePayload,
   DuckCrossing,
   GamePhase,
   GeneratedCity,
@@ -104,6 +105,7 @@ import {
   HudBannerEvent,
   HudState,
   LevelConfig,
+  LiveryId,
   OutcomeKind,
   ParcelKind,
   QuestKind,
@@ -155,6 +157,7 @@ export interface CanvasRuntimeRefs {
   bestScoreRef: { current: number };
   vehicleRef: { current: VehicleId };
   topperRef: { current: TopperId };
+  liveryRef: { current: LiveryId };
   walletCoinsRef: { current: number };
   startShieldRef: { current: boolean };
   customCityConfigRef: { current: LevelConfig | null | undefined };
@@ -164,11 +167,12 @@ export interface CanvasRuntimeRefs {
   onAwardLiveCoinsRef: { current: (delta: number) => void };
   onQuestEventRef: { current: (kind: QuestKind, amount?: number) => void };
   onConsumeStartShieldRef: { current: () => void };
+  onDiscoverLoreRef: { current: (payload: DiscoveryLorePayload) => void };
   minimapSnapRef: { current: { current: MinimapSnapshot | null } };
   loadLevelFnRef: {
     current: ((lvl: number, resetScore: boolean, customCfg?: LevelConfig | null) => void) | null;
   };
-  syncCosmeticsFnRef: { current: ((veh: VehicleId, top: TopperId) => void) | null };
+  syncCosmeticsFnRef: { current: ((veh: VehicleId, top: TopperId, liv: LiveryId) => void) | null };
 }
 
 export interface CanvasRuntimeDeps {
@@ -189,6 +193,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
     bestScoreRef,
     vehicleRef,
     topperRef,
+    liveryRef,
     walletCoinsRef,
     startShieldRef,
     customCityConfigRef,
@@ -198,6 +203,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
     onAwardLiveCoinsRef,
     onQuestEventRef,
     onConsumeStartShieldRef,
+    onDiscoverLoreRef,
     minimapSnapRef,
     loadLevelFnRef,
     syncCosmeticsFnRef,
@@ -208,6 +214,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       container,
       vehicle: vehicleRef.current,
       topper: topperRef.current,
+      livery: liveryRef.current,
     });
     const {
       isSoftwareGl,
@@ -286,6 +293,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       levelRef,
       vehicleRef,
       topperRef,
+      liveryRef,
       walletCoinsRef,
       startShieldRef,
       customCityConfigRef,
@@ -324,10 +332,11 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       S.demoState = createDemoDirectorState();
       level.buildCityScene(lvl, resetScore, customCfg);
     };
-    syncCosmeticsFnRef.current = (veh: VehicleId, top: TopperId) => {
+    syncCosmeticsFnRef.current = (veh: VehicleId, top: TopperId, liv: LiveryId) => {
       if (S.demoState.active) return;
       truckRig.setVehicleStyle(veh);
       truckRig.setTopper(top);
+      truckRig.setLivery(liv);
       const spec = VEHICLE_SPECS[veh] ?? VEHICLE_SPECS[VehicleId.ClassicVan];
       if (S.truckState.vehicleId !== veh) {
         S.truckState.vehicleId = veh;
@@ -462,6 +471,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       triggerParcelDelivery,
       startDemoReel: level.startDemoReel,
       stopDemoReel: level.stopDemoReel,
+      onDiscoverLoreRef,
     };
 
     function tick() {
@@ -481,6 +491,9 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         for (const mat of truckRig.bodyMaterials) {
           mat.emissive.setHex(S.hitFlashTimer > 0 ? 0xffffff : 0x000000);
           mat.emissiveIntensity = S.hitFlashTimer > 0 ? 0.65 : 0;
+        }
+        if (S.hitFlashTimer === 0) {
+          truckRig.setLivery(S.demoState.active ? LiveryId.Standard : liveryRef.current);
         }
       }
 
