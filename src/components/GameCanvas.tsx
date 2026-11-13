@@ -111,6 +111,7 @@ import {
   VehicleId,
 } from '../game/types';
 import { MinimapSnapshot } from './GameHud';
+import { createEffectsSystem } from './canvas/effects';
 
 // Pre-allocated scratch math helpers (Zero GC in per-frame tick!)
 const _mat4 = new THREE.Matrix4();
@@ -124,11 +125,6 @@ const _raycaster = new THREE.Raycaster();
 const _groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.24);
 const _intersectPt = new THREE.Vector3();
 
-const PARTICLE_POOL_SIZE = POOLS.particles;
-const BREADCRUMB_MAX = POOLS.breadcrumbs;
-const FLYING_PARCEL_POOL = POOLS.flyingParcels;
-const FLYING_COIN_POOL = POOLS.flyingCoins;
-const CRASH_BURST_POOL = POOLS.crashBursts;
 
 // Elevated Top-Down "Heading-Up" Google Maps 3D Chase Camera Constants
 const CHASE_BASE_FOV = CAMERA.baseFov;
@@ -143,48 +139,6 @@ function wrapAngleRad(angle: number): number {
   return a;
 }
 
-interface PooledParticle {
-  active: boolean;
-  x: number;
-  y: number;
-  z: number;
-  vx: number;
-  vy: number;
-  vz: number;
-  life: number;
-  maxLife: number;
-  size: number;
-  r: number;
-  g: number;
-  b: number;
-}
-
-interface FlyingParcel {
-  active: boolean;
-  t: number;
-  duration: number;
-  sx: number;
-  sy: number;
-  sz: number;
-  tx: number;
-  ty: number;
-  tz: number;
-  mesh: THREE.Group;
-  onLand?: () => void;
-}
-
-interface FlyingCoin {
-  active: boolean;
-  delay: number;
-  t: number;
-  duration: number;
-  sx: number;
-  sy: number;
-  sz: number;
-  coinIdx: number;
-  mesh: THREE.Group;
-}
-
 interface SpawnedIslandBird {
   rig: IslandBirdRig;
   centerX: number;
@@ -195,14 +149,6 @@ interface SpawnedIslandBird {
   speed: number;
   phase: number;
   flapSpeed: number;
-}
-
-interface PooledCrashBurst {
-  active: boolean;
-  t: number;
-  duration: number;
-  baseScale: number;
-  rig: CrashBurstRig;
 }
 
 export interface GameCanvasProps {
@@ -481,167 +427,23 @@ export function GameCanvas({
       }),
     };
 
-    // Pooled Zero-GC Particle InstancedMesh
-    const particleMesh = new THREE.InstancedMesh(
-      sharedGeos.particleSphere,
-      sharedMats.particleMat,
-      PARTICLE_POOL_SIZE,
-    );
-    particleMesh.frustumCulled = false;
-    particleMesh.instanceColor = new THREE.InstancedBufferAttribute(
-      new Float32Array(PARTICLE_POOL_SIZE * 3),
-      3,
-    );
-    scene.add(particleMesh);
-
-    const particles: PooledParticle[] = Array.from(
-      { length: PARTICLE_POOL_SIZE },
-      () => ({
-        active: false,
-        x: 0,
-        y: -50,
-        z: 0,
-        vx: 0,
-        vy: 0,
-        vz: 0,
-        life: 0,
-        maxLife: 1,
-        size: 1,
-        r: 1,
-        g: 1,
-        b: 1,
-      }),
-    );
-    let particleRingCursor = 0;
-
-    function spawnParticleBurst(
-      x: number,
-      y: number,
-      z: number,
-      count: number,
-      palette: number[],
-      speedScale: number = 1.0,
-    ) {
-      for (let i = 0; i < count; i++) {
-        const p = particles[particleRingCursor];
-        particleRingCursor = (particleRingCursor + 1) % PARTICLE_POOL_SIZE;
-        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
-        const spd = (1.6 + Math.random() * 2.8) * speedScale;
-        const hex = palette[i % palette.length];
-        _color.setHex(hex);
-        p.active = true;
-        p.x = x;
-        p.y = y;
-        p.z = z;
-        p.vx = Math.cos(angle) * spd;
-        p.vy = (2.4 + Math.random() * 2.8) * speedScale;
-        p.vz = Math.sin(angle) * spd;
-        p.maxLife = 0.42 + Math.random() * 0.28;
-        p.life = p.maxLife;
-        p.size = 0.75 + Math.random() * 0.65;
-        p.r = _color.r;
-        p.g = _color.g;
-        p.b = _color.b;
-      }
-    }
-
-    // Golden Route Breadcrumb Chevrons (InstancedMesh)
-    const breadcrumbMesh = new THREE.InstancedMesh(
-      sharedGeos.chevronGeo,
-      sharedMats.breadcrumbMat,
-      BREADCRUMB_MAX,
-    );
-    breadcrumbMesh.frustumCulled = false;
-    scene.add(breadcrumbMesh);
-
-    // Flying Parcel Pool
-    const flyingParcels: FlyingParcel[] = Array.from(
-      { length: FLYING_PARCEL_POOL },
-      () => {
-        const mesh = createMiniParcelMesh(0xf6be6d);
-        mesh.visible = false;
-        scene.add(mesh);
-        return {
-          active: false,
-          t: 0,
-          duration: 0.36,
-          sx: 0,
-          sy: 0,
-          sz: 0,
-          tx: 0,
-          ty: 0,
-          tz: 0,
-          mesh,
-        };
+    // Pooled visual effects (particles / breadcrumbs / flying parcels & tip coins / crash bursts)
+    const fx = createEffectsSystem({
+      scene,
+      assets: {
+        particleSphere: sharedGeos.particleSphere,
+        particleMat: sharedMats.particleMat,
+        chevronGeo: sharedGeos.chevronGeo,
+        breadcrumbMat: sharedMats.breadcrumbMat,
       },
-    );
-
-    // Pooled Spinning Gold Tip Coins tossed from cheering customers onto the Courier Van roof!
-    const flyingCoins: FlyingCoin[] = Array.from(
-      { length: FLYING_COIN_POOL },
-      () => {
-        const mesh = createSpinningCoinMesh();
-        mesh.visible = false;
-        scene.add(mesh);
-        return {
-          active: false,
-          delay: 0,
-          t: 0,
-          duration: 0.44,
-          sx: 0,
-          sy: 0,
-          sz: 0,
-          coinIdx: 0,
-          mesh,
-        };
+      onCoinLand: (coinIdx, coinX, coinY, coinZ) => {
+        pokoAudio.playCoinTossClink(coinIdx);
+        truckState.squashY = Math.max(0.88, truckState.squashY - 0.035);
+        fx.spawnParticleBurst(coinX, coinY + 0.1, coinZ, 4, [0xffe524, 0xffffff, 0xff9f1c], 0.6);
       },
-    );
-    let flyingCoinCursor = 0;
-
-    // Pooled Zero-GC 3D Comic Starburst + Shockwave Crash Effects
-    const crashBursts: PooledCrashBurst[] = Array.from(
-      { length: CRASH_BURST_POOL },
-      () => {
-        const rig = createCrashBurstMesh();
-        scene.add(rig.root);
-        return {
-          active: false,
-          t: 0,
-          duration: 0.44,
-          baseScale: 1.0,
-          rig,
-        };
-      },
-    );
-    let crashBurstCursor = 0;
-
-    function spawnCrashBurstEffect(ev: CrashEvent) {
-      const slot = crashBursts[crashBurstCursor];
-      crashBurstCursor = (crashBurstCursor + 1) % CRASH_BURST_POOL;
-      const isHeavy = ev.severity === 'crash';
-      slot.active = true;
-      slot.t = 0;
-      slot.duration = isHeavy ? 0.5 : 0.36;
-      slot.baseScale = !ev.involvesPlayer ? 0.72 : isHeavy ? 1.18 : 0.86;
-      slot.rig.root.position.set(ev.x, ev.y + 0.18, ev.z);
-      slot.rig.root.rotation.y = camYaw;
-      slot.rig.starBurstGroup.scale.setScalar(0.2);
-      slot.rig.shockRing.scale.setScalar(0.35);
-      slot.rig.shockRingMat.opacity = 0.92;
-      slot.rig.dizzyOrbitGroup.position.y = 0;
-      slot.rig.root.visible = true;
-
-      spawnParticleBurst(
-        ev.x,
-        ev.y + 0.12,
-        ev.z,
-        !ev.involvesPlayer ? 10 : isHeavy ? 24 : 14,
-        ev.kind === 'rival'
-          ? [0xffdf24, 0xa855f7, 0xffffff, 0xff595e]
-          : [0xffdf24, 0xff595e, 0xffffff, 0xff9f1c, 0xcbd5e1],
-        !ev.involvesPlayer ? 0.85 : isHeavy ? 1.35 : 0.98,
-      );
-    }
+    });
+    const { flyingParcels, flyingCoins } = fx;
+    const spawnParticleBurst = fx.spawnParticleBurst;
 
     // Persistent Hero Truck Rig + Flanking 3D Near-Miss Wind-Streak Ribbons
     const truckRig: ToyTruckRig = createToyTruckMesh(
@@ -1915,17 +1717,14 @@ export function GameCanvas({
         // Customer excitedly tosses 4 spinning 3D Gold Tip Coins onto the Courier Van roof!
         const tipCount = isBullseye ? 4 : 3;
         for (let c = 0; c < tipCount; c++) {
-          const fc = flyingCoins[flyingCoinCursor];
-          flyingCoinCursor = (flyingCoinCursor + 1) % FLYING_COIN_POOL;
-          fc.active = true;
-          fc.delay = c * 0.085;
-          fc.t = 0;
-          fc.duration = 0.44;
-          fc.sx = targetX;
-          fc.sy = 1.18;
-          fc.sz = targetZ;
-          fc.coinIdx = c;
-          fc.mesh.visible = false;
+          fx.spawnFlyingCoin({
+            sx: targetX,
+            sy: 1.18,
+            sz: targetZ,
+            delay: c * 0.085,
+            duration: 0.44,
+            coinIdx: c,
+          });
         }
       };
 
@@ -2619,7 +2418,7 @@ export function GameCanvas({
 
           if (physEvents.crashEvents.length > 0) {
             const wallEv = physEvents.crashEvents[0];
-            spawnCrashBurstEffect(wallEv);
+            fx.spawnCrashBurstEffect(wallEv, camYaw);
             pokoAudio.playCrashImpact(wallEv.severity, wallEv.kind);
             cameraTrauma = Math.max(
               cameraTrauma,
@@ -2824,11 +2623,11 @@ export function GameCanvas({
           for (const cev of hazEvents.crashEvents) {
             if (cev.involvesPlayer) {
               playerCrashEv = cev;
-              spawnCrashBurstEffect(cev);
+              fx.spawnCrashBurstEffect(cev, camYaw);
             } else if (
               Math.hypot(cev.x - truckState.x, cev.z - truckState.z) < 28
             ) {
-              spawnCrashBurstEffect(cev);
+              fx.spawnCrashBurstEffect(cev, camYaw);
               if (Math.hypot(cev.x - truckState.x, cev.z - truckState.z) < 22) {
                 pokoAudio.playAiFenderBender();
               }
@@ -3635,141 +3434,11 @@ export function GameCanvas({
         cachedRoadPath = [];
       }
 
-      for (let i = 0; i < BREADCRUMB_MAX; i++) {
-        if (i + 1 < cachedRoadPath.length) {
-          const node = cachedRoadPath[i + 1];
-          const wave = Math.sin(visualClock * 6 - i * 0.7) * 0.04;
-          _pos.set(node.x, 0.29 + wave, node.z);
-          _euler.set(0, node.yaw, 0);
-          _quat.setFromEuler(_euler);
-          _scale.set(0.95, 0.45, 0.95);
-          _mat4.compose(_pos, _quat, _scale);
-          breadcrumbMesh.setMatrixAt(i, _mat4);
-        } else {
-          _pos.set(0, -50, 0);
-          _quat.identity();
-          _scale.set(0.001, 0.001, 0.001);
-          _mat4.compose(_pos, _quat, _scale);
-          breadcrumbMesh.setMatrixAt(i, _mat4);
-        }
-      }
-      breadcrumbMesh.instanceMatrix.needsUpdate = true;
+      fx.updateBreadcrumbs(cachedRoadPath, visualClock);
 
-      // Update Flying Parcels
-      for (const fp of flyingParcels) {
-        if (!fp.active) continue;
-        fp.t += dt;
-        const u = Math.min(1, fp.t / fp.duration);
-        const arc = Math.sin(u * Math.PI) * 1.65;
-        fp.mesh.position.set(
-          fp.sx + (fp.tx - fp.sx) * u,
-          fp.sy + (fp.ty - fp.sy) * u + arc,
-          fp.sz + (fp.tz - fp.sz) * u,
-        );
-        fp.mesh.rotation.y += dt * 9;
-        fp.mesh.rotation.x = Math.sin(u * Math.PI * 2) * 0.35;
-        if (u >= 1) {
-          fp.active = false;
-          fp.mesh.visible = false;
-          fp.onLand?.();
-          fp.onLand = undefined;
-        }
-      }
-
-      // Update Spinning Gold Tip Coins tossed from cheering customers onto the moving Courier Van!
-      for (const fc of flyingCoins) {
-        if (!fc.active) continue;
-        if (fc.delay > 0) {
-          fc.delay -= dt;
-          if (fc.delay > 0) continue;
-          fc.mesh.visible = true;
-        }
-        fc.t += dt;
-        const u = Math.min(1, fc.t / fc.duration);
-        const arc = Math.sin(u * Math.PI) * 2.15;
-        const targetRoofX = truckState.x;
-        const targetRoofY = 1.38 + truckState.y;
-        const targetRoofZ = truckState.z;
-        fc.mesh.position.set(
-          fc.sx + (targetRoofX - fc.sx) * u,
-          fc.sy + (targetRoofY - fc.sy) * u + arc,
-          fc.sz + (targetRoofZ - fc.sz) * u,
-        );
-        fc.mesh.rotation.y += dt * 16;
-        fc.mesh.rotation.x = Math.sin(u * Math.PI) * 0.4;
-        if (u >= 1) {
-          fc.active = false;
-          fc.mesh.visible = false;
-          pokoAudio.playCoinTossClink(fc.coinIdx);
-          truckState.squashY = Math.max(0.88, truckState.squashY - 0.035);
-          spawnParticleBurst(
-            targetRoofX,
-            targetRoofY + 0.1,
-            targetRoofZ,
-            4,
-            [0xffe524, 0xffffff, 0xff9f1c],
-            0.6,
-          );
-        }
-      }
-
-      // Update Pooled 3D Cartoon Crash Starbursts + Shockwaves
-      for (const cb of crashBursts) {
-        if (!cb.active) continue;
-        cb.t += dt;
-        const u = Math.min(1, cb.t / cb.duration);
-        if (u >= 1) {
-          cb.active = false;
-          cb.rig.root.visible = false;
-          continue;
-        }
-        cb.rig.root.rotation.y = camYaw;
-        const starPop =
-          u < 0.2
-            ? (u / 0.2) * 1.25 * cb.baseScale
-            : Math.max(0.02, (1 - (u - 0.2) / 0.8) * 1.15 * cb.baseScale);
-        cb.rig.starBurstGroup.scale.setScalar(starPop);
-        cb.rig.starBurstGroup.rotation.z = Math.sin(u * Math.PI * 3.5) * 0.32;
-        cb.rig.shockRing.scale.setScalar((0.42 + u * 2.05) * cb.baseScale);
-        cb.rig.shockRingMat.opacity = (1 - u) * 0.92;
-        cb.rig.dizzyOrbitGroup.position.y = u * 0.52;
-        cb.rig.dizzyOrbitGroup.rotation.y = cb.t * 11.5;
-        cb.rig.dizzyOrbitGroup.scale.setScalar(Math.max(0.05, (1 - u * 0.65) * cb.baseScale));
-      }
-
-      // Update Zero-GC Particle Pool
-      let anyParticleChanged = false;
-      for (let i = 0; i < PARTICLE_POOL_SIZE; i++) {
-        const p = particles[i];
-        if (p.active) {
-          anyParticleChanged = true;
-          p.life -= dt;
-          if (p.life <= 0) {
-            p.active = false;
-            _pos.set(0, -50, 0);
-            _scale.setScalar(0.001);
-          } else {
-            p.vy -= 9.8 * dt;
-            p.x += p.vx * dt;
-            p.y = Math.max(0.26, p.y + p.vy * dt);
-            p.z += p.vz * dt;
-            const s = (p.life / p.maxLife) * p.size;
-            _pos.set(p.x, p.y, p.z);
-            _scale.setScalar(s);
-            _color.setRGB(p.r, p.g, p.b);
-            particleMesh.setColorAt(i, _color);
-          }
-          _quat.identity();
-          _mat4.compose(_pos, _quat, _scale);
-          particleMesh.setMatrixAt(i, _mat4);
-        }
-      }
-      if (anyParticleChanged) {
-        particleMesh.instanceMatrix.needsUpdate = true;
-        if (particleMesh.instanceColor) {
-          particleMesh.instanceColor.needsUpdate = true;
-        }
-      }
+      // Advance every pooled visual effect (parcels, tip coins, crash bursts, particles)
+      fx.setCoinTarget(truckState.x, 1.38 + truckState.y, truckState.z);
+      fx.update(dt, camYaw);
 
       renderer.render(scene, camera);
 
@@ -3780,15 +3449,6 @@ export function GameCanvas({
       }
     }
 
-    // Initialize particle matrices off-screen once
-    for (let i = 0; i < PARTICLE_POOL_SIZE; i++) {
-      _pos.set(0, -50, 0);
-      _quat.identity();
-      _scale.setScalar(0.001);
-      _mat4.compose(_pos, _quat, _scale);
-      particleMesh.setMatrixAt(i, _mat4);
-    }
-    particleMesh.instanceMatrix.needsUpdate = true;
 
     frameId = requestAnimationFrame(tick);
 
@@ -3808,9 +3468,7 @@ export function GameCanvas({
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
 
       disposeLevelGroup();
-      for (const cb of crashBursts) {
-        cb.rig.shockRingMat.dispose();
-      }
+      fx.dispose();
       Object.values(sharedGeos).forEach((g) => g.dispose());
       Object.values(sharedMats).forEach((m) => m.dispose());
       waterGeo.dispose();
@@ -3853,7 +3511,7 @@ export function GameCanvas({
     <div
       ref={mountRef}
       className="fixed inset-0 w-full h-full overflow-hidden"
-      aria-label="Poko Parcel 3D Toy City Viewport"
+      aria-label="Deliveer 3D Toy City Viewport"
     />
   );
 }
