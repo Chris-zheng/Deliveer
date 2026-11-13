@@ -7,6 +7,18 @@ import React from 'react';
 import { pokoAudio } from '../game/audio';
 import { I18N, SupportedLanguage } from '../game/i18n';
 import { LevelConfig } from '../game/types';
+import {
+  HANDLING_LABELS,
+  HANDLING_PRESETS,
+  VIEW_MODE_LABELS,
+  VIEW_MODES,
+  getHandlingPreset,
+  getViewMode,
+  setHandlingPreset,
+  setViewMode,
+  type HandlingPreset,
+  type ViewMode,
+} from '../game/controls';
 
 interface TitleOverlayProps {
   selectedLevel?: number;
@@ -74,6 +86,19 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
   onClearCustomCity,
 }) => {
   const t = I18N[lang];
+  // Comfort settings are persisted in game/controls and pushed straight into the sim.
+  const [viewMode, setViewModeState] = React.useState<ViewMode>(() => getViewMode());
+  const [handling, setHandlingState] = React.useState<HandlingPreset>(() => getHandlingPreset());
+  const pickView = (next: ViewMode) => {
+    setViewMode(next);
+    setViewModeState(next);
+    pokoAudio.playUiClick();
+  };
+  const pickHandling = (next: HandlingPreset) => {
+    setHandlingPreset(next);
+    setHandlingState(next);
+    pokoAudio.playUiClick();
+  };
 
   return (
     <div
@@ -541,6 +566,56 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
           </span>
         </div>
 
+
+        {/* Row 4: Comfort settings — camera framing + handling feel */}
+        <div className="relative z-10 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-[18px] border-[3px] border-[#8B290D]/35 bg-[#FFF3D6]/85 px-3 py-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-extrabold text-[#8B4C20]">
+              {lang === 'zh' ? '视角' : 'View'}
+            </span>
+            {VIEW_MODES.map((mode) => {
+              const active = viewMode === mode;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => pickView(mode)}
+                  className={`rounded-[10px] border-[2px] px-2 py-0.5 text-[11px] font-extrabold transition ${
+                    active
+                      ? 'border-[#8B290D] bg-[#FFB800] text-[#4B1C08] shadow-[0_2px_0_#8B290D]'
+                      : 'border-[#8B290D]/35 bg-[#FFFCF5] text-[#8B4C20] hover:bg-[#FFF0C2]'
+                  }`}
+                  aria-pressed={active}
+                >
+                  {lang === 'zh' ? VIEW_MODE_LABELS[mode].zh : VIEW_MODE_LABELS[mode].en}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-extrabold text-[#8B4C20]">
+              {lang === 'zh' ? '手感' : 'Handling'}
+            </span>
+            {HANDLING_PRESETS.map((preset) => {
+              const active = handling === preset;
+              return (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => pickHandling(preset)}
+                  className={`rounded-[10px] border-[2px] px-2 py-0.5 text-[11px] font-extrabold transition ${
+                    active
+                      ? 'border-[#8B290D] bg-[#FFB800] text-[#4B1C08] shadow-[0_2px_0_#8B290D]'
+                      : 'border-[#8B290D]/35 bg-[#FFFCF5] text-[#8B4C20] hover:bg-[#FFF0C2]'
+                  }`}
+                  aria-pressed={active}
+                >
+                  {lang === 'zh' ? HANDLING_LABELS[preset].zh : HANDLING_LABELS[preset].en}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Row 4: Daily challenge */}
         {daily ? (

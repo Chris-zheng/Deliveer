@@ -1,4 +1,5 @@
 import { GamePhase } from '../../game/types';
+import { cycleViewMode, getViewMode } from '../../game/controls';
 
 /**
  * Keyboard / pointer input shared by the simulation loop and the touch overlay.
@@ -44,6 +45,8 @@ export interface InputListenerDeps {
   playClick: () => void;
   /** Escape while the autopilot reel is running hands control back to the player. */
   onExitDemo: () => void;
+  /** Cycles the chase-camera view mode (chase / far / top) and reports the new one. */
+  onCycleView: (mode: ReturnType<typeof getViewMode>) => void;
   onTogglePause: (next: GamePhase) => void;
   /** Fired on window blur / tab hide so the van never keeps driving unattended. */
   onFocusLost: () => void;
@@ -75,6 +78,11 @@ export function attachInputListeners(deps: InputListenerDeps): () => void {
       deps.onFocusLost();
       deps.playClick();
       deps.onExitDemo();
+      return;
+    }
+    // V cycles chase / far / top framing at any time (persisted per player).
+    if (e.code === 'KeyV' && !e.repeat) {
+      deps.onCycleView(cycleViewMode());
       return;
     }
     if (deps.getPhase() === GamePhase.Playing) {

@@ -34,6 +34,7 @@ import {
 } from '../proceduralCity';
 
 import { getUpgradeBonuses, resolveVehicleSpec } from '../upgrades';
+import { getHandling } from '../controls';
 import { getWeatherGripMult } from '../weather';
 
 import {
@@ -88,6 +89,7 @@ export function createInitialTruckState(
     distanceTraveled: 0,
     squashY: 1,
     squashVel: 0,
+    steerSmooth: 0,
     rollAngle: 0,
     pitchAngle: 0,
     steerAngle: 0,
@@ -190,7 +192,15 @@ export function stepTruckPhysics(
   );
 
   const throttleIn = Math.max(-1, Math.min(1, input.throttle));
-  const steerIn = Math.max(-1, Math.min(1, input.steer));
+  const rawSteerIn = Math.max(-1, Math.min(1, input.steer));
+  const handling = getHandling();
+  // Keyboard steering is a 0..1 step; ramp it so a tap is a gentle nudge.
+  truck.steerSmooth =
+    handling.steerSmoothSec <= 0
+      ? rawSteerIn
+      : truck.steerSmooth +
+        (rawSteerIn - truck.steerSmooth) * (1 - Math.exp(-clampedDt / handling.steerSmoothSec));
+  const steerIn = truck.steerSmooth;
   const isBraking = throttleIn < -0.05;
   truck.isBraking = isBraking;
 
@@ -216,7 +226,10 @@ export function stepTruckPhysics(
   if (Math.abs(steerIn) > 0.01 && !isBraking) {
     const turnDir = -steerIn;
     const driftTurnBonus = truck.isDrifting ? 1.14 : 1.0;
-    const turnSpeedRad = 3.9 * spec.turnSpeedMult * driftTurnBonus;
+    // Speed-sensitive yaw: nimble in tight lots, calm at full tilt.
+    const speedRatio = Math.min(1, Math.abs(truck.speed) / Math.max(0.01, TRUCK_MAX_SPEED));
+    const turnFalloff = 1 + (handling.highSpeedTurnMult - 1) * speedRatio;
+    const turnSpeedRad = handling.turnSpeedRad * spec.turnSpeedMult * driftTurnBonus * turnFalloff;
     let nextYaw = wrapAngleRad(truck.yaw + turnDir * turnSpeedRad * clampedDt);
 
     const cardinalYaw = Math.round(truck.yaw / halfPi) * halfPi;
@@ -274,7 +287,7 @@ export function stepTruckPhysics(
 
   let effThrottle = Math.max(0, throttleIn);
   if (!isBraking && effThrottle < 0.05 && Math.abs(steerIn) > 0.05) {
-    effThrottle = 0.68;
+    effThrottle = handling.steerAssistThrottle;
   }
 
   const wetGripMult = (city.config.hasSunshower ? 0.86 : 1.0) * getWeatherGripMult();
@@ -291,18 +304,18 @@ export function stepTruckPhysics(
   } else if (truck.boostTimer > 0) {
     const targetVx = fwdX * topFwdSpeed;
     const targetVz = fwdZ * topFwdSpeed;
-    const accelRate = 1 - Math.exp(-12.5 * spec.accelMult * clampedDt);
+    const accelRate = 1 - Math.exp(-handling.boostAccelExp * spec.accelMult * clampedDt);
     truck.vx += (targetVx - truck.vx) * accelRate;
     truck.vz += (targetVz - truck.vz) * accelRate;
   } else if (effThrottle > 0.01) {
     const targetSpd = effThrottle * topFwdSpeed;
     const targetVx = fwdX * targetSpd;
     const targetVz = fwdZ * targetSpd;
-    const accelRate = 1 - Math.exp(-13.0 * spec.accelMult * wetGripMult * clampedDt);
+    const accelRate = 1 - Math.exp(-handling.accelExp * spec.accelMult * wetGripMult * clampedDt);
     truck.vx += (targetVx - truck.vx) * accelRate;
     truck.vz += (targetVz - truck.vz) * accelRate;
   } else {
-    const drag = Math.exp(-9.5 * clampedDt);
+    const drag = Math.exp(-handling.coastDrag * clampedDt);
     truck.vx *= drag;
     truck.vz *= drag;
     if (Math.hypot(truck.vx, truck.vz) < 0.06) {

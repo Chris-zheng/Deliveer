@@ -1,13 +1,27 @@
 import * as THREE from 'three';
 import { TILE_SIZE } from '../../config/balance';
 import { OutcomeKind, ShiftAtmosphere } from '../../game/types';
+import { VIEW_FRAMING, getViewMode } from '../../game/controls';
 import type { RuntimeState } from './runtimeState';
 import {
   CHASE_BACK_DIST,
+  CHASE_BASE_FOV,
   CHASE_LOOK_AHEAD,
   CHASE_UP_HEIGHT,
   wrapAngleRad,
 } from './canvasMath';
+
+// Framing blend so switching view mode never snaps the camera.
+const viewBlend = { back: 1, up: 1, lookAhead: 1, fov: 1 };
+
+function stepViewBlend(dt: number): void {
+  const target = VIEW_FRAMING[getViewMode()];
+  const k = 1 - Math.exp(-6.5 * Math.max(dt, 0.001));
+  viewBlend.back += (target.back - viewBlend.back) * k;
+  viewBlend.up += (target.up - viewBlend.up) * k;
+  viewBlend.lookAhead += (target.lookAhead - viewBlend.lookAhead) * k;
+  viewBlend.fov += (target.fov - viewBlend.fov) * k;
+}
 
 // Scene handles the camera framing pass needs beyond RuntimeState.
 export interface CameraFramingDeps {
@@ -23,18 +37,29 @@ export interface CameraFramingDeps {
 export function updateCameraFraming(dt: number, S: RuntimeState, deps: CameraFramingDeps): void {
   const { camera, camLookTarget, scene, waterPlane, sunLight } = deps;
         // Camera Framing: Bird's-Eye 3-2-1 Island Swoop / Demo Drone Zoom -> Heading-Up Chase -> Victory Orbit!
+        // The player-selected view mode (chase / far / top) is blended in on top.
+        stepViewBlend(dt);
         const isPortraitMobile = camera.aspect < 0.95;
         const zoomScale = S.demoState.active ? S.demoState.cameraZoomScale : 1;
         const yawOffset = S.demoState.active ? S.demoState.cameraYawOffset : 0;
         const activeLookAhead =
           (isPortraitMobile ? 6.1 : CHASE_LOOK_AHEAD) *
+          viewBlend.lookAhead *
           (S.demoState.active ? 0.8 + 0.2 * zoomScale : 1);
         const activeBackDist =
           (isPortraitMobile ? CHASE_BACK_DIST * 1.07 : CHASE_BACK_DIST) *
+          viewBlend.back *
           zoomScale;
         const activeUpHeight =
           (isPortraitMobile ? CHASE_UP_HEIGHT * 1.07 : CHASE_UP_HEIGHT) *
+          viewBlend.up *
           zoomScale;
+        const baseFov = isPortraitMobile ? 42 : CHASE_BASE_FOV;
+        const targetFov = baseFov * viewBlend.fov;
+        if (Math.abs(camera.fov - targetFov) > 0.01) {
+          camera.fov = targetFov;
+          camera.updateProjectionMatrix();
+        }
         const targetLookY = isPortraitMobile ? -0.45 : 0.35;
 
         const demoZoomOut = S.demoState.active ? S.demoState.transitionZoomAlpha : 0;

@@ -472,6 +472,8 @@ export interface TruckState {
   distanceTraveled: number;
   squashY: number;
   squashVel: number;
+  /** Smoothed steering input (-1..1) so keyboard taps ramp in. */
+  steerSmooth: number;
   rollAngle: number;
   pitchAngle: number;
   steerAngle: number;

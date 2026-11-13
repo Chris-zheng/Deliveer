@@ -10,6 +10,8 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CAMERA, POOLS } from '../../config/balance';
 import { pokoAudio } from '../../game/audio';
+import { VIEW_MODE_LABELS } from '../../game/controls';
+import type { ViewMode } from '../../game/controls';
 import { setActiveWeather, weatherAt, WEATHER_PROFILES } from '../../game/weather';
 import { encodeGhostSample, GHOST_MAX_SAMPLES } from '../../game/ghost';
 import {
@@ -342,6 +344,17 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
     level.buildCityScene(levelRef.current, true);
 
     // 5. Unified Input Listeners (held vs justPressed, Space buffer, focus-loss reset, pointer steer)
+    const handleCycleView = (mode: ViewMode) => {
+      S.bannerEvent = {
+        id: ++S.bannerSeq,
+        label: VIEW_MODE_LABELS[mode].zh,
+        detail: '视角已切换 · V 键循环',
+        tone: 'emerald',
+      };
+      S.bannerTimer = 1.6;
+      emitHudSnapshot();
+    };
+
     const detachInput = attachInputListeners({
       state: input,
       canvas: renderer.domElement,
@@ -349,6 +362,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       isDemoActive: () => S.demoState.active,
       playClick: () => pokoAudio.playUiClick(),
       onExitDemo: level.stopDemoReel,
+      onCycleView: handleCycleView,
       onTogglePause: (next) => onPhaseChangeRef.current(next),
       onFocusLost: clearAllInputs,
     });
