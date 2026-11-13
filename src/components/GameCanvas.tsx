@@ -41,10 +41,8 @@ import {
   createWindStreakMesh,
 } from '../game/meshes';
 import {
-  findForwardRoadPath,
   generateProceduralCity,
   gridToWorld,
-  worldToGrid,
 } from '../game/proceduralCity';
 import { VEHICLE_SPECS, computeRunRewards } from '../game/progression';
 import {
@@ -115,6 +113,7 @@ import { createEffectsSystem } from './canvas/effects';
 import { buildStaticCityGeometry } from './canvas/cityGeometry';
 import { buildCityActors, type SpawnedIslandBird } from './canvas/actors';
 import { createSceneStage } from './canvas/sceneStage';
+import { computeForwardRoadPath } from './canvas/navigation';
 import { attachInputListeners, clearInputState, createInputState } from './canvas/input';
 
 // Pre-allocated scratch math helpers (Zero GC in per-frame tick!)
@@ -445,56 +444,12 @@ export function GameCanvas({
     }
 
     function refreshForwardRoadPath() {
-      const activeStop = getActiveStop(currentCity.stops);
-      if (!activeStop) {
-        cachedRoadPath = [];
-        return;
-      }
-      const startGc = worldToGrid(
-        truckState.x,
-        truckState.z,
-        currentCity.totalGridSize,
+      cachedRoadPath = computeForwardRoadPath(
+        currentCity,
+        truckState,
+        getActiveStop(currentCity.stops),
       );
-      const rawPath = findForwardRoadPath(
-        currentCity.tiles,
-        startGc,
-        truckState.yaw,
-        activeStop.roadCoord,
-      );
-      const fwdX = Math.sin(truckState.yaw);
-      const fwdZ = Math.cos(truckState.yaw);
-      cachedRoadPath = [];
-      for (let i = 0; i < rawPath.length; i++) {
-        const wp = gridToWorld(rawPath[i], currentCity.totalGridSize);
-        const nextWp =
-          i + 1 < rawPath.length
-            ? gridToWorld(rawPath[i + 1], currentCity.totalGridSize)
-            : wp;
-        const yaw =
-          i + 1 < rawPath.length
-            ? Math.atan2(nextWp.x - wp.x, nextWp.z - wp.z)
-            : cachedRoadPath.length > 0
-              ? cachedRoadPath[cachedRoadPath.length - 1].yaw
-              : truckState.yaw;
-
-        // Skip any node behind the van's rear bumper so no road arrow ever points backward!
-        if (i > 0 && i < rawPath.length - 1) {
-          const alongFwd =
-            (wp.x - truckState.x) * fwdX + (wp.z - truckState.z) * fwdZ;
-          if (alongFwd < -0.35) continue;
-        }
-        // Also ensure chevron yaw never points >105° backward relative to the van on the first step!
-        const relStepYaw = wrapAngleRad(yaw - truckState.yaw);
-        const safeYaw =
-          cachedRoadPath.length <= 1 && Math.abs(relStepYaw) > Math.PI * 0.58
-            ? wrapAngleRad(
-                truckState.yaw + Math.sign(relStepYaw || 1) * Math.PI * 0.5,
-              )
-            : yaw;
-        cachedRoadPath.push({ x: wp.x, z: wp.z, yaw: safeYaw });
-      }
     }
-
     function emitHudSnapshot() {
       const activeStop = getActiveStop(currentCity.stops);
       const elig = checkDeliveryEligibility(
