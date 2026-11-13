@@ -54,7 +54,9 @@ export function batchStaticDecor(
   let skipped = 0;
 
   for (const root of roots) {
-    root.updateWorldMatrix(true, false);
+    // Depth-first refresh: roots alone are not enough, every descendant's
+    // matrixWorld must be current before its vertices are baked to world space.
+    root.updateMatrixWorld(true);
     root.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
       if (!(mesh as unknown as { isMesh?: boolean }).isMesh) return;
@@ -90,6 +92,7 @@ export function batchStaticDecor(
         };
         buckets.set(key, bucket);
       }
+      mesh.updateWorldMatrix(true, false);
       const baked = geo.clone();
       baked.applyMatrix4(new THREE.Matrix4().multiplyMatrices(parentInverse, mesh.matrixWorld));
       bucket.geoms.push(baked);
@@ -99,31 +102,33 @@ export function batchStaticDecor(
   let bucketsMade = 0;
   let mergedMeshes = 0;
   for (const bucket of buckets.values()) {
-    if (bucket.geoms.length < 2) {
+    const merged = bucket.geoms.length >= 2 ? mergeGeometries(bucket.geoms, false) : null;
+    if (merged) {
       for (const g of bucket.geoms) g.dispose();
-      skipped += bucket.geoms.length;
+      const mesh = new THREE.Mesh(merged, bucket.material);
+      mesh.castShadow = bucket.castShadow;
+      mesh.receiveShadow = bucket.receiveShadow;
+      mesh.name = 'batched-static';
+      parent.add(mesh);
+      bucketsMade += 1;
+      mergedMeshes += bucket.geoms.length;
       continue;
     }
-    const merged = mergeGeometries(bucket.geoms, false);
-    for (const g of bucket.geoms) g.dispose();
-    if (!merged) {
-      skipped += bucket.geoms.length;
-      continue;
-    }
-    const mesh = new THREE.Mesh(merged, bucket.material);
-    mesh.castShadow = bucket.castShadow;
-    mesh.receiveShadow = bucket.receiveShadow;
-    mesh.name = 'batched-static';
-    parent.add(mesh);
-    bucketsMade += 1;
-    mergedMeshes += bucket.geoms.length;
-  }
-
-  if (bucketsMade > 0) {
-    for (const root of roots) {
-      if (root.parent) root.parent.remove(root);
+    // Never drop geometry: if a bucket cannot be merged, emit one mesh per
+    // geometry so the decor still renders instead of vanishing silently.
+    for (const g of bucket.geoms) {
+      const mesh = new THREE.Mesh(g, bucket.material);
+      mesh.castShadow = bucket.castShadow;
+      mesh.receiveShadow = bucket.receiveShadow;
+      mesh.name = 'batched-static';
+      parent.add(mesh);
+      bucketsMade += 1;
     }
   }
 
+  // Safe now that every collected geometry lives in the scene again.
+  for (const root of roots) {
+    if (root.parent) root.parent.remove(root);
+  }
   return { sourceMeshes, skipped, buckets: bucketsMade, mergedMeshes };
 }
