@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CAMERA, POOLS } from '../../config/balance';
 import { pokoAudio } from '../../game/audio';
+import { setActiveWeather, weatherAt, WEATHER_PROFILES } from '../../game/weather';
 import {
   CitizenStopRig,
   CoffeeKioskRig,
@@ -496,6 +497,29 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       }
       if (S.treeFlutterCooldown > 0) {
         S.treeFlutterCooldown = Math.max(0, S.treeFlutterCooldown - dt);
+      }
+
+      // Weather beats: deterministic per level, so a long run visibly shifts.
+      if (currentPhase === GamePhase.Playing && S.finishDelayTimer < 0 && !S.demoState.active) {
+        S.weatherElapsedSec += cdDt;
+        const nextWeather = weatherAt(
+          S.currentCity ? S.currentCity.config.level : 1,
+          S.weatherElapsedSec,
+        );
+        if (nextWeather !== S.weatherKind) {
+          S.weatherKind = nextWeather;
+          setActiveWeather(nextWeather);
+          level.applyWeatherRig(nextWeather);
+          const profile = WEATHER_PROFILES[nextWeather];
+          S.bannerEvent = {
+            id: ++S.bannerSeq,
+            label: profile.labelZh,
+            detail: profile.hintZh,
+            tone: nextWeather === 'clear' ? 'emerald' : 'amber',
+          };
+          S.bannerTimer = 2.2;
+          emitHudSnapshot();
+        }
       }
 
       if (currentPhase === GamePhase.Title) {

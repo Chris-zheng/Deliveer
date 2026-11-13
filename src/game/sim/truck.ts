@@ -34,6 +34,7 @@ import {
 } from '../proceduralCity';
 
 import { getUpgradeBonuses, resolveVehicleSpec } from '../upgrades';
+import { getWeatherGripMult } from '../weather';
 
 import {
   countDrivableNeighbors,
@@ -276,7 +277,7 @@ export function stepTruckPhysics(
     effThrottle = 0.68;
   }
 
-  const wetGripMult = city.config.hasSunshower ? 0.86 : 1.0;
+  const wetGripMult = (city.config.hasSunshower ? 0.86 : 1.0) * getWeatherGripMult();
 
   if (isBraking) {
     truck.boostTimer = 0;

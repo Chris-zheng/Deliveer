@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { DemoDirectorState, createDemoDirectorState } from '../../game/demoDirector';
 import { OutcomeKind } from '../../game/types';
+import type { WeatherKind } from '../../game/weather';
 import { generateProceduralCity } from '../../game/proceduralCity';
 import {
   ParcelStackWobbleState,
@@ -115,6 +116,8 @@ export function createRuntimeState({
     let riderBullseyeTip = 0;
     let riderRushHourBonus = 0;
 let rushPromiseSec = -1;
+let weatherElapsedSec = 0;
+let weatherKind: WeatherKind = 'clear';
     let riderSpillDeduction = 0;
     let riderTrafficFines = 0;
     let riderLateDeduction = 0;
@@ -181,7 +184,9 @@ let rushPromiseSec = -1;
     riderHotMealTip,
     riderBullseyeTip,
     riderRushHourBonus,
-  rushPromiseSec,
+    rushPromiseSec,
+    weatherElapsedSec,
+    weatherKind: weatherKind as WeatherKind,
     riderSpillDeduction,
     riderTrafficFines,
     riderLateDeduction,
