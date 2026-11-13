@@ -1,14 +1,18 @@
 {
-  "name": "react-example",
+  "name": "deliveer",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "verify": "bun run typecheck && bun test && bun run build"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -34,5 +38,6 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^7.0.2"
-  }
+  },
+  "description": "Procedural 3D isometric pastel-city parcel delivery game (Three.js + React)."
 }
