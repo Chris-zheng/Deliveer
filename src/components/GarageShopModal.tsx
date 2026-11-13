@@ -13,7 +13,14 @@ import {
   TOPPER_SPECS,
   VEHICLE_SPECS,
 } from '../game/progression';
-import { PlayerProgression, TopperId, VehicleId } from '../game/types';
+import { PlayerProgression, TopperId, UpgradeTrack, VehicleId } from '../game/types';
+import {
+  MAX_UPGRADE_LEVEL,
+  nextUpgradeTier,
+  normalizeUpgradeLevels,
+  UPGRADE_TRACK_ORDER,
+  UPGRADE_TRACKS,
+} from '../game/upgrades';
 
 interface GarageShopModalProps {
   open: boolean;
@@ -22,10 +29,11 @@ interface GarageShopModalProps {
   onSelectOrBuyVehicle: (id: VehicleId) => void;
   onSelectOrBuyTopper: (id: TopperId) => void;
   onSpinWheel: () => { slice: SpinWheelSlice | null; usedToken: boolean };
+  onPurchaseUpgrade: (track: UpgradeTrack) => boolean;
   onClose: () => void;
 }
 
-type ShopTab = 'fleet' | 'toppers' | 'spin';
+type ShopTab = 'fleet' | 'toppers' | 'upgrades' | 'spin';
 
 const VEHICLE_ZH: Record<VehicleId, { name: string; tagline: string }> = {
   [VehicleId.ClassicVan]: {
@@ -81,6 +89,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
   onSelectOrBuyVehicle,
   onSelectOrBuyTopper,
   onSpinWheel,
+  onPurchaseUpgrade,
   onClose,
 }) => {
   const [tab, setTab] = useState<ShopTab>('fleet');
@@ -157,7 +166,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
 
         {/* 3 Category Tabs */}
         <div
-          className="grid grid-cols-3 gap-2"
+          className="grid grid-cols-4 gap-2"
           role="tablist"
           aria-label="Shop categories"
         >
@@ -165,6 +174,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
             [
               { id: 'fleet', label: t.vehicleTab },
               { id: 'toppers', label: t.topperTab },
+              { id: 'upgrades', label: lang === 'zh' ? '升级' : 'Upgrades' },
               { id: 'spin', label: t.wheelTab },
             ] as { id: ShopTab; label: string }[]
           ).map((item) => {
@@ -311,6 +321,90 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                 );
               },
             )}
+          </div>
+        )}
+
+        {/* Tab: Permanent garage upgrades (engine / tires / cargo) */}
+        {tab === 'upgrades' && (
+          <div className="flex flex-col gap-2.5">
+            {UPGRADE_TRACK_ORDER.map((track) => {
+              const spec = UPGRADE_TRACKS[track];
+              const levels = normalizeUpgradeLevels(progression.upgrades);
+              const level = levels[track];
+              const tier = nextUpgradeTier(track, level);
+              const canAfford = tier ? progression.coins >= tier.costCoins : false;
+              const buttonClass = !tier
+                ? 'arcade-btn-green'
+                : canAfford
+                  ? 'arcade-btn-gold'
+                  : 'bg-stone-700 border-2 border-[#140c04] opacity-60 cursor-not-allowed';
+
+              return (
+                <div
+                  key={track}
+                  className="arcade-pill-brown rounded-2xl p-3 flex flex-col gap-2"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="arcade-stroke-sm text-white text-base leading-snug">
+                        {lang === 'zh' ? spec.nameZh : spec.nameEn}
+                      </div>
+                      <div className="text-[11px] font-bold text-[#ffe8a3] mt-0.5">
+                        {lang === 'zh' ? spec.summaryZh : spec.summaryEn}
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-[11px] font-extrabold text-[#ffee1f]">
+                      {'Lv ' + level + ' / ' + MAX_UPGRADE_LEVEL}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-1">
+                    {spec.tiers.map((step) => (
+                      <div
+                        key={step.level}
+                        className={`${
+                          step.level <= level
+                            ? 'flex-1 h-1.5 rounded-full bg-[#6bf25c]'
+                            : 'flex-1 h-1.5 rounded-full bg-[#2b1b08]'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="text-[11px] font-bold text-white/80">
+                    {tier
+                      ? lang === 'zh'
+                        ? tier.nameZh + ' · ' + tier.detailZh
+                        : tier.nameEn + ' · ' + tier.detailEn
+                      : lang === 'zh'
+                        ? '已满级，加成持续生效'
+                        : 'Fully upgraded'}
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={!tier || !canAfford}
+                    onClick={() => {
+                      pokoAudio.playUiClick();
+                      onPurchaseUpgrade(track);
+                    }}
+                    className={`${buttonClass} w-full py-2 px-3 rounded-xl cursor-pointer text-center`}
+                  >
+                    <span className="arcade-stroke-sm text-white text-sm">
+                      {!tier
+                        ? lang === 'zh'
+                          ? '已满级'
+                          : 'Max level'
+                        : canAfford
+                          ? `${t.buyFor} · ${tier.costCoins}`
+                          : lang === 'zh'
+                            ? '金币不足'
+                            : 'Not enough coins'}
+                    </span>
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
 

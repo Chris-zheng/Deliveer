@@ -23,6 +23,7 @@ import {
   purchaseOrSelectVehicle,
   saveProgression,
 } from './game/progression';
+import { applyUpgradeLevels, purchaseUpgrade } from './game/upgrades';
 import { CustomCityModal } from './components/CustomCityModal';
 import { SupportedLanguage, getInitialLanguage, saveLanguagePreference } from './game/i18n';
 import {
@@ -35,6 +36,7 @@ import {
   QuestKind,
   RunSnapshot,
   TopperId,
+  UpgradeTrack,
   VehicleId,
 } from './game/types';
 
@@ -82,6 +84,10 @@ export default function App() {
     truckYaw: Math.PI / 2,
     activeStopIndex: 1,
   });
+
+  // Garage upgrades live in permanent save state but the truck sim is a pure
+  // function of the city, so push them into game/upgrades during render.
+  applyUpgradeLevels(progression.upgrades);
 
   // Persist progression whenever wallet coins, quests, stars, or cosmetics update
   useEffect(() => {
@@ -239,6 +245,16 @@ export default function App() {
 
   const handleSelectOrBuyTopper = useCallback((id: TopperId) => {
     setProgression((prev) => purchaseOrSelectTopper(prev, id).next);
+  }, []);
+
+  const handlePurchaseUpgrade = useCallback((track: UpgradeTrack): boolean => {
+    let bought = false;
+    setProgression((prev) => {
+      const res = purchaseUpgrade(prev, track);
+      bought = res.reason === 'purchased';
+      return bought ? res.progression : prev;
+    });
+    return bought;
   }, []);
 
   const handleClaimQuest = useCallback((questId: string) => {
@@ -478,6 +494,7 @@ export default function App() {
         onSelectOrBuyVehicle={handleSelectOrBuyVehicle}
         onSelectOrBuyTopper={handleSelectOrBuyTopper}
         onSpinWheel={handleSpinWheel}
+        onPurchaseUpgrade={handlePurchaseUpgrade}
         onClose={() => setShopOpen(false)}
       />
 

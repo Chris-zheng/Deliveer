@@ -33,9 +33,7 @@ import {
   worldToGrid,
 } from '../proceduralCity';
 
-import {
-  VEHICLE_SPECS,
-} from '../progression';
+import { getUpgradeBonuses, resolveVehicleSpec } from '../upgrades';
 
 import {
   countDrivableNeighbors,
@@ -59,7 +57,8 @@ export function createInitialTruckState(
   vehicleId: VehicleId = VehicleId.ClassicVan,
   startWithShield: boolean = false,
 ): TruckState {
-  const spec = VEHICLE_SPECS[vehicleId] ?? VEHICLE_SPECS[VehicleId.ClassicVan];
+  const spec = resolveVehicleSpec(vehicleId);
+  const thermalMaxSec = 18 + getUpgradeBonuses().thermalBonusSec;
   const spawnPos = gridToWorld(city.spawnCoord, city.totalGridSize);
   const rightX = -Math.cos(city.spawnYaw) * RIGHT_LANE_OFFSET;
   const rightZ = Math.sin(city.spawnYaw) * RIGHT_LANE_OFFSET;
@@ -97,8 +96,8 @@ export function createInitialTruckState(
     ticketsCount: 0,
     lastSignalCellKey: '',
     fragileIntact: true,
-    thermalTimer: 18,
-    thermalMaxSec: 18,
+    thermalTimer: thermalMaxSec,
+    thermalMaxSec,
     wallCrashCooldown: 0,
   };
 }
@@ -132,7 +131,7 @@ export function stepTruckPhysics(
   let issuedTicket: TicketKind | null = null;
   const crashEvents: CrashEvent[] = [];
 
-  const spec = VEHICLE_SPECS[truck.vehicleId] ?? VEHICLE_SPECS[VehicleId.ClassicVan];
+  const spec = resolveVehicleSpec(truck.vehicleId);
   const prevSpeed = truck.speed;
   const prevYaw = truck.yaw;
 

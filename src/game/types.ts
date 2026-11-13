@@ -500,6 +500,10 @@ export interface QuestItem {
   claimed: boolean;
 }
 
+export type UpgradeTrack = 'engine' | 'tires' | 'cargo';
+
+export type UpgradeLevels = Record<UpgradeTrack, number>;
+
 export interface PlayerProgression {
   coins: number;
   spinTokens: number;
@@ -510,6 +514,7 @@ export interface PlayerProgression {
   districtStars: Record<number, number>; // level -> 1..3 stars
   quests: QuestItem[];
   nextFreeShield: boolean;
+  upgrades: UpgradeLevels;
 }
 
 export interface RiderShiftReceipt {

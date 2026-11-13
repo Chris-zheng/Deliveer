@@ -25,9 +25,7 @@ import {
   gridToWorld,
 } from '../proceduralCity';
 
-import {
-  VEHICLE_SPECS,
-} from '../progression';
+import { resolveVehicleSpec } from '../upgrades';
 
 export function getActiveStop(stops: DeliveryStop[]): DeliveryStop | null {
   for (const s of stops) {
@@ -58,7 +56,7 @@ export function checkDeliveryEligibility(
       distance: Infinity,
     };
   }
-  const spec = VEHICLE_SPECS[truck.vehicleId] ?? VEHICLE_SPECS[VehicleId.ClassicVan];
+  const spec = resolveVehicleSpec(truck.vehicleId);
   const padPos = gridToWorld(stop.roadCoord, totalGridSize);
   const baseCitizen = gridToWorld(stop.citizenCoord, totalGridSize);
   const cx = stop.liveCitizenX ?? baseCitizen.x;

@@ -176,6 +176,7 @@ export function createDefaultProgression(): PlayerProgression {
     districtStars: {},
     quests: createInitialQuests(0),
     nextFreeShield: false,
+    upgrades: { engine: 0, tires: 0, cargo: 0 },
   };
 }
 
@@ -217,6 +218,11 @@ export function loadProgression(): PlayerProgression {
           ? parsed.quests
           : base.quests,
       nextFreeShield: Boolean(parsed.nextFreeShield),
+      upgrades: {
+        engine: Math.min(3, Math.max(0, Math.floor(Number(parsed.upgrades && parsed.upgrades.engine) || 0))),
+        tires: Math.min(3, Math.max(0, Math.floor(Number(parsed.upgrades && parsed.upgrades.tires) || 0))),
+        cargo: Math.min(3, Math.max(0, Math.floor(Number(parsed.upgrades && parsed.upgrades.cargo) || 0))),
+      },
     };
   } catch {
     return createDefaultProgression();
