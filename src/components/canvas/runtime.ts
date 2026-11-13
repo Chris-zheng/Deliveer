@@ -1,3 +1,4 @@
+import { createRuntimeState } from './runtimeState';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CAMERA, POOLS } from '../../config/balance';
@@ -240,7 +241,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       },
       onCoinLand: (coinIdx, coinX, coinY, coinZ) => {
         pokoAudio.playCoinTossClink(coinIdx);
-        truckState.squashY = Math.max(0.88, truckState.squashY - 0.035);
+        S.truckState.squashY = Math.max(0.88, S.truckState.squashY - 0.035);
         fx.spawnParticleBurst(coinX, coinY + 0.1, coinZ, 4, [0xffe524, 0xffffff, 0xff9f1c], 0.6);
       },
     });
@@ -249,91 +250,19 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
 
 
     // Level World Container (rebuilt cleanly per level)
-    let levelGroup = new THREE.Group();
-    scene.add(levelGroup);
-
-    let currentCity: GeneratedCity = generateProceduralCity(levelRef.current);
-    let truckState: TruckState = createInitialTruckState(
-      currentCity,
-      vehicleRef.current,
-      startShieldRef.current,
-    );
-    let camYaw = truckState.yaw;
-    let citizenRigs: CitizenStopRig[] = [];
-    let hazardRigs: HazardRig[] = [];
-    let signalRigs: TrafficSignalRig[] = [];
-    let kioskRigs: CoffeeKioskRig[] = [];
-    let garageRigs: MechanicGarageRig[] = [];
-    let duckRigs: { data: DuckCrossing; mesh: THREE.Group }[] = [];
-    let greenWaveRigs: { data: GreenWavePickup; mesh: THREE.Group }[] = [];
-    let rivalRig: RivalCourierRig | null = null;
-    let balloonRigs: { data: SkyBalloon; mesh: THREE.Group }[] = [];
-    let pedestrianRigs: { data: SidewalkPedestrian; rig: PersonRig }[] = [];
-    let boatRigs: { data: CanalBoat; mesh: THREE.Group }[] = [];
-    let birdRigs: SpawnedIslandBird[] = [];
-    let rampBeaconGroups: THREE.Group[] = [];
-
-    // Simulation state
-    let score = 0;
-    let combo = 0;
-    let comboTimer = 0;
-    let maxCombo = 0;
-    let bullseyeCount = 0;
-    let timeRemainingSec = currentCity.config.timeLimitSec;
-    let elapsedSec = 0;
-    let hitstopTimer = 0;
-    let cameraTrauma = 0;
-    let hitFlashTimer = 0;
-    let finishDelayTimer = -1;
-    let pendingOutcome: OutcomeKind = OutcomeKind.None;
-    let lastHudEmitTime = 0;
-    let lastPathCalcTime = -1;
-    let cachedRoadPath: { x: number; z: number; yaw: number }[] = [];
-    let bannerEvent: HudBannerEvent | null = null;
-    let bannerTimer = 0;
-    let bannerSeq = 0;
-    let lastTickedSecond = -1;
-    let feverTrailAccum = 0;
-    let sunshowerAccum = 0;
-    let countdownState: StartCountdownState = createStartCountdownState('instant');
-    let parcelWobble: ParcelStackWobbleState = createParcelStackWobbleState(
-      truckState.yaw,
-    );
-    let windStreakTimer = 0;
-    let victoryOrbitAngle = 0;
-    let victoryConfettiAccum = 0;
-    let birdChirpTimer = 1.8;
-    let treeFlutterCooldown = 0;
-    let revExhaustAccum = 0;
-    let lastStartedLevel = -1;
-    let demoState: DemoDirectorState = createDemoDirectorState();
-    let demoSandboxCoins = walletCoinsRef.current;
-
-    // Food Delivery Rider Economy (¥)
-    let riderBaseIncome = 0;
-    let riderOnTimeBonus = 0;
-    let riderHotMealTip = 0;
-    let riderBullseyeTip = 0;
-    let riderRushHourBonus = 0;
-    let riderSpillDeduction = 0;
-    let riderTrafficFines = 0;
-    let riderLateDeduction = 0;
-    let riderReviewScore = 5.0;
-    let earningSeq = 0;
-    let lastEarningEvent: HudState['lastEarningEvent'] = null;
-    let earningEventTimer = 0;
+  const S = createRuntimeState({ levelRef, walletCoinsRef, vehicleRef, startShieldRef, scene });
 
     function awardRunCoins(delta: number) {
       if (delta <= 0) return;
-      if (demoState.active) {
-        demoSandboxCoins += delta;
+      if (S.demoState.active) {
+        S.demoSandboxCoins += delta;
       } else {
         onAwardLiveCoinsRef.current(delta);
       }
     }
 
     function recordQuestEvent(kind: QuestKind, amount: number = 1) {
-      if (demoState.active) return;
+      if (S.demoState.active) return;
       onQuestEventRef.current(kind, amount);
     }
 
@@ -346,22 +275,22 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
     }
 
     function disposeLevelGroup() {
-      for (const cr of citizenRigs) {
+      for (const cr of S.citizenRigs) {
         cr.disposeTextures();
       }
-      citizenRigs = [];
-      hazardRigs = [];
-      signalRigs = [];
-      kioskRigs = [];
-      garageRigs = [];
-      duckRigs = [];
-      greenWaveRigs = [];
-      rivalRig = null;
-      balloonRigs = [];
-      pedestrianRigs = [];
-      boatRigs = [];
-      birdRigs = [];
-      rampBeaconGroups = [];
+      S.citizenRigs = [];
+      S.hazardRigs = [];
+      S.signalRigs = [];
+      S.kioskRigs = [];
+      S.garageRigs = [];
+      S.duckRigs = [];
+      S.greenWaveRigs = [];
+      S.rivalRig = null;
+      S.balloonRigs = [];
+      S.pedestrianRigs = [];
+      S.boatRigs = [];
+      S.birdRigs = [];
+      S.rampBeaconGroups = [];
       for (const fc of flyingCoins) {
         fc.active = false;
         fc.mesh.visible = false;
@@ -371,8 +300,8 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         fp.mesh.visible = false;
         fp.onLand = undefined;
       }
-      scene.remove(levelGroup);
-      levelGroup.traverse((obj) => {
+      scene.remove(S.levelGroup);
+      S.levelGroup.traverse((obj) => {
         if ((obj as THREE.Mesh).isMesh) {
           const m = obj as THREE.Mesh;
           if (
@@ -392,12 +321,12 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           }
         }
       });
-      levelGroup = new THREE.Group();
-      scene.add(levelGroup);
+      S.levelGroup = new THREE.Group();
+      scene.add(S.levelGroup);
     }
 
     function syncTruckParcelStack() {
-      const remaining = currentCity.stops.filter((s) => !s.delivered).length;
+      const remaining = S.currentCity.stops.filter((s) => !s.delivered).length;
       truckRig.parcelBoxes.forEach((box, idx) => {
         box.visible = idx < remaining;
       });
@@ -406,45 +335,45 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
     function syncMinimapSnapshot() {
       const snap = minimapSnapRef.current.current;
       if (!snap) return;
-      const activeStop = getActiveStop(currentCity.stops);
-      snap.city = currentCity;
-      snap.truckX = truckState.x;
-      snap.truckZ = truckState.z;
-      snap.truckYaw = truckState.yaw;
+      const activeStop = getActiveStop(S.currentCity.stops);
+      snap.city = S.currentCity;
+      snap.truckX = S.truckState.x;
+      snap.truckZ = S.truckState.z;
+      snap.truckYaw = S.truckState.yaw;
       snap.activeStopIndex = activeStop ? activeStop.index : -1;
     }
 
     function refreshForwardRoadPath() {
-      cachedRoadPath = computeForwardRoadPath(
-        currentCity,
-        truckState,
-        getActiveStop(currentCity.stops),
+      S.cachedRoadPath = computeForwardRoadPath(
+        S.currentCity,
+        S.truckState,
+        getActiveStop(S.currentCity.stops),
       );
     }
     function emitHudSnapshot() {
       onHudUpdateRef.current(
         buildRunHudState({
-          currentCity,
-          truckState,
-          score,
-          combo,
-          comboTimer,
-          timeRemainingSec,
-          bannerEvent,
-          countdownState,
-          demoState,
-          demoSandboxCoins,
-          getCachedRoadPath: () => cachedRoadPath,
-          lastEarningEvent,
-          riderBaseIncome,
-          riderOnTimeBonus,
-          riderHotMealTip,
-          riderBullseyeTip,
-          riderRushHourBonus,
-          riderSpillDeduction,
-          riderTrafficFines,
-          riderLateDeduction,
-          riderReviewScore,
+          currentCity: S.currentCity,
+          truckState: S.truckState,
+          score: S.score,
+          combo: S.combo,
+          comboTimer: S.comboTimer,
+          timeRemainingSec: S.timeRemainingSec,
+          bannerEvent: S.bannerEvent,
+          countdownState: S.countdownState,
+          demoState: S.demoState,
+          demoSandboxCoins: S.demoSandboxCoins,
+          getCachedRoadPath: () => S.cachedRoadPath,
+          lastEarningEvent: S.lastEarningEvent,
+          riderBaseIncome: S.riderBaseIncome,
+          riderOnTimeBonus: S.riderOnTimeBonus,
+          riderHotMealTip: S.riderHotMealTip,
+          riderBullseyeTip: S.riderBullseyeTip,
+          riderRushHourBonus: S.riderRushHourBonus,
+          riderSpillDeduction: S.riderSpillDeduction,
+          riderTrafficFines: S.riderTrafficFines,
+          riderLateDeduction: S.riderLateDeduction,
+          riderReviewScore: S.riderReviewScore,
           walletCoins: walletCoinsRef.current,
           bestScore: bestScoreRef.current,
           refreshForwardRoadPath,
@@ -500,19 +429,19 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         customCfg !== undefined
           ? (customCfg ?? undefined)
           : (customCityConfigRef.current ?? undefined);
-      currentCity = generateProceduralCity(lvl, undefined, effectiveCfg);
+      S.currentCity = generateProceduralCity(lvl, undefined, effectiveCfg);
       const grantShield =
-        !demoState.active &&
+        !S.demoState.active &&
         startShieldRef.current &&
         phaseRef.current === GamePhase.Playing;
-      const activeVeh = demoState.active
-        ? demoState.vehicleId
+      const activeVeh = S.demoState.active
+        ? S.demoState.vehicleId
         : vehicleRef.current;
-      const activeTop = demoState.active
-        ? demoState.topperId
+      const activeTop = S.demoState.active
+        ? S.demoState.topperId
         : topperRef.current;
-      truckState = createInitialTruckState(
-        currentCity,
+      S.truckState = createInitialTruckState(
+        S.currentCity,
         activeVeh,
         grantShield,
       );
@@ -521,120 +450,120 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       }
       truckRig.setVehicleStyle(activeVeh);
       truckRig.setTopper(activeTop);
-      applyAtmosphereRig(currentCity.config.atmosphere);
+      applyAtmosphereRig(S.currentCity.config.atmosphere);
       pokoAudio.setFeverMode(false);
 
       if (resetScore) {
-        score = 0;
+        S.score = 0;
       }
-      combo = 0;
-      comboTimer = 0;
-      maxCombo = 0;
-      bullseyeCount = 0;
-      timeRemainingSec = currentCity.config.timeLimitSec;
-      elapsedSec = 0;
-      hitstopTimer = 0;
-      cameraTrauma = 0;
-      hitFlashTimer = 0;
-      finishDelayTimer = -1;
-      pendingOutcome = OutcomeKind.None;
-      lastPathCalcTime = -1;
-      cachedRoadPath = [];
-      bannerEvent = null;
-      bannerTimer = 0;
-      lastTickedSecond = -1;
-      riderBaseIncome = 0;
-      riderOnTimeBonus = 0;
-      riderHotMealTip = 0;
-      riderBullseyeTip = 0;
-      riderRushHourBonus = 0;
-      riderSpillDeduction = 0;
-      riderTrafficFines = 0;
-      riderLateDeduction = 0;
-      riderReviewScore = 5.0;
-      lastEarningEvent = null;
-      earningEventTimer = 0;
+      S.combo = 0;
+      S.comboTimer = 0;
+      S.maxCombo = 0;
+      S.bullseyeCount = 0;
+      S.timeRemainingSec = S.currentCity.config.timeLimitSec;
+      S.elapsedSec = 0;
+      S.hitstopTimer = 0;
+      S.cameraTrauma = 0;
+      S.hitFlashTimer = 0;
+      S.finishDelayTimer = -1;
+      S.pendingOutcome = OutcomeKind.None;
+      S.lastPathCalcTime = -1;
+      S.cachedRoadPath = [];
+      S.bannerEvent = null;
+      S.bannerTimer = 0;
+      S.lastTickedSecond = -1;
+      S.riderBaseIncome = 0;
+      S.riderOnTimeBonus = 0;
+      S.riderHotMealTip = 0;
+      S.riderBullseyeTip = 0;
+      S.riderRushHourBonus = 0;
+      S.riderSpillDeduction = 0;
+      S.riderTrafficFines = 0;
+      S.riderLateDeduction = 0;
+      S.riderReviewScore = 5.0;
+      S.lastEarningEvent = null;
+      S.earningEventTimer = 0;
 
       buildStaticCityGeometry({
-        levelGroup,
-        city: currentCity,
+        levelGroup: S.levelGroup,
+        city: S.currentCity,
         textures,
         sharedGeos,
         sharedMats,
       });
-      const N = currentCity.totalGridSize;
+      const N = S.currentCity.totalGridSize;
 
-      for (const boat of currentCity.canalBoats) {
+      for (const boat of S.currentCity.canalBoats) {
         const bMesh = createCanalBoatMesh(boat);
-        levelGroup.add(bMesh);
-        boatRigs.push({ data: boat, mesh: bMesh });
+        S.levelGroup.add(bMesh);
+        S.boatRigs.push({ data: boat, mesh: bMesh });
       }
 
       // 8B-13. Per-level actors (pedestrians, stops, hazards, signals, kiosks, balloons,
       // garages, ramps, duck crossings, green-wave orbs, rival courier, circling birds).
       const actorResult = buildCityActors({
-        levelGroup,
-        city: currentCity,
+        levelGroup: S.levelGroup,
+        city: S.currentCity,
         N,
         textures,
         maxAniso,
         rigs: {
-          citizen: citizenRigs,
-          hazard: hazardRigs,
-          signal: signalRigs,
-          kiosk: kioskRigs,
-          garage: garageRigs,
-          duck: duckRigs,
-          greenWave: greenWaveRigs,
-          balloon: balloonRigs,
-          pedestrian: pedestrianRigs,
-          boat: boatRigs,
-          bird: birdRigs,
-          rampBeacons: rampBeaconGroups,
+          citizen: S.citizenRigs,
+          hazard: S.hazardRigs,
+          signal: S.signalRigs,
+          kiosk: S.kioskRigs,
+          garage: S.garageRigs,
+          duck: S.duckRigs,
+          greenWave: S.greenWaveRigs,
+          balloon: S.balloonRigs,
+          pedestrian: S.pedestrianRigs,
+          boat: S.boatRigs,
+          bird: S.birdRigs,
+          rampBeacons: S.rampBeaconGroups,
         },
       });
-      rivalRig = actorResult.rival;
+      S.rivalRig = actorResult.rival;
       // Reset parcel wobble & wind streaks
-      parcelWobble = createParcelStackWobbleState(truckState.yaw);
-      windStreakTimer = 0;
+      S.parcelWobble = createParcelStackWobbleState(S.truckState.yaw);
+      S.windStreakTimer = 0;
       windStreakRig.root.visible = false;
-      victoryOrbitAngle = 0;
-      victoryConfettiAccum = 0;
-      birdChirpTimer = 1.4;
-      treeFlutterCooldown = 0;
-      revExhaustAccum = 0;
+      S.victoryOrbitAngle = 0;
+      S.victoryConfettiAccum = 0;
+      S.birdChirpTimer = 1.4;
+      S.treeFlutterCooldown = 0;
+      S.revExhaustAccum = 0;
 
       // Initialize 3 - 2 - 1 - GO! Bird's-Eye Island Overview Swoop when starting a Playing shift!
       if (phaseRef.current === GamePhase.Playing) {
-        const isSameStageRetry = lastStartedLevel === lvl;
-        const cdMode: CountdownMode = demoState.active
+        const isSameStageRetry = S.lastStartedLevel === lvl;
+        const cdMode: CountdownMode = S.demoState.active
           ? 'quick'
           : isSameStageRetry
             ? 'quick'
             : 'full';
-        if (!demoState.active) {
-          lastStartedLevel = lvl;
+        if (!S.demoState.active) {
+          S.lastStartedLevel = lvl;
         }
-        countdownState = createStartCountdownState(cdMode);
+        S.countdownState = createStartCountdownState(cdMode);
         pokoAudio.playCountdownBeep(3);
-        if (currentCity.config.atmosphere !== ShiftAtmosphere.TwilightNeon) {
+        if (S.currentCity.config.atmosphere !== ShiftAtmosphere.TwilightNeon) {
           pokoAudio.playBirdChirp(0.7);
         }
       } else {
-        countdownState = createStartCountdownState('instant');
+        S.countdownState = createStartCountdownState('instant');
       }
 
       // Position truck at spawn & set initial camera (Bird's-Eye Overview on Playing start, Chase on Title!)
-      truckRig.root.position.set(truckState.x, 0.24, truckState.z);
-      truckRig.root.rotation.y = truckState.yaw;
-      truckRig.shieldRing.visible = truckState.hasBumperShield;
-      camYaw = truckState.yaw;
-      if (countdownState.isFrozen) {
+      truckRig.root.position.set(S.truckState.x, 0.24, S.truckState.z);
+      truckRig.root.rotation.y = S.truckState.yaw;
+      truckRig.shieldRing.visible = S.truckState.hasBumperShield;
+      S.camYaw = S.truckState.yaw;
+      if (S.countdownState.isFrozen) {
         const isPortrait = camera.aspect < 0.95;
-        const islandSpan = currentCity.totalGridSize * TILE_SIZE;
-        const ovwYaw = demoState.active
+        const islandSpan = S.currentCity.totalGridSize * TILE_SIZE;
+        const ovwYaw = S.demoState.active
           ? Math.PI / 2 - 0.34
-          : truckState.yaw - 0.34;
+          : S.truckState.yaw - 0.34;
         const ovwHeight = islandSpan * (isPortrait ? 1.56 : 1.44);
         const ovwBack = islandSpan * (isPortrait ? 1.04 : 0.94);
         camLookTarget.set(0, 0.4, 0);
@@ -650,14 +579,14 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         }
       } else {
         camLookTarget.set(
-          truckState.x + Math.sin(camYaw) * CHASE_LOOK_AHEAD,
+          S.truckState.x + Math.sin(S.camYaw) * CHASE_LOOK_AHEAD,
           0.35,
-          truckState.z + Math.cos(camYaw) * CHASE_LOOK_AHEAD,
+          S.truckState.z + Math.cos(S.camYaw) * CHASE_LOOK_AHEAD,
         );
         camera.position.set(
-          camLookTarget.x - Math.sin(camYaw) * CHASE_BACK_DIST,
+          camLookTarget.x - Math.sin(S.camYaw) * CHASE_BACK_DIST,
           camLookTarget.y + CHASE_UP_HEIGHT,
-          camLookTarget.z - Math.cos(camYaw) * CHASE_BACK_DIST,
+          camLookTarget.z - Math.cos(S.camYaw) * CHASE_BACK_DIST,
         );
         camera.lookAt(camLookTarget);
       }
@@ -675,37 +604,37 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
 
     function startDemoReel() {
       touchControls.demoTogglePulse = false;
-      demoState = createDemoDirectorState();
-      demoState.active = true;
-      demoSandboxCoins = walletCoinsRef.current;
+      S.demoState = createDemoDirectorState();
+      S.demoState.active = true;
+      S.demoSandboxCoins = walletCoinsRef.current;
       buildCityScene(1, true);
     }
 
     function stopDemoReel() {
       touchControls.demoTogglePulse = false;
-      demoState = createDemoDirectorState();
+      S.demoState = createDemoDirectorState();
       pokoAudio.setFeverMode(false);
       buildCityScene(levelRef.current, true);
     }
 
     loadLevelFnRef.current = (lvl: number, resetScore: boolean, customCfg?: LevelConfig | null) => {
-      demoState = createDemoDirectorState();
+      S.demoState = createDemoDirectorState();
       buildCityScene(lvl, resetScore, customCfg);
     };
     syncCosmeticsFnRef.current = (veh: VehicleId, top: TopperId) => {
-      if (demoState.active) return;
+      if (S.demoState.active) return;
       truckRig.setVehicleStyle(veh);
       truckRig.setTopper(top);
       const spec = VEHICLE_SPECS[veh] ?? VEHICLE_SPECS[VehicleId.ClassicVan];
-      if (truckState.vehicleId !== veh) {
-        truckState.vehicleId = veh;
-        const hpDelta = spec.maxHealth - truckState.maxHealth;
-        truckState.maxHealth = spec.maxHealth;
-        truckState.health = Math.max(
+      if (S.truckState.vehicleId !== veh) {
+        S.truckState.vehicleId = veh;
+        const hpDelta = spec.maxHealth - S.truckState.maxHealth;
+        S.truckState.maxHealth = spec.maxHealth;
+        S.truckState.health = Math.max(
           1,
-          Math.min(spec.maxHealth, truckState.health + Math.max(0, hpDelta)),
+          Math.min(spec.maxHealth, S.truckState.health + Math.max(0, hpDelta)),
         );
-        truckState.shockAbsorberAvailable = spec.hasShockAbsorber;
+        S.truckState.shockAbsorberAvailable = spec.hasShockAbsorber;
         emitHudSnapshot();
       }
     };
@@ -716,7 +645,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       state: input,
       canvas: renderer.domElement,
       getPhase: () => phaseRef.current,
-      isDemoActive: () => demoState.active,
+      isDemoActive: () => S.demoState.active,
       playClick: () => pokoAudio.playUiClick(),
       onExitDemo: stopDemoReel,
       onTogglePause: (next) => onPhaseChangeRef.current(next),
@@ -751,79 +680,79 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       viaExpressToss: boolean,
       isBullseye: boolean = false,
     ) {
-      const activeStop = getActiveStop(currentCity.stops);
+      const activeStop = getActiveStop(S.currentCity.stops);
       if (!activeStop || activeStop.delivered) return;
 
       activeStop.delivered = true;
       activeStop.deliveredViaToss = viaExpressToss;
 
-      const wasFragileIntact = truckState.fragileIntact;
+      const wasFragileIntact = S.truckState.fragileIntact;
       const reward = calculateDeliveryScore(
-        combo,
-        comboTimer,
+        S.combo,
+        S.comboTimer,
         viaExpressToss,
-        currentCity.config.level,
+        S.currentCity.config.level,
         activeStop.parcelKind,
         wasFragileIntact,
         {
           bullseye: isBullseye,
-          thermalTimer: truckState.thermalTimer,
+          thermalTimer: S.truckState.thermalTimer,
           vipRole: activeStop.vipRole,
-          ticketsCount: truckState.ticketsCount,
+          ticketsCount: S.truckState.ticketsCount,
         },
       );
-      score += reward.pointsAwarded;
-      combo = reward.nextCombo;
-      maxCombo = Math.max(maxCombo, combo);
-      comboTimer = COMBO_WINDOW_SEC;
+      S.score += reward.pointsAwarded;
+      S.combo = reward.nextCombo;
+      S.maxCombo = Math.max(S.maxCombo, S.combo);
+      S.comboTimer = COMBO_WINDOW_SEC;
       if (isBullseye) {
-        bullseyeCount += 1;
+        S.bullseyeCount += 1;
         recordQuestEvent('bullseye_drops', 1);
       }
       if (viaExpressToss) {
         recordQuestEvent('express_tosses', 1);
       }
-      if (truckState.ticketsCount === 0) {
+      if (S.truckState.ticketsCount === 0) {
         recordQuestEvent('clean_deliveries', 1);
       }
       awardRunCoins(reward.coinsAwarded);
       pokoAudio.setFeverMode(reward.isFever);
 
       // Accumulate Food Delivery Rider earnings (¥)
-      riderBaseIncome += reward.baseDeliveryFeeYuan;
-      riderOnTimeBonus += reward.onTimeBonusYuan;
-      riderHotMealTip += (reward.thermalBonus > 0 ? 3.5 : 0) + (reward.vipBonus > 0 ? 3.5 : 0);
-      riderBullseyeTip += (isBullseye ? 2.0 : 0) + (reward.pristineBonus > 0 ? 2.0 : 0) + (reward.isFever ? 2.0 : 0);
-      riderSpillDeduction += reward.spillPenaltyYuan;
+      S.riderBaseIncome += reward.baseDeliveryFeeYuan;
+      S.riderOnTimeBonus += reward.onTimeBonusYuan;
+      S.riderHotMealTip += (reward.thermalBonus > 0 ? 3.5 : 0) + (reward.vipBonus > 0 ? 3.5 : 0);
+      S.riderBullseyeTip += (isBullseye ? 2.0 : 0) + (reward.pristineBonus > 0 ? 2.0 : 0) + (reward.isFever ? 2.0 : 0);
+      S.riderSpillDeduction += reward.spillPenaltyYuan;
       if (reward.spillPenaltyYuan > 0) {
-        riderReviewScore = Math.max(3.0, Number((riderReviewScore - 0.15).toFixed(2)));
+        S.riderReviewScore = Math.max(3.0, Number((S.riderReviewScore - 0.15).toFixed(2)));
       } else if (isBullseye || reward.thermalBonus > 0) {
-        riderReviewScore = Math.min(5.0, Number((riderReviewScore + 0.05).toFixed(2)));
+        S.riderReviewScore = Math.min(5.0, Number((S.riderReviewScore + 0.05).toFixed(2)));
       }
-      lastEarningEvent = {
-        id: ++earningSeq,
+      S.lastEarningEvent = {
+        id: ++S.earningSeq,
         label: reward.spillPenaltyYuan > 0 ? '外卖送达(餐损扣款)' : '外卖送达收益',
         amountYuan: reward.netDeliveryEarningsYuan,
         isReward: true,
       };
-      earningEventTimer = 2.4;
+      S.earningEventTimer = 2.4;
 
       const boomerangBonusPts = activeStop.isBoomerangTrigger ? 150 : 0;
       const boomerangTimeSec = activeStop.isBoomerangTrigger ? 4 : 0;
-      score += boomerangBonusPts;
+      S.score += boomerangBonusPts;
 
-      timeRemainingSec = Math.min(
-        currentCity.config.timeLimitSec + 22,
-        timeRemainingSec + reward.timeBonusSec + boomerangTimeSec,
+      S.timeRemainingSec = Math.min(
+        S.currentCity.config.timeLimitSec + 22,
+        S.timeRemainingSec + reward.timeBonusSec + boomerangTimeSec,
       );
 
       // Reset fragile handling & hot express thermal status fresh for the upcoming parcel!
-      truckState.fragileIntact = true;
-      truckState.thermalTimer = truckState.thermalMaxSec;
-      truckState.squashY = 0.82;
-      truckState.squashVel = 3.6;
+      S.truckState.fragileIntact = true;
+      S.truckState.thermalTimer = S.truckState.thermalMaxSec;
+      S.truckState.squashY = 0.82;
+      S.truckState.squashVel = 3.6;
       syncTruckParcelStack();
-      lastPathCalcTime = -1;
+      S.lastPathCalcTime = -1;
       refreshForwardRoadPath();
 
       const dropLabel = activeStop.isBoomerangTrigger
@@ -842,8 +771,8 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
                     ? 'Express Toss!'
                     : 'Curbside Drop!';
 
-      bannerEvent = {
-        id: ++bannerSeq,
+      S.bannerEvent = {
+        id: ++S.bannerSeq,
         label: dropLabel,
         detail: `+${reward.pointsAwarded + boomerangBonusPts} pts · +${reward.coinsAwarded} Coins`,
         tone:
@@ -851,15 +780,15 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
             ? 'emerald'
             : 'amber',
       };
-      bannerTimer = 2.05;
+      S.bannerTimer = 2.05;
 
       pokoAudio.playTossWhoosh();
-      pokoAudio.playDeliverySuccess(combo, viaExpressToss, isBullseye);
+      pokoAudio.playDeliverySuccess(S.combo, viaExpressToss, isBullseye);
 
       // Launch visible 3D parcel arc to citizen!
       const stopIdx = activeStop.index - 1;
-      const cRig = citizenRigs[stopIdx];
-      const cw = gridToWorld(activeStop.citizenCoord, currentCity.totalGridSize);
+      const cRig = S.citizenRigs[stopIdx];
+      const cw = gridToWorld(activeStop.citizenCoord, S.currentCity.totalGridSize);
       const targetX = activeStop.liveCitizenX ?? cw.x;
       const targetZ = activeStop.liveCitizenZ ?? cw.z;
 
@@ -868,9 +797,9 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       fp.active = true;
       fp.t = 0;
       fp.duration = viaExpressToss ? 0.34 : 0.24;
-      fp.sx = truckState.x;
-      fp.sy = 1.25 + truckState.y;
-      fp.sz = truckState.z;
+      fp.sx = S.truckState.x;
+      fp.sy = 1.25 + S.truckState.y;
+      fp.sz = S.truckState.z;
       fp.tx = targetX;
       fp.ty = 0.65;
       fp.tz = targetZ;
@@ -908,113 +837,109 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
     }
 
     // 6. Main Simulation & Render Loop (with software-WebGL afterDraw pacing!)
-    let frameId = 0;
-    let disposed = false;
-    let lastTime = performance.now();
-    let visualClock = 0;
 
     function afterDraw(cb: () => void) {
-      if (disposed) return;
+      if (S.disposed) return;
       const gl = renderer.getContext() as WebGL2RenderingContext;
       const sync = gl.fenceSync ? gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0) : null;
       gl.flush();
       const poll = () => {
-        if (disposed) return;
+        if (S.disposed) return;
         const state = sync ? gl.getSyncParameter(sync, gl.SYNC_STATUS) : gl.SIGNALED;
         if (state === gl.UNSIGNALED) {
-          frameId = window.setTimeout(poll, 5);
+          S.frameId = window.setTimeout(poll, 5);
         } else {
           if (sync) gl.deleteSync(sync);
-          frameId = window.setTimeout(cb, 80);
+          S.frameId = window.setTimeout(cb, 80);
         }
       };
-      frameId = window.setTimeout(poll, 5);
+      S.frameId = window.setTimeout(poll, 5);
     }
 
     function tick() {
-      if (disposed) return;
+      if (S.disposed) return;
       const now = performance.now();
-      const rawDt = (now - lastTime) / 1000;
-      lastTime = now;
+      const rawDt = (now - S.lastTime) / 1000;
+      S.lastTime = now;
       const dt = Math.min(Math.max(rawDt, 0.001), 0.05);
       const cdDt = Math.min(Math.max(rawDt, 0.001), 0.35);
-      visualClock += dt;
+      S.visualClock += dt;
 
       const currentPhase = phaseRef.current;
 
       // Hit flash decay
-      if (hitFlashTimer > 0) {
-        hitFlashTimer = Math.max(0, hitFlashTimer - dt);
+      if (S.hitFlashTimer > 0) {
+        S.hitFlashTimer = Math.max(0, S.hitFlashTimer - dt);
         for (const mat of truckRig.bodyMaterials) {
-          mat.emissive.setHex(hitFlashTimer > 0 ? 0xffffff : 0x000000);
-          mat.emissiveIntensity = hitFlashTimer > 0 ? 0.65 : 0;
+          mat.emissive.setHex(S.hitFlashTimer > 0 ? 0xffffff : 0x000000);
+          mat.emissiveIntensity = S.hitFlashTimer > 0 ? 0.65 : 0;
         }
       }
 
       // Camera trauma decay
-      if (cameraTrauma > 0) {
-        cameraTrauma = Math.max(0, cameraTrauma - dt * 1.9);
+      if (S.cameraTrauma > 0) {
+        S.cameraTrauma = Math.max(0, S.cameraTrauma - dt * 1.9);
       }
 
-      if (bannerTimer > 0) {
-        bannerTimer = Math.max(0, bannerTimer - cdDt);
-        if (bannerTimer <= 0 && bannerEvent) {
-          bannerEvent = null;
+      if (S.bannerTimer > 0) {
+        S.bannerTimer = Math.max(0, S.bannerTimer - cdDt);
+        if (S.bannerTimer <= 0 && S.bannerEvent) {
+          S.bannerEvent = null;
           emitHudSnapshot();
         }
       }
-      if (earningEventTimer > 0) {
-        earningEventTimer = Math.max(0, earningEventTimer - cdDt);
-        if (earningEventTimer <= 0 && lastEarningEvent) {
-          lastEarningEvent = null;
+      if (S.earningEventTimer > 0) {
+        S.earningEventTimer = Math.max(0, S.earningEventTimer - cdDt);
+        if (S.earningEventTimer <= 0 && S.lastEarningEvent) {
+          S.lastEarningEvent = null;
           emitHudSnapshot();
         }
       }
 
       // Update continuous speed-reactive van engine hum
       pokoAudio.updateEngine(
-        truckState.speed,
-        truckState.boostTimer > 0,
+        S.truckState.speed,
+        S.truckState.boostTimer > 0,
         currentPhase === GamePhase.Playing &&
-          finishDelayTimer < 0 &&
-          !countdownState.isFrozen,
+          S.finishDelayTimer < 0 &&
+          !S.countdownState.isFrozen,
       );
 
-      if (windStreakTimer > 0) {
-        windStreakTimer = Math.max(0, windStreakTimer - dt);
+      if (S.windStreakTimer > 0) {
+        S.windStreakTimer = Math.max(0, S.windStreakTimer - dt);
       }
-      if (treeFlutterCooldown > 0) {
-        treeFlutterCooldown = Math.max(0, treeFlutterCooldown - dt);
+      if (S.treeFlutterCooldown > 0) {
+        S.treeFlutterCooldown = Math.max(0, S.treeFlutterCooldown - dt);
       }
 
       if (currentPhase === GamePhase.Title) {
         // Live World Heading-Up Preview behind the parked Courier Van!
-        stepTrafficSignals(currentCity.trafficSignals, dt * 0.85);
+        stepTrafficSignals(S.currentCity.trafficSignals, dt * 0.85);
         stepHazardsAndCollisions(
-          currentCity.hazards,
-          truckState,
+          S.currentCity.hazards,
+          S.truckState,
           dt * 0.65,
-          currentCity.trafficSignals,
-          currentCity,
+          S.currentCity.trafficSignals,
+          S.currentCity,
         );
         stepPedestriansPhysics(
-          currentCity.pedestrians,
-          currentCity,
-          truckState,
+          S.currentCity.pedestrians,
+          S.currentCity,
+          S.truckState,
           dt * 0.85,
         );
-        const titleYaw = truckState.yaw + Math.sin(visualClock * 0.35) * 0.14;
+        const titleYaw = S.truckState.yaw + Math.sin(S.visualClock * 0.35) * 0.14;
         const dampAlpha = 1 - Math.exp(-3.5 * dt);
-        camYaw = wrapAngleRad(camYaw + wrapAngleRad(titleYaw - camYaw) * dampAlpha);
-        const leadX = truckState.x + Math.sin(camYaw) * CHASE_LOOK_AHEAD;
-        const leadZ = truckState.z + Math.cos(camYaw) * CHASE_LOOK_AHEAD;
+        S.camYaw = wrapAngleRad(S.camYaw + wrapAngleRad(titleYaw - S.camYaw) * dampAlpha);
+        const leadX = S.truckState.x + Math.sin(S.camYaw) * CHASE_LOOK_AHEAD;
+        const leadZ = S.truckState.z + Math.cos(S.camYaw) * CHASE_LOOK_AHEAD;
         camLookTarget.x += (leadX - camLookTarget.x) * dampAlpha;
         camLookTarget.y += (0.35 - camLookTarget.y) * dampAlpha;
         camLookTarget.z += (leadZ - camLookTarget.z) * dampAlpha;
         camera.position.set(
-          camLookTarget.x - Math.sin(camYaw) * CHASE_BACK_DIST,
+          camLookTarget.x - Math.sin(S.camYaw) * CHASE_BACK_DIST,
           camLookTarget.y + CHASE_UP_HEIGHT,
-          camLookTarget.z - Math.cos(camYaw) * CHASE_BACK_DIST,
+          camLookTarget.z - Math.cos(S.camYaw) * CHASE_BACK_DIST,
         );
         camera.lookAt(camLookTarget);
         waterPlane.position.set(camLookTarget.x, 0.0, camLookTarget.z);
@@ -1023,20 +948,20 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         if (touchControls.demoTogglePulse || input.keysJustPressed.has('KeyT')) {
           touchControls.demoTogglePulse = false;
           input.keysJustPressed.delete('KeyT');
-          if (demoState.active) {
+          if (S.demoState.active) {
             stopDemoReel();
           } else {
             startDemoReel();
           }
         }
 
-        const demoOut = demoState.active
+        const demoOut = S.demoState.active
           ? stepDemoDirector(
-              demoState,
-              truckState,
-              currentCity,
-              cachedRoadPath,
-              countdownState.stage,
+              S.demoState,
+              S.truckState,
+              S.currentCity,
+              S.cachedRoadPath,
+              S.countdownState.stage,
               cdDt,
             )
           : null;
@@ -1051,16 +976,16 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
             truckRig.setTopper(nextTop);
             const spec =
               VEHICLE_SPECS[nextVeh] ?? VEHICLE_SPECS[VehicleId.ClassicVan];
-            truckState.vehicleId = nextVeh;
-            truckState.maxHealth = spec.maxHealth;
-            truckState.health = spec.maxHealth;
-            truckState.shockAbsorberAvailable = spec.hasShockAbsorber;
-            truckState.squashY = 1.15;
-            truckState.squashVel = -2.2;
+            S.truckState.vehicleId = nextVeh;
+            S.truckState.maxHealth = spec.maxHealth;
+            S.truckState.health = spec.maxHealth;
+            S.truckState.shockAbsorberAvailable = spec.hasShockAbsorber;
+            S.truckState.squashY = 1.15;
+            S.truckState.squashVel = -2.2;
             spawnParticleBurst(
-              truckState.x,
+              S.truckState.x,
               0.7,
-              truckState.z,
+              S.truckState.z,
               18,
               [0xffe524, 0x38bdf8, 0xff70a6, 0xffffff],
               1.1,
@@ -1068,69 +993,69 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           }
 
           if (demoOut?.changedScene) {
-            camYaw = truckState.yaw;
-            parcelWobble = createParcelStackWobbleState(truckState.yaw);
-            lastPathCalcTime = -1;
+            S.camYaw = S.truckState.yaw;
+            S.parcelWobble = createParcelStackWobbleState(S.truckState.yaw);
+            S.lastPathCalcTime = -1;
             syncTruckParcelStack();
             refreshForwardRoadPath();
             if (demoOut.changedScene === 'scene2_bullseye_fever') {
-              combo = 2;
-              comboTimer = COMBO_WINDOW_SEC;
-              bannerEvent = {
-                id: ++bannerSeq,
+              S.combo = 2;
+              S.comboTimer = COMBO_WINDOW_SEC;
+              S.bannerEvent = {
+                id: ++S.bannerSeq,
                 label: 'Kei Truck · Bullseye Rush!',
                 detail: 'Curbside Toss & 2x Fever Showcase',
                 tone: 'emerald',
               };
-              bannerTimer = 1.5;
+              S.bannerTimer = 1.5;
             } else if (demoOut.changedScene === 'scene3_canal_jump') {
-              bannerEvent = {
-                id: ++bannerSeq,
+              S.bannerEvent = {
+                id: ++S.bannerSeq,
                 label: 'Zippy Trike · Canal Stunt!',
                 detail: 'Lining Up on Yellow Jump Ramp!',
                 tone: 'amber',
               };
-              bannerTimer = 1.4;
+              S.bannerTimer = 1.4;
             } else if (demoOut.changedScene === 'scene4_clash_shield') {
               pokoAudio.setFeverMode(false);
-              combo = 0;
-              comboTimer = 0;
-              bannerEvent = {
-                id: ++bannerSeq,
+              S.combo = 0;
+              S.comboTimer = 0;
+              S.bannerEvent = {
+                id: ++S.bannerSeq,
                 label: 'Step-Van · Rush-Hour Clash!',
                 detail: '3D Traffic Impact & Shield Pit-Stop',
                 tone: 'amber',
               };
-              bannerTimer = 1.45;
+              S.bannerTimer = 1.45;
             } else if (demoOut.changedScene === 'scene5_finale_orbit') {
-              finishDelayTimer = -1;
-              pendingOutcome = OutcomeKind.None;
-              bannerEvent = {
-                id: ++bannerSeq,
+              S.finishDelayTimer = -1;
+              S.pendingOutcome = OutcomeKind.None;
+              S.bannerEvent = {
+                id: ++S.bannerSeq,
                 label: 'Final Parcel · Stage Finale!',
                 detail: 'Delivering Last Package!',
                 tone: 'emerald',
               };
-              bannerTimer = 1.4;
+              S.bannerTimer = 1.4;
             }
             emitHudSnapshot();
           }
 
           if (demoOut?.triggerGarageSaveShowcase) {
-            truckState.hasBumperShield = true;
-            truckState.health = truckState.maxHealth;
+            S.truckState.hasBumperShield = true;
+            S.truckState.health = S.truckState.maxHealth;
             pokoAudio.playMechanicWrench();
-            bannerEvent = {
-              id: ++bannerSeq,
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
               label: 'Wrench Pit-Stop!',
               detail: 'Hull Repaired & Bumper Shield Ready!',
               tone: 'emerald',
             };
-            bannerTimer = 1.75;
+            S.bannerTimer = 1.75;
             spawnParticleBurst(
-              truckState.x,
+              S.truckState.x,
               0.8,
-              truckState.z,
+              S.truckState.z,
               16,
               [0x38bdf8, 0xffdf24, 0xffffff],
               1.05,
@@ -1144,12 +1069,12 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         }
 
         // Ambient Sunny & Sunset Songbird Chirps!
-        if (currentCity.config.atmosphere !== ShiftAtmosphere.TwilightNeon) {
-          birdChirpTimer -= dt;
-          if (birdChirpTimer <= 0) {
-            birdChirpTimer = 3.8 + Math.random() * 3.8;
+        if (S.currentCity.config.atmosphere !== ShiftAtmosphere.TwilightNeon) {
+          S.birdChirpTimer -= dt;
+          if (S.birdChirpTimer <= 0) {
+            S.birdChirpTimer = 3.8 + Math.random() * 3.8;
             pokoAudio.playBirdChirp(
-              currentCity.config.atmosphere === ShiftAtmosphere.SunnyHarbor
+              S.currentCity.config.atmosphere === ShiftAtmosphere.SunnyHarbor
                 ? 0.82
                 : 0.6,
             );
@@ -1158,26 +1083,26 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
 
         // Quick-skip flyover if player explicitly presses Enter after overview has begun
         if (
-          !demoState.active &&
-          countdownState.isFrozen &&
-          countdownState.remainingSec > 0.06 &&
-          countdownState.remainingSec < countdownState.totalSec - 0.3 &&
+          !S.demoState.active &&
+          S.countdownState.isFrozen &&
+          S.countdownState.remainingSec > 0.06 &&
+          S.countdownState.remainingSec < S.countdownState.totalSec - 0.3 &&
           input.keysJustPressed.has('Enter')
         ) {
-          countdownState.remainingSec = 0.03;
+          S.countdownState.remainingSec = 0.03;
         }
 
-        const gasHeldForCountdown = demoState.active
+        const gasHeldForCountdown = S.demoState.active
           ? Boolean(demoOut?.gasForCountdown)
           : input.keysHeld.has('KeyW') ||
             input.keysHeld.has('ArrowUp') ||
             touchControls.gas ||
             input.pointerDown;
 
-        if (countdownState.isFrozen || countdownState.stage !== null) {
-          const prevRocketStatus = countdownState.rocketStatus;
+        if (S.countdownState.isFrozen || S.countdownState.stage !== null) {
+          const prevRocketStatus = S.countdownState.rocketStatus;
           const cdEv = stepStartCountdown(
-            countdownState,
+            S.countdownState,
             gasHeldForCountdown,
             cdDt,
           );
@@ -1193,88 +1118,88 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
             }
           }
 
-          if (countdownState.isFrozen) {
+          if (S.countdownState.isFrozen) {
             // Keep living island animated while shift timer & van position stay frozen!
-            stepTrafficSignals(currentCity.trafficSignals, dt * 0.9);
+            stepTrafficSignals(S.currentCity.trafficSignals, dt * 0.9);
             stepPedestriansPhysics(
-              currentCity.pedestrians,
-              currentCity,
-              truckState,
+              S.currentCity.pedestrians,
+              S.currentCity,
+              S.truckState,
               dt * 0.9,
             );
-            stepMovingCustomers(currentCity.stops, visualClock);
+            stepMovingCustomers(S.currentCity.stops, S.visualClock);
 
             if (cdEv.triggeredSputter) {
               pokoAudio.playEngineSputter();
-              truckState.squashY = 1.09;
+              S.truckState.squashY = 1.09;
               spawnParticleBurst(
-                truckState.x - Math.sin(truckState.yaw) * 0.95,
+                S.truckState.x - Math.sin(S.truckState.yaw) * 0.95,
                 0.35,
-                truckState.z - Math.cos(truckState.yaw) * 0.95,
+                S.truckState.z - Math.cos(S.truckState.yaw) * 0.95,
                 6,
                 [0x94a3b8, 0xcbd5e1, 0x64748b],
                 0.55,
               );
             } else if (cdEv.revIntensity > 0) {
               pokoAudio.playCountdownRev(cdEv.revIntensity);
-              truckState.squashY =
-                1 + Math.sin(visualClock * 42) * 0.045 * cdEv.revIntensity;
-              revExhaustAccum += dt;
-              if (revExhaustAccum > 0.11) {
-                revExhaustAccum = 0;
+              S.truckState.squashY =
+                1 + Math.sin(S.visualClock * 42) * 0.045 * cdEv.revIntensity;
+              S.revExhaustAccum += dt;
+              if (S.revExhaustAccum > 0.11) {
+                S.revExhaustAccum = 0;
                 spawnParticleBurst(
-                  truckState.x - Math.sin(truckState.yaw) * 0.92,
+                  S.truckState.x - Math.sin(S.truckState.yaw) * 0.92,
                   0.34,
-                  truckState.z - Math.cos(truckState.yaw) * 0.92,
-                  countdownState.rocketStatus === 'primed' ? 4 : 2,
-                  countdownState.rocketStatus === 'primed'
+                  S.truckState.z - Math.cos(S.truckState.yaw) * 0.92,
+                  S.countdownState.rocketStatus === 'primed' ? 4 : 2,
+                  S.countdownState.rocketStatus === 'primed'
                     ? [0xffe524, 0xff9f1c, 0xffffff]
                     : [0xffffff, 0xe2e8f0],
                   0.52,
                 );
               }
             } else {
-              truckState.squashY += (1 - truckState.squashY) * Math.min(1, dt * 10);
+              S.truckState.squashY += (1 - S.truckState.squashY) * Math.min(1, dt * 10);
             }
           }
 
           if (cdEv.justUnlockedGo) {
             if (cdEv.triggeredRocketStart) {
-              applyRocketStartToTruck(truckState);
-              score += ROCKET_START_POINTS;
+              applyRocketStartToTruck(S.truckState);
+              S.score += ROCKET_START_POINTS;
               pokoAudio.playRocketStart();
-              windStreakTimer = 0.9;
-              cameraTrauma = Math.max(cameraTrauma, 0.28);
+              S.windStreakTimer = 0.9;
+              S.cameraTrauma = Math.max(S.cameraTrauma, 0.28);
               spawnParticleBurst(
-                truckState.x - Math.sin(truckState.yaw) * 0.95,
+                S.truckState.x - Math.sin(S.truckState.yaw) * 0.95,
                 0.42,
-                truckState.z - Math.cos(truckState.yaw) * 0.95,
+                S.truckState.z - Math.cos(S.truckState.yaw) * 0.95,
                 22,
                 [0xffe524, 0xff9f1c, 0x70e4ff, 0xffffff],
                 1.35,
               );
-              bannerEvent = {
-                id: ++bannerSeq,
+              S.bannerEvent = {
+                id: ++S.bannerSeq,
                 label: 'Rocket Start!',
                 detail: `+${ROCKET_START_POINTS} pts · Turbo Launch!`,
                 tone: 'emerald',
               };
-              bannerTimer = 1.95;
+              S.bannerTimer = 1.95;
             } else if (cdEv.triggeredSputter) {
               pokoAudio.playEngineSputter();
-              bannerEvent = {
-                id: ++bannerSeq,
+              S.bannerEvent = {
+                id: ++S.bannerSeq,
                 label: 'Early Gas Sputter!',
                 detail: 'Hold Gas on "1" Next Time!',
                 tone: 'amber',
               };
-              bannerTimer = 1.45;
+              S.bannerTimer = 1.45;
             }
           }
 
           if (
             cdEv.changedStage !== null ||
-            prevRocketStatus !== countdownState.rocketStatus ||
+            prevRocketStatus !== S.countdownState.rocketStatus ||
             cdEv.justUnlockedGo
           ) {
             emitHudSnapshot();
@@ -1282,27 +1207,27 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         }
 
         // Simulation-level Hitstop on heavy impacts
-        let simDt = countdownState.isFrozen ? 0 : dt;
-        if (hitstopTimer > 0) {
-          hitstopTimer = Math.max(0, hitstopTimer - dt);
+        let simDt = S.countdownState.isFrozen ? 0 : dt;
+        if (S.hitstopTimer > 0) {
+          S.hitstopTimer = Math.max(0, S.hitstopTimer - dt);
           simDt = 0;
         }
 
-        if (simDt > 0 && finishDelayTimer < 0) {
-          elapsedSec += simDt;
-          timeRemainingSec = Math.max(0, timeRemainingSec - simDt);
+        if (simDt > 0 && S.finishDelayTimer < 0) {
+          S.elapsedSec += simDt;
+          S.timeRemainingSec = Math.max(0, S.timeRemainingSec - simDt);
 
           // Countdown tick audio cue on final 10 seconds
-          const ceilSec = Math.ceil(timeRemainingSec);
-          if (ceilSec > 0 && ceilSec <= 10 && ceilSec !== lastTickedSecond) {
-            lastTickedSecond = ceilSec;
+          const ceilSec = Math.ceil(S.timeRemainingSec);
+          if (ceilSec > 0 && ceilSec <= 10 && ceilSec !== S.lastTickedSecond) {
+            S.lastTickedSecond = ceilSec;
             pokoAudio.playTimerTick(ceilSec <= 5);
           }
 
-          if (comboTimer > 0) {
-            comboTimer = Math.max(0, comboTimer - simDt);
-            if (comboTimer <= 0) {
-              combo = 0;
+          if (S.comboTimer > 0) {
+            S.comboTimer = Math.max(0, S.comboTimer - simDt);
+            if (S.comboTimer <= 0) {
+              S.combo = 0;
               pokoAudio.setFeverMode(false);
             }
           }
@@ -1311,7 +1236,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           let throttle = 0;
           let steer = 0;
           let wantsHorn = false;
-          if (demoState.active && demoOut) {
+          if (S.demoState.active && demoOut) {
             throttle = demoOut.throttle;
             steer = demoOut.steer;
             wantsHorn = demoOut.wantsHorn;
@@ -1344,18 +1269,18 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           // Musical Horn [Q / H / Mobile Horn Button]
           if (wantsHorn) {
             const hornRes = triggerMusicalHorn(
-              truckState,
-              currentCity.hazards,
-              currentCity.pedestrians,
-              currentCity.duckCrossings,
+              S.truckState,
+              S.currentCity.hazards,
+              S.currentCity.pedestrians,
+              S.currentCity.duckCrossings,
             );
             if (hornRes) {
               pokoAudio.playMusicalHorn();
-              truckState.squashY = 1.12;
-              truckState.squashVel = -2.0;
+              S.truckState.squashY = 1.12;
+              S.truckState.squashVel = -2.0;
               if (hornRes.calmedScooters > 0 || hornRes.hurriedDucks > 0) {
-                bannerEvent = {
-                  id: ++bannerSeq,
+                S.bannerEvent = {
+                  id: ++S.bannerSeq,
                   label:
                     hornRes.calmedScooters > 0
                       ? 'Honk! Scooters Calmed!'
@@ -1363,7 +1288,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
                   detail: 'Friendly Musical Horn',
                   tone: 'emerald',
                 };
-                bannerTimer = 1.45;
+                S.bannerTimer = 1.45;
                 emitHudSnapshot();
               }
             }
@@ -1378,7 +1303,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
 
           // Optional pointer hold-to-steer on the road (projected relative to van heading)
           if (
-            !demoState.active &&
+            !S.demoState.active &&
             !anyTouchDeckHeld &&
             Math.abs(throttle) < 0.01 &&
             Math.abs(steer) < 0.01 &&
@@ -1386,14 +1311,14 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           ) {
             const worldPt = screenToWorldOnRoad(input.pointerClientX, input.pointerClientY);
             if (worldPt) {
-              const dx = worldPt.x - truckState.x;
-              const dz = worldPt.z - truckState.z;
+              const dx = worldPt.x - S.truckState.x;
+              const dz = worldPt.z - S.truckState.z;
               const dist = Math.hypot(dx, dz);
               if (dist > 0.45) {
-                const fwdX = Math.sin(truckState.yaw);
-                const fwdZ = Math.cos(truckState.yaw);
-                const rightX = -Math.cos(truckState.yaw);
-                const rightZ = Math.sin(truckState.yaw);
+                const fwdX = Math.sin(S.truckState.yaw);
+                const fwdZ = Math.cos(S.truckState.yaw);
+                const rightX = -Math.cos(S.truckState.yaw);
+                const rightZ = Math.sin(S.truckState.yaw);
                 const fwdDot = (dx * fwdX + dz * fwdZ) / dist;
                 const rightDot = (dx * rightX + dz * rightZ) / dist;
                 throttle = fwdDot < -0.35 ? -1 : 1;
@@ -1402,21 +1327,21 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
             }
           }
 
-          const activeStop = getActiveStop(currentCity.stops);
+          const activeStop = getActiveStop(S.currentCity.stops);
           if (activeStop?.parcelKind === ParcelKind.HotExpress) {
-            truckState.thermalTimer = Math.max(
+            S.truckState.thermalTimer = Math.max(
               0,
-              truckState.thermalTimer - simDt,
+              S.truckState.thermalTimer - simDt,
             );
           }
 
           const preElig = checkDeliveryEligibility(
-            truckState,
+            S.truckState,
             activeStop,
-            currentCity.totalGridSize,
+            S.currentCity.totalGridSize,
           );
 
-          const usedTouchDeliver = demoState.active
+          const usedTouchDeliver = S.demoState.active
             ? Boolean(demoOut?.wantsDeliver)
             : touchControls.deliverPulse;
           touchControls.deliverPulse = false;
@@ -1425,7 +1350,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           }
 
           // Consume buffered Space/E/Touch-Deliver: if in Express Toss range, toss parcel! Otherwise trigger Turbo Boost!
-          let wantsBoost = demoState.active
+          let wantsBoost = S.demoState.active
             ? Boolean(demoOut?.wantsBoost)
             : input.keysJustPressed.has('ShiftLeft') ||
               input.keysJustPressed.has('ShiftRight') ||
@@ -1433,16 +1358,16 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           touchControls.boostPulse = false;
           if (input.spaceBufferTimer > 0) {
             const demoBlockEarlyFinalDrop =
-              demoState.active &&
-              demoState.sceneId !== 'scene5_finale_orbit' &&
-              currentCity.stops.filter((s) => !s.delivered).length <= 1;
+              S.demoState.active &&
+              S.demoState.sceneId !== 'scene5_finale_orbit' &&
+              S.currentCity.stops.filter((s) => !s.delivered).length <= 1;
             if (preElig.canExpressToss && !demoBlockEarlyFinalDrop) {
               input.spaceBufferTimer = 0;
               triggerParcelDelivery(true, preElig.canBullseyeToss);
             } else if (
-              !demoState.active &&
+              !S.demoState.active &&
               (input.keysJustPressed.has('Space') || usedTouchDeliver) &&
-              truckState.boostCooldown <= 0
+              S.truckState.boostCooldown <= 0
             ) {
               input.spaceBufferTimer = 0;
               wantsBoost = true;
@@ -1450,30 +1375,30 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           }
 
           // Step intersection traffic signals (or force green during Green-Wave transponder!)
-          stepTrafficSignals(currentCity.trafficSignals, simDt);
+          stepTrafficSignals(S.currentCity.trafficSignals, simDt);
 
           const physEvents = stepTruckPhysics(
-            truckState,
+            S.truckState,
             {
               throttle,
               steer,
               wantsBoost,
-              wantsDrift: demoState.active
+              wantsDrift: S.demoState.active
                 ? Boolean(demoOut?.wantsDrift)
                 : input.keysHeld.has('KeyC'),
             },
-            currentCity,
+            S.currentCity,
             simDt,
           );
 
           // Leafy boulevard breeze & songbird flutter when zooming past park trees!
-          if (truckState.speed > 6.2 && treeFlutterCooldown <= 0) {
-            for (let ti = 0; ti < currentCity.trees.length; ti++) {
-              const tr = currentCity.trees[ti];
+          if (S.truckState.speed > 6.2 && S.treeFlutterCooldown <= 0) {
+            for (let ti = 0; ti < S.currentCity.trees.length; ti++) {
+              const tr = S.currentCity.trees[ti];
               if (tr.variant === 'bush') continue;
-              const dTree = Math.hypot(truckState.x - tr.x, truckState.z - tr.z);
+              const dTree = Math.hypot(S.truckState.x - tr.x, S.truckState.z - tr.z);
               if (dTree < 2.25) {
-                treeFlutterCooldown = 2.8;
+                S.treeFlutterCooldown = 2.8;
                 spawnParticleBurst(
                   tr.x,
                   1.25,
@@ -1483,7 +1408,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
                   0.62,
                 );
                 if (
-                  currentCity.config.atmosphere !== ShiftAtmosphere.TwilightNeon
+                  S.currentCity.config.atmosphere !== ShiftAtmosphere.TwilightNeon
                 ) {
                   pokoAudio.playBirdChirp(0.78);
                 }
@@ -1496,76 +1421,76 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
             const isWrongWayTicket = physEvents.issuedTicket === 'wrong_way';
             const penaltyPts = isWrongWayTicket ? 75 : 60;
             const fineYuan = isWrongWayTicket ? 8.0 : 6.0;
-            riderTrafficFines += fineYuan;
-            riderReviewScore = Math.max(3.0, Number((riderReviewScore - 0.15).toFixed(2)));
-            lastEarningEvent = {
-              id: ++earningSeq,
+            S.riderTrafficFines += fineYuan;
+            S.riderReviewScore = Math.max(3.0, Number((S.riderReviewScore - 0.15).toFixed(2)));
+            S.lastEarningEvent = {
+              id: ++S.earningSeq,
               label: isWrongWayTicket ? '逆行违章罚款' : '闯红灯罚款',
               amountYuan: -fineYuan,
               isReward: false,
             };
-            earningEventTimer = 2.4;
+            S.earningEventTimer = 2.4;
 
-            score = Math.max(0, score - penaltyPts);
-            timeRemainingSec = Math.max(1, timeRemainingSec - 3);
-            combo = 0;
-            comboTimer = 0;
+            S.score = Math.max(0, S.score - penaltyPts);
+            S.timeRemainingSec = Math.max(1, S.timeRemainingSec - 3);
+            S.combo = 0;
+            S.comboTimer = 0;
             pokoAudio.setFeverMode(false);
             pokoAudio.playTicketCitation();
-            cameraTrauma = Math.max(cameraTrauma, 0.34);
-            hitFlashTimer = 0.07;
-            bannerEvent = {
-              id: ++bannerSeq,
+            S.cameraTrauma = Math.max(S.cameraTrauma, 0.34);
+            S.hitFlashTimer = 0.07;
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
               label: isWrongWayTicket
                 ? 'Wrong-Way Ticket!'
                 : 'Red-Light Ticket!',
               detail: `-${penaltyPts} pts · -¥${fineYuan.toFixed(1)}`,
               tone: 'rose',
             };
-            bannerTimer = 2.35;
+            S.bannerTimer = 2.35;
             emitHudSnapshot();
           } else if (physEvents.activatedJumpRamp) {
-            score += 80;
+            S.score += 80;
             pokoAudio.playJumpLaunch();
-            windStreakTimer = Math.max(windStreakTimer, 0.65);
-            cameraTrauma = Math.max(cameraTrauma, 0.28);
-            bannerEvent = {
-              id: ++bannerSeq,
+            S.windStreakTimer = Math.max(S.windStreakTimer, 0.65);
+            S.cameraTrauma = Math.max(S.cameraTrauma, 0.28);
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
               label: 'Canal Ramp Jump!',
               detail: '+80 pts · Air Stunt!',
               tone: 'emerald',
             };
-            bannerTimer = 1.65;
+            S.bannerTimer = 1.65;
             spawnParticleBurst(
-              truckState.x,
+              S.truckState.x,
               0.45,
-              truckState.z,
+              S.truckState.z,
               14,
               [0xffdf24, 0xffffff, 0x38bdf8],
               1.1,
             );
             emitHudSnapshot();
           } else if (physEvents.pickedGreenWave) {
-            score += 75;
+            S.score += 75;
             pokoAudio.playCoffeePickup();
-            bannerEvent = {
-              id: ++bannerSeq,
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
               label: 'Green-Wave Transponder!',
               detail: '+75 pts · Signals Cleared 7.5s',
               tone: 'emerald',
             };
-            bannerTimer = 1.85;
+            S.bannerTimer = 1.85;
             spawnParticleBurst(
-              truckState.x,
+              S.truckState.x,
               0.65,
-              truckState.z,
+              S.truckState.z,
               14,
               [0x10b981, 0xfef08a, 0xffffff],
               1.0,
             );
             emitHudSnapshot();
           } else if (physEvents.splashedHydrantPos) {
-            score += 40;
+            S.score += 40;
             pokoAudio.playHydrantSplash();
             spawnParticleBurst(
               physEvents.splashedHydrantPos.x,
@@ -1580,12 +1505,12 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
             physEvents.triggeredBoostPad
           ) {
             pokoAudio.playBoost();
-            windStreakTimer = Math.max(windStreakTimer, 0.45);
-            cameraTrauma = Math.max(cameraTrauma, 0.24);
+            S.windStreakTimer = Math.max(S.windStreakTimer, 0.45);
+            S.cameraTrauma = Math.max(S.cameraTrauma, 0.24);
             spawnParticleBurst(
-              truckState.x,
+              S.truckState.x,
               0.38,
-              truckState.z,
+              S.truckState.z,
               10,
               [0xffffff, 0x70d6ff, 0x38e4ae],
               0.85,
@@ -1594,22 +1519,22 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
 
           if (physEvents.crashEvents.length > 0) {
             const wallEv = physEvents.crashEvents[0];
-            fx.spawnCrashBurstEffect(wallEv, camYaw);
+            fx.spawnCrashBurstEffect(wallEv, S.camYaw);
             pokoAudio.playCrashImpact(wallEv.severity, wallEv.kind);
-            cameraTrauma = Math.max(
-              cameraTrauma,
+            S.cameraTrauma = Math.max(
+              S.cameraTrauma,
               wallEv.severity === 'crash' ? 0.54 : 0.3,
             );
-            hitFlashTimer = Math.max(
-              hitFlashTimer,
+            S.hitFlashTimer = Math.max(
+              S.hitFlashTimer,
               wallEv.severity === 'crash' ? 0.08 : 0.05,
             );
             if (wallEv.severity === 'crash') {
-              hitstopTimer = Math.max(hitstopTimer, 0.035);
+              S.hitstopTimer = Math.max(S.hitstopTimer, 0.035);
             }
             if (!physEvents.issuedTicket) {
-              bannerEvent = {
-                id: ++bannerSeq,
+              S.bannerEvent = {
+                id: ++S.bannerSeq,
                 label: physEvents.absorbedCurbWithShock
                   ? 'Shock-Absorber Saved Cargo!'
                   : wallEv.label,
@@ -1620,43 +1545,43 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
                     : 'Bumper Rebound!',
                 tone: wallEv.severity === 'crash' ? 'rose' : 'amber',
               };
-              bannerTimer = 1.45;
+              S.bannerTimer = 1.45;
               emitHudSnapshot();
             }
           } else if (physEvents.absorbedCurbWithShock) {
             pokoAudio.playCurbBump();
-            bannerEvent = {
-              id: ++bannerSeq,
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
               label: 'Shock-Absorber Saved Fragile!',
               detail: 'Step-Van Heavy Suspension',
               tone: 'amber',
             };
-            bannerTimer = 1.4;
+            S.bannerTimer = 1.4;
           } else if (physEvents.hitCurb) {
             pokoAudio.playCurbBump();
           }
 
           // Check Roadside Drive-Thru Espresso Boost Kiosks!
           const pickedCoffee = stepCoffeeKiosks(
-            currentCity.coffeeKiosks,
-            truckState,
+            S.currentCity.coffeeKiosks,
+            S.truckState,
             simDt,
           );
           if (pickedCoffee) {
-            score += 65;
-            timeRemainingSec = Math.min(
-              currentCity.config.timeLimitSec + 22,
-              timeRemainingSec + 3,
+            S.score += 65;
+            S.timeRemainingSec = Math.min(
+              S.currentCity.config.timeLimitSec + 22,
+              S.timeRemainingSec + 3,
             );
             recordQuestEvent('pitstops_used', 1);
             pokoAudio.playCoffeePickup();
-            bannerEvent = {
-              id: ++bannerSeq,
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
               label: 'Espresso Boost!',
               detail: '+65 pts · +3s & Full Turbo',
               tone: 'emerald',
             };
-            bannerTimer = 1.95;
+            S.bannerTimer = 1.95;
             spawnParticleBurst(
               pickedCoffee.roadX,
               0.8,
@@ -1670,21 +1595,21 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
 
           // Check Wrench Mechanic Pit-Stop Garages!
           const servicedGarage = stepMechanicGarages(
-            currentCity.mechanicGarages,
-            truckState,
+            S.currentCity.mechanicGarages,
+            S.truckState,
             simDt,
           );
           if (servicedGarage) {
-            score += 55;
+            S.score += 55;
             recordQuestEvent('pitstops_used', 1);
             pokoAudio.playMechanicWrench();
-            bannerEvent = {
-              id: ++bannerSeq,
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
               label: 'Wrench Pit-Stop!',
               detail: '+1 Hull HP & Bumper Shield',
               tone: 'emerald',
             };
-            bannerTimer = 1.95;
+            S.bannerTimer = 1.95;
             spawnParticleBurst(
               servicedGarage.roadX,
               0.8,
@@ -1698,54 +1623,54 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
 
           // Step Duckling Family Crossings + Polite Yield Bonus!
           const politeDuck = stepDuckCrossings(
-            currentCity.duckCrossings,
-            truckState,
+            S.currentCity.duckCrossings,
+            S.truckState,
             simDt,
           );
           if (politeDuck) {
-            score += 95;
+            S.score += 95;
             awardRunCoins(30);
             pokoAudio.playDuckQuack();
-            bannerEvent = {
-              id: ++bannerSeq,
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
               label: 'Polite Duck Yield!',
               detail: '+95 pts · +30 Coins',
               tone: 'emerald',
             };
-            bannerTimer = 1.85;
+            S.bannerTimer = 1.85;
             emitHudSnapshot();
           }
 
           // Step Moving Porch Customers & Rival Courier ("Zoomy Blitz")
-          stepMovingCustomers(currentCity.stops, visualClock);
+          stepMovingCustomers(S.currentCity.stops, S.visualClock);
           const rivalStatus = stepRivalCourier(
-            currentCity.rivalCourier,
-            truckState,
+            S.currentCity.rivalCourier,
+            S.truckState,
             simDt,
           );
-          if (rivalStatus === 'player_claimed' && currentCity.rivalCourier) {
-            score += 250;
+          if (rivalStatus === 'player_claimed' && S.currentCity.rivalCourier) {
+            S.score += 250;
             awardRunCoins(75);
-            riderRushHourBonus += 8.0;
-            lastEarningEvent = {
-              id: ++earningSeq,
+            S.riderRushHourBonus += 8.0;
+            S.lastEarningEvent = {
+              id: ++S.earningSeq,
               label: '高峰抢单王补贴',
               amountYuan: 8.0,
               isReward: true,
             };
-            earningEventTimer = 2.4;
+            S.earningEventTimer = 2.4;
             pokoAudio.playSpinReward();
-            bannerEvent = {
-              id: ++bannerSeq,
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
               label: 'Beat Zoomy Blitz!',
               detail: '+250 pts · +¥8.0补贴',
               tone: 'emerald',
             };
-            bannerTimer = 2.15;
+            S.bannerTimer = 2.15;
             spawnParticleBurst(
-              currentCity.rivalCourier.bonusDropPos.x,
+              S.currentCity.rivalCourier.bonusDropPos.x,
               0.9,
-              currentCity.rivalCourier.bonusDropPos.z,
+              S.currentCity.rivalCourier.bonusDropPos.z,
               22,
               [0xffdf24, 0xa855f7, 0xffffff],
               1.3,
@@ -1754,41 +1679,41 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           }
 
           // Auto-drop check if player drove onto the golden delivery pad (respecting Large Crate brake check!)
-          const postStop = getActiveStop(currentCity.stops);
+          const postStop = getActiveStop(S.currentCity.stops);
           const postElig = checkDeliveryEligibility(
-            truckState,
+            S.truckState,
             postStop,
-            currentCity.totalGridSize,
+            S.currentCity.totalGridSize,
           );
           const demoKeepLastStopForFinale =
-            demoState.active &&
-            demoState.sceneId !== 'scene5_finale_orbit' &&
-            currentCity.stops.filter((s) => !s.delivered).length <= 1;
+            S.demoState.active &&
+            S.demoState.sceneId !== 'scene5_finale_orbit' &&
+            S.currentCity.stops.filter((s) => !s.delivered).length <= 1;
           if (postElig.canAutoDrop && !demoKeepLastStopForFinale) {
             triggerParcelDelivery(false, postElig.canBullseyeToss);
           }
 
           // Step obstacle-aware sidewalk & plaza pedestrians
           stepPedestriansPhysics(
-            currentCity.pedestrians,
-            currentCity,
-            truckState,
+            S.currentCity.pedestrians,
+            S.currentCity,
+            S.truckState,
             simDt,
           );
 
           // Step traffic & bridge hazards + Solid 3D Vehicle Separation, Crash Events & Ambient Car Honks!
           const hazEvents = stepHazardsAndCollisions(
-            currentCity.hazards,
-            truckState,
+            S.currentCity.hazards,
+            S.truckState,
             simDt,
-            currentCity.trafficSignals,
-            currentCity,
+            S.currentCity.trafficSignals,
+            S.currentCity,
           );
           for (const wh of hazEvents.startedWindups) {
             pokoAudio.playWindupTelegraph(wh.kind === HazardKind.BridgeGate);
           }
           for (const hev of hazEvents.honkEvents) {
-            const distH = Math.hypot(hev.x - truckState.x, hev.z - truckState.z);
+            const distH = Math.hypot(hev.x - S.truckState.x, hev.z - S.truckState.z);
             if (distH < 34) {
               const volScale = Math.max(0.22, 1 - distH / 36);
               pokoAudio.playAmbientCarHorn(hev.isBus, volScale);
@@ -1799,12 +1724,12 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           for (const cev of hazEvents.crashEvents) {
             if (cev.involvesPlayer) {
               playerCrashEv = cev;
-              fx.spawnCrashBurstEffect(cev, camYaw);
+              fx.spawnCrashBurstEffect(cev, S.camYaw);
             } else if (
-              Math.hypot(cev.x - truckState.x, cev.z - truckState.z) < 28
+              Math.hypot(cev.x - S.truckState.x, cev.z - S.truckState.z) < 28
             ) {
-              fx.spawnCrashBurstEffect(cev, camYaw);
-              if (Math.hypot(cev.x - truckState.x, cev.z - truckState.z) < 22) {
+              fx.spawnCrashBurstEffect(cev, S.camYaw);
+              if (Math.hypot(cev.x - S.truckState.x, cev.z - S.truckState.z) < 22) {
                 pokoAudio.playAiFenderBender();
               }
             }
@@ -1813,19 +1738,19 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           if (hazEvents.shieldAbsorbed) {
             pokoAudio.playCrashImpact('bump', 'vehicle');
             pokoAudio.playMechanicWrench();
-            hitFlashTimer = 0.06;
-            cameraTrauma = Math.max(cameraTrauma, 0.38);
-            bannerEvent = {
-              id: ++bannerSeq,
+            S.hitFlashTimer = 0.06;
+            S.cameraTrauma = Math.max(S.cameraTrauma, 0.38);
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
               label: 'Bumper Shield Saved You!',
               detail: 'Combo & Hull Preserved',
               tone: 'amber',
             };
-            bannerTimer = 1.75;
+            S.bannerTimer = 1.75;
             spawnParticleBurst(
-              truckState.x,
+              S.truckState.x,
               0.7,
-              truckState.z,
+              S.truckState.z,
               16,
               [0x38bdf8, 0xffffff, 0xfef08a],
               1.1,
@@ -1834,37 +1759,37 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           } else if (hazEvents.playerHitBy) {
             pokoAudio.playCrashImpact('crash', 'vehicle');
             pokoAudio.setFeverMode(false);
-            hitstopTimer = 0.055; // Crisp 55ms heavy impact hitstop!
-            hitFlashTimer = 0.095;
-            cameraTrauma = Math.min(1.0, cameraTrauma + 0.72);
-            combo = 0;
-            comboTimer = 0;
-            riderSpillDeduction += 4.0;
-            riderReviewScore = Math.max(3.0, Number((riderReviewScore - 0.1).toFixed(2)));
-            lastEarningEvent = {
-              id: ++earningSeq,
+            S.hitstopTimer = 0.055; // Crisp 55ms heavy impact hitstop!
+            S.hitFlashTimer = 0.095;
+            S.cameraTrauma = Math.min(1.0, S.cameraTrauma + 0.72);
+            S.combo = 0;
+            S.comboTimer = 0;
+            S.riderSpillDeduction += 4.0;
+            S.riderReviewScore = Math.max(3.0, Number((S.riderReviewScore - 0.1).toFixed(2)));
+            S.lastEarningEvent = {
+              id: ++S.earningSeq,
               label: '碰撞洒餐赔付',
               amountYuan: -4.0,
               isReward: false,
             };
-            earningEventTimer = 2.2;
-            bannerEvent = {
-              id: ++bannerSeq,
+            S.earningEventTimer = 2.2;
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
               label: playerCrashEv?.label ?? 'Traffic Crash!',
-              detail: `${truckState.health}/${truckState.maxHealth} · -¥4.0赔付`,
+              detail: `${S.truckState.health}/${S.truckState.maxHealth} · -¥4.0赔付`,
               tone: 'rose',
             };
-            bannerTimer = 1.8;
+            S.bannerTimer = 1.8;
             emitHudSnapshot();
           } else if (playerCrashEv) {
             pokoAudio.playCrashImpact(playerCrashEv.severity, playerCrashEv.kind);
-            hitFlashTimer = 0.07;
-            cameraTrauma = Math.max(cameraTrauma, 0.44);
+            S.hitFlashTimer = 0.07;
+            S.cameraTrauma = Math.max(S.cameraTrauma, 0.44);
             if (playerCrashEv.kind === 'rival') {
-              hitstopTimer = Math.max(hitstopTimer, 0.038);
+              S.hitstopTimer = Math.max(S.hitstopTimer, 0.038);
             }
-            bannerEvent = {
-              id: ++bannerSeq,
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
               label: playerCrashEv.label,
               detail:
                 playerCrashEv.kind === 'rival'
@@ -1872,49 +1797,49 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
                   : 'Solid Bumper Bounce!',
               tone: 'amber',
             };
-            bannerTimer = 1.45;
+            S.bannerTimer = 1.45;
             emitHudSnapshot();
           } else if (hazEvents.nearMissCount > 0) {
             const pts = 45 * hazEvents.nearMissCount;
-            score += pts;
+            S.score += pts;
             recordQuestEvent('near_misses', hazEvents.nearMissCount);
             pokoAudio.playNearMissWhoosh();
-            windStreakTimer = Math.max(windStreakTimer, 0.56);
-            if (!bannerEvent || bannerTimer < 0.6) {
-              bannerEvent = {
-                id: ++bannerSeq,
+            S.windStreakTimer = Math.max(S.windStreakTimer, 0.56);
+            if (!S.bannerEvent || S.bannerTimer < 0.6) {
+              S.bannerEvent = {
+                id: ++S.bannerSeq,
                 label: 'Slipstream Near-Miss!',
                 detail: `+${pts} pts · +Turbo Charge`,
                 tone: 'emerald',
               };
-              bannerTimer = 1.25;
+              S.bannerTimer = 1.25;
               emitHudSnapshot();
             }
           }
 
           // Express Fever rainbow exhaust sparkles + Sunshower raindrops!
-          if (combo >= FEVER_COMBO_THRESHOLD && comboTimer > 0 && truckState.speed > 1.5) {
-            feverTrailAccum += simDt;
-            if (feverTrailAccum > 0.09) {
-              feverTrailAccum = 0;
+          if (S.combo >= FEVER_COMBO_THRESHOLD && S.comboTimer > 0 && S.truckState.speed > 1.5) {
+            S.feverTrailAccum += simDt;
+            if (S.feverTrailAccum > 0.09) {
+              S.feverTrailAccum = 0;
               spawnParticleBurst(
-                truckState.x - Math.sin(truckState.yaw) * 0.9,
-                0.35 + truckState.y,
-                truckState.z - Math.cos(truckState.yaw) * 0.9,
+                S.truckState.x - Math.sin(S.truckState.yaw) * 0.9,
+                0.35 + S.truckState.y,
+                S.truckState.z - Math.cos(S.truckState.yaw) * 0.9,
                 2,
                 [0xffdf24, 0xff70a6, 0x38bdf8, 0x9ef01a],
                 0.45,
               );
             }
           }
-          if (currentCity.config.hasSunshower) {
-            sunshowerAccum += simDt;
-            if (sunshowerAccum > 0.14) {
-              sunshowerAccum = 0;
+          if (S.currentCity.config.hasSunshower) {
+            S.sunshowerAccum += simDt;
+            if (S.sunshowerAccum > 0.14) {
+              S.sunshowerAccum = 0;
               spawnParticleBurst(
-                truckState.x + (Math.random() - 0.5) * 14,
+                S.truckState.x + (Math.random() - 0.5) * 14,
                 3.2,
-                truckState.z + (Math.random() - 0.5) * 14,
+                S.truckState.z + (Math.random() - 0.5) * 14,
                 2,
                 [0xbae6fd, 0x7dd3fc],
                 0.35,
@@ -1924,126 +1849,126 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
 
           // Check Victory / Defeat Outcome
           const outcome = evaluateRunStatus(
-            currentCity.stops,
-            timeRemainingSec,
-            truckState.health,
+            S.currentCity.stops,
+            S.timeRemainingSec,
+            S.truckState.health,
           );
           if (outcome !== OutcomeKind.None) {
-            pendingOutcome = outcome;
-            finishDelayTimer = outcome === OutcomeKind.Victory ? 1.55 : 0.52;
-            victoryOrbitAngle = 0;
-            victoryConfettiAccum = 0;
+            S.pendingOutcome = outcome;
+            S.finishDelayTimer = outcome === OutcomeKind.Victory ? 1.55 : 0.52;
+            S.victoryOrbitAngle = 0;
+            S.victoryConfettiAccum = 0;
             pokoAudio.setFeverMode(false);
             if (outcome === OutcomeKind.Victory) {
               // Time-left mastery bonus + Stage Clear Confetti Finale!
-              score += Math.round(timeRemainingSec * 15);
+              S.score += Math.round(S.timeRemainingSec * 15);
               pokoAudio.playStageClear();
               spawnParticleBurst(
-                truckState.x,
+                S.truckState.x,
                 1.4,
-                truckState.z,
+                S.truckState.z,
                 28,
                 [0xffe524, 0xff70a6, 0x38bdf8, 0x9ef01a, 0xa855f7],
                 1.45,
               );
-              bannerEvent = {
-                id: ++bannerSeq,
+              S.bannerEvent = {
+                id: ++S.bannerSeq,
                 label: 'Stage Complete!',
                 detail: 'All Parcels Delivered!',
                 tone: 'emerald',
               };
-              bannerTimer = 1.6;
+              S.bannerTimer = 1.6;
             } else {
               pokoAudio.playGameOver();
             }
             emitHudSnapshot();
           }
-        } else if (finishDelayTimer >= 0) {
-          finishDelayTimer -= dt;
-          if (pendingOutcome === OutcomeKind.Victory) {
+        } else if (S.finishDelayTimer >= 0) {
+          S.finishDelayTimer -= dt;
+          if (S.pendingOutcome === OutcomeKind.Victory) {
             // Smooth celebratory coast + Orbiting Confetti Finale!
-            truckState.speed *= Math.exp(-4.5 * dt);
-            victoryOrbitAngle += dt * 1.45;
-            victoryConfettiAccum += dt;
-            if (victoryConfettiAccum > 0.28) {
-              victoryConfettiAccum = 0;
+            S.truckState.speed *= Math.exp(-4.5 * dt);
+            S.victoryOrbitAngle += dt * 1.45;
+            S.victoryConfettiAccum += dt;
+            if (S.victoryConfettiAccum > 0.28) {
+              S.victoryConfettiAccum = 0;
               spawnParticleBurst(
-                truckState.x + (Math.random() - 0.5) * 2.4,
+                S.truckState.x + (Math.random() - 0.5) * 2.4,
                 1.5,
-                truckState.z + (Math.random() - 0.5) * 2.4,
+                S.truckState.z + (Math.random() - 0.5) * 2.4,
                 16,
                 [0xffe524, 0xff70a6, 0x38bdf8, 0x9ef01a, 0xffffff],
                 1.25,
               );
             }
           }
-          if (finishDelayTimer <= 0) {
-            if (demoState.active) {
+          if (S.finishDelayTimer <= 0) {
+            if (S.demoState.active) {
               // Hold celebratory confetti & Victory Orbit inside the demo until 45s completes!
-              finishDelayTimer = 0.25;
+              S.finishDelayTimer = 0.25;
             } else {
-              finishDelayTimer = -1;
+              S.finishDelayTimer = -1;
               clearAllInputs();
               pokoAudio.setFeverMode(false);
-              const deliveredCount = currentCity.stops.filter(
+              const deliveredCount = S.currentCity.stops.filter(
                 (s) => s.delivered,
               ).length;
-              const finalScore = Math.round(score);
-              const ceilLeft = Math.max(0, Math.ceil(timeRemainingSec));
+              const finalScore = Math.round(S.score);
+              const ceilLeft = Math.max(0, Math.ceil(S.timeRemainingSec));
               const runRewards = computeRunRewards(
-                pendingOutcome,
+                S.pendingOutcome,
                 finalScore,
                 deliveredCount,
-                truckState.ticketsCount,
+                S.truckState.ticketsCount,
                 ceilLeft,
               );
-              if (pendingOutcome === OutcomeKind.OutOfTime) {
-                riderLateDeduction += 10.0;
+              if (S.pendingOutcome === OutcomeKind.OutOfTime) {
+                S.riderLateDeduction += 10.0;
               }
               const finalTips = Number(
-                (riderOnTimeBonus + riderHotMealTip + riderBullseyeTip + riderRushHourBonus).toFixed(1),
+                (S.riderOnTimeBonus + S.riderHotMealTip + S.riderBullseyeTip + S.riderRushHourBonus).toFixed(1),
               );
               const finalPenalties = Number(
-                (riderSpillDeduction + riderTrafficFines + riderLateDeduction).toFixed(1),
+                (S.riderSpillDeduction + S.riderTrafficFines + S.riderLateDeduction).toFixed(1),
               );
               const finalNetYuan = Number(
-                (riderBaseIncome + finalTips - finalPenalties).toFixed(1),
+                (S.riderBaseIncome + finalTips - finalPenalties).toFixed(1),
               );
               const praiseRate = Math.max(
                 60,
-                Math.min(100, Math.round((riderReviewScore / 5.0) * 100)),
+                Math.min(100, Math.round((S.riderReviewScore / 5.0) * 100)),
               );
               const riderReceipt: RiderShiftReceipt = {
                 totalOrders: deliveredCount,
-                baseDeliveryFee: Number(riderBaseIncome.toFixed(1)),
-                onTimeBonus: Number(riderOnTimeBonus.toFixed(1)),
-                hotMealTip: Number(riderHotMealTip.toFixed(1)),
-                bullseyeTip: Number(riderBullseyeTip.toFixed(1)),
-                rushHourBonus: Number(riderRushHourBonus.toFixed(1)),
-                spillDeduction: Number(riderSpillDeduction.toFixed(1)),
-                trafficFines: Number(riderTrafficFines.toFixed(1)),
-                lateDeduction: Number(riderLateDeduction.toFixed(1)),
+                baseDeliveryFee: Number(S.riderBaseIncome.toFixed(1)),
+                onTimeBonus: Number(S.riderOnTimeBonus.toFixed(1)),
+                hotMealTip: Number(S.riderHotMealTip.toFixed(1)),
+                bullseyeTip: Number(S.riderBullseyeTip.toFixed(1)),
+                rushHourBonus: Number(S.riderRushHourBonus.toFixed(1)),
+                spillDeduction: Number(S.riderSpillDeduction.toFixed(1)),
+                trafficFines: Number(S.riderTrafficFines.toFixed(1)),
+                lateDeduction: Number(S.riderLateDeduction.toFixed(1)),
                 netEarningsYuan: finalNetYuan,
                 praiseRate,
               };
               onRunFinishedRef.current({
-                level: currentCity.config.level,
-                districtName: currentCity.config.districtName,
-                outcome: pendingOutcome,
+                level: S.currentCity.config.level,
+                districtName: S.currentCity.config.districtName,
+                outcome: S.pendingOutcome,
                 score: finalScore,
                 bestScore: Math.max(bestScoreRef.current, finalScore),
                 coinsEarned: runRewards.coinsEarned,
                 starsEarned: runRewards.starsEarned,
                 earnedSpinToken: runRewards.earnedSpinToken,
                 deliveredCount,
-                totalStops: currentCity.stops.length,
-                bullseyeCount,
+                totalStops: S.currentCity.stops.length,
+                bullseyeCount: S.bullseyeCount,
                 timeRemainingSec: ceilLeft,
-                elapsedSec: Math.round(elapsedSec),
-                maxCombo,
-                healthRemaining: truckState.health,
-                ticketsCount: truckState.ticketsCount,
-                customCity: currentCity.config.customCity,
+                elapsedSec: Math.round(S.elapsedSec),
+                maxCombo: S.maxCombo,
+                healthRemaining: S.truckState.health,
+                ticketsCount: S.truckState.ticketsCount,
+                customCity: S.currentCity.config.customCity,
                 riderReceipt,
               });
             }
@@ -2052,11 +1977,11 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
 
         // Camera Framing: Bird's-Eye 3-2-1 Island Swoop / Demo Drone Zoom -> Heading-Up Chase -> Victory Orbit!
         const isPortraitMobile = camera.aspect < 0.95;
-        const zoomScale = demoState.active ? demoState.cameraZoomScale : 1;
-        const yawOffset = demoState.active ? demoState.cameraYawOffset : 0;
+        const zoomScale = S.demoState.active ? S.demoState.cameraZoomScale : 1;
+        const yawOffset = S.demoState.active ? S.demoState.cameraYawOffset : 0;
         const activeLookAhead =
           (isPortraitMobile ? 6.1 : CHASE_LOOK_AHEAD) *
-          (demoState.active ? 0.8 + 0.2 * zoomScale : 1);
+          (S.demoState.active ? 0.8 + 0.2 * zoomScale : 1);
         const activeBackDist =
           (isPortraitMobile ? CHASE_BACK_DIST * 1.07 : CHASE_BACK_DIST) *
           zoomScale;
@@ -2065,16 +1990,16 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           zoomScale;
         const targetLookY = isPortraitMobile ? -0.45 : 0.35;
 
-        const demoZoomOut = demoState.active ? demoState.transitionZoomAlpha : 0;
-        const swoopA = Math.min(countdownState.swoopAlpha, 1 - demoZoomOut);
+        const demoZoomOut = S.demoState.active ? S.demoState.transitionZoomAlpha : 0;
+        const swoopA = Math.min(S.countdownState.swoopAlpha, 1 - demoZoomOut);
         // Keep fog pushed back during high Bird's-Eye overview so the entire miniature island sparkles crisply!
         if (scene.fog instanceof THREE.Fog) {
           const baseFogNear =
-            currentCity.config.atmosphere === ShiftAtmosphere.TwilightNeon
+            S.currentCity.config.atmosphere === ShiftAtmosphere.TwilightNeon
               ? 54
               : 58;
           const baseFogFar =
-            currentCity.config.atmosphere === ShiftAtmosphere.TwilightNeon
+            S.currentCity.config.atmosphere === ShiftAtmosphere.TwilightNeon
               ? 122
               : 128;
           const ovwFactor = 1 - swoopA;
@@ -2085,32 +2010,32 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         if (swoopA < 0.999) {
           // Cinematic Bird's-Eye Island Overview diving smoothly to/from street or Victory Orbit!
           const inVictory =
-            finishDelayTimer >= 0 && pendingOutcome === OutcomeKind.Victory;
-          camYaw = wrapAngleRad(truckState.yaw + yawOffset);
-          let chaseLeadX = truckState.x + Math.sin(camYaw) * activeLookAhead;
+            S.finishDelayTimer >= 0 && S.pendingOutcome === OutcomeKind.Victory;
+          S.camYaw = wrapAngleRad(S.truckState.yaw + yawOffset);
+          let chaseLeadX = S.truckState.x + Math.sin(S.camYaw) * activeLookAhead;
           let chaseLeadY = targetLookY;
-          let chaseLeadZ = truckState.z + Math.cos(camYaw) * activeLookAhead;
-          let chaseCamX = chaseLeadX - Math.sin(camYaw) * activeBackDist;
+          let chaseLeadZ = S.truckState.z + Math.cos(S.camYaw) * activeLookAhead;
+          let chaseCamX = chaseLeadX - Math.sin(S.camYaw) * activeBackDist;
           let chaseCamY = targetLookY + activeUpHeight;
-          let chaseCamZ = chaseLeadZ - Math.cos(camYaw) * activeBackDist;
+          let chaseCamZ = chaseLeadZ - Math.cos(S.camYaw) * activeBackDist;
 
           if (inVictory) {
-            const orbitYaw = camYaw + victoryOrbitAngle;
-            const orbitLerp = Math.min(1, victoryOrbitAngle / 0.8);
+            const orbitYaw = S.camYaw + S.victoryOrbitAngle;
+            const orbitLerp = Math.min(1, S.victoryOrbitAngle / 0.8);
             const vicDist = activeBackDist * (1 - 0.24 * orbitLerp);
             const vicHeight = activeUpHeight * (1 - 0.28 * orbitLerp);
-            chaseLeadX = truckState.x;
+            chaseLeadX = S.truckState.x;
             chaseLeadY = 0.55;
-            chaseLeadZ = truckState.z;
+            chaseLeadZ = S.truckState.z;
             chaseCamX = chaseLeadX - Math.sin(orbitYaw) * vicDist;
             chaseCamY = chaseLeadY + vicHeight;
             chaseCamZ = chaseLeadZ - Math.cos(orbitYaw) * vicDist;
           }
 
-          const islandSpan = currentCity.totalGridSize * TILE_SIZE;
-          const ovwYaw = demoState.active
-            ? Math.PI / 2 - 0.34 + demoState.elapsedSec * 0.04
-            : truckState.yaw - 0.34 * (1 - swoopA);
+          const islandSpan = S.currentCity.totalGridSize * TILE_SIZE;
+          const ovwYaw = S.demoState.active
+            ? Math.PI / 2 - 0.34 + S.demoState.elapsedSec * 0.04
+            : S.truckState.yaw - 0.34 * (1 - swoopA);
           const ovwHeight = islandSpan * (isPortraitMobile ? 1.56 : 1.44);
           const ovwBack = islandSpan * (isPortraitMobile ? 1.04 : 0.94);
           const ovwCamX = -Math.sin(ovwYaw) * ovwBack;
@@ -2131,18 +2056,18 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           );
           camera.lookAt(camLookTarget);
         } else if (
-          finishDelayTimer >= 0 &&
-          pendingOutcome === OutcomeKind.Victory
+          S.finishDelayTimer >= 0 &&
+          S.pendingOutcome === OutcomeKind.Victory
         ) {
           // Celebratory Stage-Clear 3D Victory Orbit around the Courier Van!
-          const orbitYaw = camYaw + victoryOrbitAngle;
-          const orbitLerp = Math.min(1, victoryOrbitAngle / 0.8);
+          const orbitYaw = S.camYaw + S.victoryOrbitAngle;
+          const orbitLerp = Math.min(1, S.victoryOrbitAngle / 0.8);
           const vicDist = activeBackDist * (1 - 0.24 * orbitLerp);
           const vicHeight = activeUpHeight * (1 - 0.28 * orbitLerp);
           const followDamp = 1 - Math.exp(-8.0 * dt);
-          camLookTarget.x += (truckState.x - camLookTarget.x) * followDamp;
+          camLookTarget.x += (S.truckState.x - camLookTarget.x) * followDamp;
           camLookTarget.y += (0.55 - camLookTarget.y) * followDamp;
-          camLookTarget.z += (truckState.z - camLookTarget.z) * followDamp;
+          camLookTarget.z += (S.truckState.z - camLookTarget.z) * followDamp;
           camera.position.set(
             camLookTarget.x - Math.sin(orbitYaw) * vicDist,
             camLookTarget.y + vicHeight,
@@ -2150,37 +2075,37 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           );
           camera.lookAt(camLookTarget);
         } else {
-          const desiredCamYaw = wrapAngleRad(truckState.yaw + yawOffset);
+          const desiredCamYaw = wrapAngleRad(S.truckState.yaw + yawOffset);
           const yawDamp = 1 - Math.exp(-7.5 * dt);
-          camYaw = wrapAngleRad(
-            camYaw + wrapAngleRad(desiredCamYaw - camYaw) * yawDamp,
+          S.camYaw = wrapAngleRad(
+            S.camYaw + wrapAngleRad(desiredCamYaw - S.camYaw) * yawDamp,
           );
 
           const followDamp = 1 - Math.exp(-9.5 * dt);
-          const leadX = truckState.x + Math.sin(camYaw) * activeLookAhead;
-          const leadZ = truckState.z + Math.cos(camYaw) * activeLookAhead;
+          const leadX = S.truckState.x + Math.sin(S.camYaw) * activeLookAhead;
+          const leadZ = S.truckState.z + Math.cos(S.camYaw) * activeLookAhead;
           camLookTarget.x += (leadX - camLookTarget.x) * followDamp;
           camLookTarget.y += (targetLookY - camLookTarget.y) * followDamp;
           camLookTarget.z += (leadZ - camLookTarget.z) * followDamp;
 
-          const rightX = -Math.cos(camYaw);
-          const rightZ = Math.sin(camYaw);
-          const shakeAmt = cameraTrauma * cameraTrauma * 0.45;
+          const rightX = -Math.cos(S.camYaw);
+          const rightZ = Math.sin(S.camYaw);
+          const shakeAmt = S.cameraTrauma * S.cameraTrauma * 0.45;
           const shakeLat =
-            shakeAmt > 0.001 ? Math.sin(visualClock * 53) * shakeAmt : 0;
+            shakeAmt > 0.001 ? Math.sin(S.visualClock * 53) * shakeAmt : 0;
           const shakeFwd =
-            shakeAmt > 0.001 ? Math.cos(visualClock * 47) * shakeAmt : 0;
+            shakeAmt > 0.001 ? Math.cos(S.visualClock * 47) * shakeAmt : 0;
 
           camera.position.set(
             camLookTarget.x -
-              Math.sin(camYaw) * activeBackDist +
+              Math.sin(S.camYaw) * activeBackDist +
               rightX * shakeLat +
-              Math.sin(camYaw) * shakeFwd,
+              Math.sin(S.camYaw) * shakeFwd,
             camLookTarget.y + activeUpHeight,
             camLookTarget.z -
-              Math.cos(camYaw) * activeBackDist +
+              Math.cos(S.camYaw) * activeBackDist +
               rightZ * shakeLat +
-              Math.cos(camYaw) * shakeFwd,
+              Math.cos(S.camYaw) * shakeFwd,
           );
           camera.lookAt(camLookTarget);
         }
@@ -2191,8 +2116,8 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
 
         // Keep minimap snapshot smooth every frame while throttling React HUD state to ~8Hz
         syncMinimapSnapshot();
-        if (now - lastHudEmitTime > 125) {
-          lastHudEmitTime = now;
+        if (now - S.lastHudEmitTime > 125) {
+          S.lastHudEmitTime = now;
           emitHudSnapshot();
         }
       }
@@ -2201,55 +2126,55 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
 
       // 7. Update Visual Meshes (Truck Gait/Roll/Pitch/Steer/Jump/Shield, Citizens, Pedestrians, Hazards, Particles)
       truckRig.root.position.set(
-        truckState.x,
-        0.24 + truckState.y,
-        truckState.z,
+        S.truckState.x,
+        0.24 + S.truckState.y,
+        S.truckState.z,
       );
-      truckRig.root.rotation.y = truckState.yaw;
+      truckRig.root.rotation.y = S.truckState.yaw;
       // Keep contact shadow anchored flush to the road surface even while airborne off a Canal Ramp!
-      truckRig.shadowMesh.position.y = 0.025 - truckState.y;
-      const airShadowScale = Math.max(0.62, 1 - truckState.y * 0.22);
+      truckRig.shadowMesh.position.y = 0.025 - S.truckState.y;
+      const airShadowScale = Math.max(0.62, 1 - S.truckState.y * 0.22);
       truckRig.shadowMesh.scale.set(airShadowScale, airShadowScale, 1);
 
-      truckRig.shieldRing.visible = truckState.hasBumperShield;
-      if (truckState.hasBumperShield) {
-        truckRig.shieldRing.rotation.z = visualClock * 1.8;
+      truckRig.shieldRing.visible = S.truckState.hasBumperShield;
+      if (S.truckState.hasBumperShield) {
+        truckRig.shieldRing.rotation.z = S.visualClock * 1.8;
       }
-      truckRig.topperPivot.rotation.y = Math.sin(visualClock * 2.4) * 0.16;
+      truckRig.topperPivot.rotation.y = Math.sin(S.visualClock * 2.4) * 0.16;
 
       // Blink gently during invulnerability frames
       truckRig.root.visible =
-        truckState.invulnTimer <= 0 ||
-        Math.floor(truckState.invulnTimer * 16) % 2 === 0;
+        S.truckState.invulnTimer <= 0 ||
+        Math.floor(S.truckState.invulnTimer * 16) % 2 === 0;
 
       // Distance-synced suspension bounce + body roll/pitch + squash-and-stretch + front wheel steering!
       const gaitBob =
-        truckState.y > 0.05
+        S.truckState.y > 0.05
           ? 0
-          : Math.abs(Math.sin(truckState.distanceTraveled * 2.8)) *
-            Math.min(1, truckState.speed / 5) *
+          : Math.abs(Math.sin(S.truckState.distanceTraveled * 2.8)) *
+            Math.min(1, S.truckState.speed / 5) *
             0.055;
-      const invScaleXZ = 1 / Math.sqrt(truckState.squashY);
+      const invScaleXZ = 1 / Math.sqrt(S.truckState.squashY);
       truckRig.bodyTiltGroup.position.y = gaitBob;
-      truckRig.bodyTiltGroup.rotation.z = truckState.rollAngle;
+      truckRig.bodyTiltGroup.rotation.z = S.truckState.rollAngle;
       truckRig.bodyTiltGroup.rotation.x =
-        truckState.pitchAngle - Math.min(0.22, truckState.vy * 0.022);
+        S.truckState.pitchAngle - Math.min(0.22, S.truckState.vy * 0.022);
       truckRig.bodyTiltGroup.scale.set(
         invScaleXZ,
-        truckState.squashY,
+        S.truckState.squashY,
         invScaleXZ,
       );
       for (const sg of truckRig.frontWheelSteerGroups) {
-        sg.rotation.y = truckState.steerAngle;
+        sg.rotation.y = S.truckState.steerAngle;
       }
       for (const w of truckRig.wheels) {
-        w.rotation.x = truckState.distanceTraveled * 2.4;
+        w.rotation.x = S.truckState.distanceTraveled * 2.4;
       }
       // Glow brake taillights bright crimson when braking!
-      truckRig.taillightMat.emissiveIntensity = truckState.isBraking ? 1.9 : 0.45;
+      truckRig.taillightMat.emissiveIntensity = S.truckState.isBraking ? 1.9 : 0.45;
 
       // Wobbly Roof-Rack Parcel Stack Spring-Damper Sway!
-      stepParcelStackWobble(parcelWobble, truckState, dt);
+      stepParcelStackWobble(S.parcelWobble, S.truckState, dt);
       for (let pi = 0; pi < truckRig.parcelBoxes.length; pi++) {
         const box = truckRig.parcelBoxes[pi];
         if (!box.visible) continue;
@@ -2258,19 +2183,19 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         const by = (box.userData.baseY as number) ?? 1.13;
         const bz = (box.userData.baseZ as number) ?? -0.32;
         const brotY = (box.userData.baseRotY as number) ?? 0;
-        box.position.x = bx - Math.sin(parcelWobble.roll) * layer * 0.14;
-        box.position.y = by + parcelWobble.bounceY * (1 + layer * 0.35);
-        box.position.z = bz + Math.sin(parcelWobble.pitch) * layer * 0.12;
-        box.rotation.z = parcelWobble.roll * (0.45 + layer * 0.25);
-        box.rotation.x = parcelWobble.pitch * (0.42 + layer * 0.22);
-        box.rotation.y = brotY + parcelWobble.roll * 0.12 * (pi % 2 === 0 ? 1 : -1);
+        box.position.x = bx - Math.sin(S.parcelWobble.roll) * layer * 0.14;
+        box.position.y = by + S.parcelWobble.bounceY * (1 + layer * 0.35);
+        box.position.z = bz + Math.sin(S.parcelWobble.pitch) * layer * 0.12;
+        box.rotation.z = S.parcelWobble.roll * (0.45 + layer * 0.25);
+        box.rotation.x = S.parcelWobble.pitch * (0.42 + layer * 0.22);
+        box.rotation.y = brotY + S.parcelWobble.roll * 0.12 * (pi % 2 === 0 ? 1 : -1);
       }
 
       // 3D Near-Miss & Rocket-Start Slipstream Wind-Streak Ribbons!
-      windStreakRig.root.visible = windStreakTimer > 0;
-      if (windStreakTimer > 0) {
-        const wsPulse = Math.min(1, windStreakTimer / 0.28);
-        const streakSlide = ((visualClock * 18) % 1) * 0.75 - 0.35;
+      windStreakRig.root.visible = S.windStreakTimer > 0;
+      if (S.windStreakTimer > 0) {
+        const wsPulse = Math.min(1, S.windStreakTimer / 0.28);
+        const streakSlide = ((S.visualClock * 18) % 1) * 0.75 - 0.35;
         windStreakRig.leftRibbon.position.z = -streakSlide;
         windStreakRig.rightRibbon.position.z = -streakSlide * 0.85;
         windStreakRig.leftRibbon.scale.set(1, 1, 0.65 + wsPulse * 0.65);
@@ -2278,8 +2203,8 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       }
 
       // Overview Sky-Beacons scale tall during 3-2-1 Bird's-Eye Swoop and tuck down smoothly when driving!
-      const overviewVisibilityFactor = Math.max(0, 1 - countdownState.swoopAlpha * 1.05);
-      for (const rb of rampBeaconGroups) {
+      const overviewVisibilityFactor = Math.max(0, 1 - S.countdownState.swoopAlpha * 1.05);
+      for (const rb of S.rampBeaconGroups) {
         rb.visible = overviewVisibilityFactor > 0.04;
         if (rb.visible) {
           rb.scale.set(
@@ -2291,9 +2216,9 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       }
 
       // Update Articulated Waiting Customers (plus Excitement Charm, Overview Beam & Bullseye Ring!)
-      const activeStop = getActiveStop(currentCity.stops);
-      citizenRigs.forEach((cr, idx) => {
-        const stop = currentCity.stops[idx];
+      const activeStop = getActiveStop(S.currentCity.stops);
+      S.citizenRigs.forEach((cr, idx) => {
+        const stop = S.currentCity.stops[idx];
         if (!stop) return;
         if (
           stop.liveCitizenX !== undefined &&
@@ -2307,34 +2232,34 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         }
         const isNext = activeStop?.id === stop.id;
         if (stop.delivered) {
-          const hop = Math.abs(Math.sin(visualClock * 6 + idx)) * 0.14;
+          const hop = Math.abs(Math.sin(S.visualClock * 6 + idx)) * 0.14;
           cr.person.bodyBounce.position.y = hop;
           cr.person.rightArm.rotation.x = -2.5;
           cr.person.leftArm.rotation.x = -2.5;
-          cr.person.rightArm.rotation.z = -0.3 + Math.sin(visualClock * 11) * 0.25;
-          cr.person.leftArm.rotation.z = 0.3 - Math.sin(visualClock * 11) * 0.25;
+          cr.person.rightArm.rotation.z = -0.3 + Math.sin(S.visualClock * 11) * 0.25;
+          cr.person.leftArm.rotation.z = 0.3 - Math.sin(S.visualClock * 11) * 0.25;
           cr.excitementBadge.visible = true;
           cr.excitementBadge.position.y = 1.62 + hop * 0.9;
-          cr.excitementBadge.rotation.y = visualClock * 4.6;
+          cr.excitementBadge.rotation.y = S.visualClock * 4.6;
           cr.overviewBeam.visible = false;
         } else if (isNext) {
           cr.person.bodyBounce.position.y =
-            Math.abs(Math.sin(visualClock * 4.8)) * 0.08;
+            Math.abs(Math.sin(S.visualClock * 4.8)) * 0.08;
           cr.person.rightArm.rotation.x = -2.55;
           cr.person.rightArm.rotation.z =
-            -0.25 + Math.sin(visualClock * 10.5) * 0.36;
-          cr.person.headGroup.rotation.y = Math.sin(visualClock * 3.2) * 0.18;
-          cr.pinSprite.position.y = 1.96 + Math.sin(visualClock * 4.5) * 0.12;
+            -0.25 + Math.sin(S.visualClock * 10.5) * 0.36;
+          cr.person.headGroup.rotation.y = Math.sin(S.visualClock * 3.2) * 0.18;
+          cr.pinSprite.position.y = 1.96 + Math.sin(S.visualClock * 4.5) * 0.12;
           cr.pinSprite.scale.setScalar(
             1.04 + overviewVisibilityFactor * 0.55,
           );
           cr.excitementBadge.visible = true;
           cr.excitementBadge.position.y =
-            1.48 + Math.sin(visualClock * 5.8) * 0.09;
-          cr.excitementBadge.rotation.y = visualClock * 3.4;
-          const pulseScale = 1 + Math.sin(visualClock * 5.5) * 0.1;
+            1.48 + Math.sin(S.visualClock * 5.8) * 0.09;
+          cr.excitementBadge.rotation.y = S.visualClock * 3.4;
+          const pulseScale = 1 + Math.sin(S.visualClock * 5.5) * 0.1;
           cr.outerRing.scale.set(pulseScale, pulseScale, 1);
-          const bullScale = 1 + Math.cos(visualClock * 7.2) * 0.12;
+          const bullScale = 1 + Math.cos(S.visualClock * 7.2) * 0.12;
           cr.bullseyeRing.scale.set(bullScale, bullScale, 1);
           cr.padGroup.visible = true;
           cr.overviewBeam.visible = true;
@@ -2345,12 +2270,12 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           );
         } else {
           cr.person.bodyBounce.position.y =
-            Math.abs(Math.sin(visualClock * 2.0 + idx)) * 0.02;
+            Math.abs(Math.sin(S.visualClock * 2.0 + idx)) * 0.02;
           cr.person.rightArm.rotation.x = 0;
           cr.person.rightArm.rotation.z = -0.1;
           cr.person.headGroup.rotation.y =
-            Math.sin(visualClock * 1.5 + idx) * 0.24;
-          cr.pinSprite.position.y = 1.84 + Math.sin(visualClock * 2.5 + idx) * 0.05;
+            Math.sin(S.visualClock * 1.5 + idx) * 0.24;
+          cr.pinSprite.position.y = 1.84 + Math.sin(S.visualClock * 2.5 + idx) * 0.05;
           cr.pinSprite.scale.setScalar(
             0.78 + overviewVisibilityFactor * 0.38,
           );
@@ -2361,7 +2286,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       });
 
       // Animate Obstacle-Free Sidewalk & Plaza Pedestrians (distance-synced stride, zero skating!)
-      for (const item of pedestrianRigs) {
+      for (const item of S.pedestrianRigs) {
         const p = item.data;
         item.rig.root.position.set(p.x, 0.42, p.z);
         item.rig.root.rotation.y = p.yaw;
@@ -2372,9 +2297,9 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           item.rig.leftArm.rotation.x = 0;
           item.rig.rightArm.rotation.x = -2.45;
           item.rig.rightArm.rotation.z =
-            -0.25 + Math.sin(visualClock * 11.5) * 0.32;
+            -0.25 + Math.sin(S.visualClock * 11.5) * 0.32;
           item.rig.bodyBounce.position.y =
-            Math.abs(Math.sin(visualClock * 5.2)) * 0.04;
+            Math.abs(Math.sin(S.visualClock * 5.2)) * 0.04;
         } else {
           const curSpd = Math.hypot(p.vx, p.vz);
           const speedRatio = Math.min(
@@ -2392,29 +2317,29 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       }
 
       // Animate Canal Boats & Sailboats gently cruising and bobbing on the water!
-      for (const bItem of boatRigs) {
+      for (const bItem of S.boatRigs) {
         const b = bItem.data;
         const dx = b.patrolEnd.x - b.patrolStart.x;
         const dz = b.patrolEnd.z - b.patrolStart.z;
         const dist = Math.max(0.5, Math.hypot(dx, dz));
         const omega = (b.speed / dist) * 0.9;
-        const phase = visualClock * omega + b.phaseOffset;
+        const phase = S.visualClock * omega + b.phaseOffset;
         const u = 0.5 - 0.5 * Math.cos(phase);
         const dirSign = Math.sin(phase) >= 0 ? 1 : -1;
 
-        const bobY = 0.055 + Math.sin(visualClock * 2.4 + b.phaseOffset) * 0.025;
+        const bobY = 0.055 + Math.sin(S.visualClock * 2.4 + b.phaseOffset) * 0.025;
         bItem.mesh.position.set(
           b.patrolStart.x + dx * u,
           bobY,
           b.patrolStart.z + dz * u,
         );
         bItem.mesh.rotation.y = Math.atan2(dx * dirSign, dz * dirSign);
-        bItem.mesh.rotation.z = Math.sin(visualClock * 1.9 + b.phaseOffset) * 0.04;
+        bItem.mesh.rotation.z = Math.sin(S.visualClock * 1.9 + b.phaseOffset) * 0.04;
       }
 
       // Animate Flocking 3D Songbirds & Harbor Seagulls!
-      for (const bird of birdRigs) {
-        const angle = visualClock * bird.speed + bird.phase;
+      for (const bird of S.birdRigs) {
+        const angle = S.visualClock * bird.speed + bird.phase;
         const bx = bird.centerX + Math.cos(angle) * bird.orbitRadiusX;
         const bz = bird.centerZ + Math.sin(angle) * bird.orbitRadiusZ;
         const vx = -Math.sin(angle) * bird.orbitRadiusX * bird.speed;
@@ -2427,15 +2352,15 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         bird.rig.root.rotation.x = Math.cos(angle * 2.1) * 0.08;
 
         // Naturalistic flap-flap-glide cadence!
-        const glideCycle = Math.sin(visualClock * 1.7 + bird.phase);
+        const glideCycle = Math.sin(S.visualClock * 1.7 + bird.phase);
         const flapAmp = glideCycle > 0.55 ? 0.14 : 0.66;
-        const flap = Math.sin(visualClock * bird.flapSpeed + bird.phase) * flapAmp;
+        const flap = Math.sin(S.visualClock * bird.flapSpeed + bird.phase) * flapAmp;
         bird.rig.leftWingPivot.rotation.z = flap;
         bird.rig.rightWingPivot.rotation.z = -flap;
       }
 
       // Update Traffic & Gate Hazard Visuals + Crash Wobble, Hit-Flash & 3D Comic Honk Rings!
-      for (const hr of hazardRigs) {
+      for (const hr of S.hazardRigs) {
         const h = hr.hazard;
         hr.root.position.set(h.x, 0.24, h.z);
         hr.root.rotation.y = h.yaw;
@@ -2447,7 +2372,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
             const prog = 1 - Math.min(1, hvt / 0.72);
             const popScale = 0.55 + Math.sin(prog * Math.PI) * 0.75;
             hr.honkRingGroup.scale.setScalar(popScale);
-            hr.honkRingGroup.rotation.y = camYaw - h.yaw;
+            hr.honkRingGroup.rotation.y = S.camYaw - h.yaw;
           }
         }
 
@@ -2473,7 +2398,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           if (hr.warningBeacon) {
             hr.warningBeacon.visible = isWinding;
             if (isWinding) {
-              const s = 1 + Math.sin(visualClock * 28) * 0.28;
+              const s = 1 + Math.sin(S.visualClock * 28) * 0.28;
               hr.warningBeacon.scale.setScalar(s);
             }
           }
@@ -2489,7 +2414,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
             h.phase === HazardPhase.Active
               ? gateBumpWobble
               : h.phase === HazardPhase.Windup
-                ? Math.PI * 0.22 + Math.sin(visualClock * 22) * 0.08
+                ? Math.PI * 0.22 + Math.sin(S.visualClock * 22) * 0.08
                 : Math.PI * 0.44;
           hr.gateArm.rotation.z +=
             (targetRot - hr.gateArm.rotation.z) * (1 - Math.exp(-12 * dt));
@@ -2497,7 +2422,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
             const mat = hr.warningBeacon.material as THREE.MeshStandardMaterial;
             mat.emissiveIntensity =
               h.phase === HazardPhase.Windup
-                ? 0.6 + Math.abs(Math.sin(visualClock * 20)) * 1.4
+                ? 0.6 + Math.abs(Math.sin(S.visualClock * 20)) * 1.4
                 : h.phase === HazardPhase.Active
                   ? 1.0
                   : 0.15;
@@ -2505,8 +2430,8 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         }
       }
 
-      const greenWaveOverride = truckState.greenWaveTimer > 0;
-      for (const sr of signalRigs) {
+      const greenWaveOverride = S.truckState.greenWaveTimer > 0;
+      for (const sr of S.signalRigs) {
         const st = sr.signal.state;
         const ewG = greenWaveOverride || st === SignalAxisState.EWGreen;
         const ewY = !greenWaveOverride && st === SignalAxisState.EWYellow;
@@ -2524,63 +2449,63 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         sr.nsRedMat.emissiveIntensity = nsR ? 1.45 : 0.05;
       }
 
-      for (const kr of kioskRigs) {
+      for (const kr of S.kioskRigs) {
         const ready = kr.kiosk.cooldown <= 0;
         kr.roadRingGroup.visible = ready;
-        kr.cupGroup.rotation.y = visualClock * (ready ? 1.65 : 0.45);
+        kr.cupGroup.rotation.y = S.visualClock * (ready ? 1.65 : 0.45);
         kr.cupGroup.position.y =
-          0.94 + (ready ? Math.sin(visualClock * 3.5) * 0.05 : 0);
+          0.94 + (ready ? Math.sin(S.visualClock * 3.5) * 0.05 : 0);
       }
 
-      for (const gr of garageRigs) {
+      for (const gr of S.garageRigs) {
         const ready = gr.garage.cooldown <= 0;
         gr.roadRingGroup.visible = ready;
-        gr.wrenchGroup.rotation.y = visualClock * (ready ? 1.8 : 0.5);
+        gr.wrenchGroup.rotation.y = S.visualClock * (ready ? 1.8 : 0.5);
         gr.wrenchGroup.position.y =
-          1.28 + (ready ? Math.sin(visualClock * 3.8) * 0.05 : 0);
+          1.28 + (ready ? Math.sin(S.visualClock * 3.8) * 0.05 : 0);
       }
 
-      for (const dr of duckRigs) {
+      for (const dr of S.duckRigs) {
         dr.mesh.position.set(dr.data.x, 0.25, dr.data.z);
         dr.mesh.rotation.y = dr.data.yaw;
-        dr.mesh.rotation.z = Math.sin(visualClock * 11 + dr.data.phase) * 0.09;
+        dr.mesh.rotation.z = Math.sin(S.visualClock * 11 + dr.data.phase) * 0.09;
       }
 
-      for (const gwr of greenWaveRigs) {
+      for (const gwr of S.greenWaveRigs) {
         const ready = gwr.data.cooldown <= 0;
         gwr.mesh.visible = ready;
         if (ready) {
-          gwr.mesh.position.y = 0.62 + Math.sin(visualClock * 3.6) * 0.08;
-          gwr.mesh.rotation.y = visualClock * 2.1;
+          gwr.mesh.position.y = 0.62 + Math.sin(S.visualClock * 3.6) * 0.08;
+          gwr.mesh.rotation.y = S.visualClock * 2.1;
         }
       }
 
-      if (rivalRig && currentCity.rivalCourier) {
-        const rv = currentCity.rivalCourier;
-        rivalRig.vanGroup.position.set(rv.x, 0.24, rv.z);
-        rivalRig.vanGroup.rotation.y = rv.yaw;
+      if (S.rivalRig && S.currentCity.rivalCourier) {
+        const rv = S.currentCity.rivalCourier;
+        S.rivalRig.vanGroup.position.set(rv.x, 0.24, rv.z);
+        S.rivalRig.vanGroup.rotation.y = rv.yaw;
         const rbt = rv.bumpTimer ?? 0;
         if (rbt > 0) {
-          rivalRig.bodyTiltGroup.rotation.z = Math.sin(rbt * 38) * rbt * 0.44;
-          rivalRig.bodyTiltGroup.rotation.x = Math.cos(rbt * 31) * rbt * 0.3;
+          S.rivalRig.bodyTiltGroup.rotation.z = Math.sin(rbt * 38) * rbt * 0.44;
+          S.rivalRig.bodyTiltGroup.rotation.x = Math.cos(rbt * 31) * rbt * 0.3;
           const sy = Math.max(0.75, 1 + Math.sin(rbt * 26) * rbt * 0.32);
           const sxz = 1 / Math.sqrt(sy);
-          rivalRig.bodyTiltGroup.scale.set(sxz, sy, sxz);
-          rivalRig.hitFlashMat.emissive.setHex(0xfff3b0);
-          rivalRig.hitFlashMat.emissiveIntensity = Math.min(0.85, rbt * 1.9);
+          S.rivalRig.bodyTiltGroup.scale.set(sxz, sy, sxz);
+          S.rivalRig.hitFlashMat.emissive.setHex(0xfff3b0);
+          S.rivalRig.hitFlashMat.emissiveIntensity = Math.min(0.85, rbt * 1.9);
         } else {
-          rivalRig.bodyTiltGroup.rotation.set(0, 0, 0);
-          rivalRig.bodyTiltGroup.scale.set(1, 1, 1);
-          rivalRig.hitFlashMat.emissiveIntensity = 0;
+          S.rivalRig.bodyTiltGroup.rotation.set(0, 0, 0);
+          S.rivalRig.bodyTiltGroup.scale.set(1, 1, 1);
+          S.rivalRig.hitFlashMat.emissiveIntensity = 0;
         }
-        rivalRig.bonusDropGroup.visible = !rv.bonusClaimed && !rv.rivalWonBonus;
-        if (rivalRig.bonusDropGroup.visible) {
-          rivalRig.bonusDropGroup.rotation.y = visualClock * 2.2;
-          rivalRig.bonusDropGroup.position.y =
-            0.65 + Math.sin(visualClock * 3.5) * 0.08;
-          rivalRig.bonusOverviewBeam.visible = overviewVisibilityFactor > 0.03;
-          if (rivalRig.bonusOverviewBeam.visible) {
-            rivalRig.bonusOverviewBeam.scale.set(
+        S.rivalRig.bonusDropGroup.visible = !rv.bonusClaimed && !rv.rivalWonBonus;
+        if (S.rivalRig.bonusDropGroup.visible) {
+          S.rivalRig.bonusDropGroup.rotation.y = S.visualClock * 2.2;
+          S.rivalRig.bonusDropGroup.position.y =
+            0.65 + Math.sin(S.visualClock * 3.5) * 0.08;
+          S.rivalRig.bonusOverviewBeam.visible = overviewVisibilityFactor > 0.03;
+          if (S.rivalRig.bonusOverviewBeam.visible) {
+            S.rivalRig.bonusOverviewBeam.scale.set(
               0.88,
               0.25 + overviewVisibilityFactor * 1.05,
               0.88,
@@ -2589,9 +2514,9 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         }
       }
 
-      for (const br of balloonRigs) {
+      for (const br of S.balloonRigs) {
         const b = br.data;
-        const t = visualClock * b.speed + b.phaseOffset;
+        const t = S.visualClock * b.speed + b.phaseOffset;
         br.mesh.position.set(
           b.baseX + Math.cos(t) * b.orbitRadius,
           b.baseY + Math.sin(t * 1.8) * 0.42,
@@ -2602,19 +2527,19 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
 
       // Update Forward-Only Route Breadcrumb Chevrons along live road path to Active Stop!
       if (activeStop && currentPhase === GamePhase.Playing) {
-        if (visualClock - lastPathCalcTime > 0.22) {
-          lastPathCalcTime = visualClock;
+        if (S.visualClock - S.lastPathCalcTime > 0.22) {
+          S.lastPathCalcTime = S.visualClock;
           refreshForwardRoadPath();
         }
       } else {
-        cachedRoadPath = [];
+        S.cachedRoadPath = [];
       }
 
-      fx.updateBreadcrumbs(cachedRoadPath, visualClock);
+      fx.updateBreadcrumbs(S.cachedRoadPath, S.visualClock);
 
       // Advance every pooled visual effect (parcels, tip coins, crash bursts, particles)
-      fx.setCoinTarget(truckState.x, 1.38 + truckState.y, truckState.z);
-      fx.update(dt, camYaw);
+      fx.setCoinTarget(S.truckState.x, 1.38 + S.truckState.y, S.truckState.z);
+      fx.update(dt, S.camYaw);
 
       renderer.render(scene, camera);
 
@@ -2622,19 +2547,19 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       if (isSoftwareGl) {
         afterDraw(tick);
       } else {
-        frameId = requestAnimationFrame(tick);
+        S.frameId = requestAnimationFrame(tick);
       }
     }
 
 
-    frameId = requestAnimationFrame(tick);
+    S.frameId = requestAnimationFrame(tick);
 
   return {
     dispose: () => {
-        disposed = true;
+        S.disposed = true;
         pokoAudio.setMusicPlaying(false);
-        cancelAnimationFrame(frameId);
-        clearTimeout(frameId);
+        cancelAnimationFrame(S.frameId);
+        clearTimeout(S.frameId);
         resizeObs.disconnect();
         detachInput();
         renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
