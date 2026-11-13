@@ -1,0 +1,445 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React from 'react';
+import { pokoAudio } from '../game/audio';
+import { I18N, SupportedLanguage } from '../game/i18n';
+import { GamePhase, OutcomeKind, RunSnapshot } from '../game/types';
+
+interface StatusModalProps {
+  phase: GamePhase;
+  snapshot: RunSnapshot | null;
+  currentLevel: number;
+  lang: SupportedLanguage;
+  onResume: () => void;
+  onRestart: () => void;
+  onNextLevel: () => void;
+  onOpenShop: () => void;
+  onOpenCustomCity?: () => void;
+  onBackToTitle: () => void;
+}
+
+export const StatusModal: React.FC<StatusModalProps> = ({
+  phase,
+  snapshot,
+  currentLevel,
+  lang,
+  onResume,
+  onRestart,
+  onNextLevel,
+  onOpenShop,
+  onOpenCustomCity,
+  onBackToTitle,
+}) => {
+  if (phase !== GamePhase.Paused && phase !== GamePhase.GameOver) {
+    return null;
+  }
+
+  const t = I18N[lang];
+  const isPaused = phase === GamePhase.Paused;
+  const isVictory = snapshot?.outcome === OutcomeKind.Victory;
+  const isBreakdown = snapshot?.outcome === OutcomeKind.Breakdown;
+  const starsEarned = snapshot?.starsEarned ?? 0;
+  const isCustomCity = Boolean(snapshot?.customCity);
+
+  return (
+    <div
+      className="fixed inset-0 z-30 flex items-center justify-center p-4 bg-black/55 backdrop-blur-xs"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-heading"
+    >
+      <div className="pointer-events-auto arcade-panel rounded-3xl p-5 sm:p-6 w-full max-w-md max-h-[92vh] overflow-y-auto flex flex-col gap-3.5">
+        {isPaused ? (
+          <>
+            <div className="arcade-pill-brown rounded-2xl px-4 py-3 text-center">
+              <div className="text-xs font-extrabold text-[#ffee1f] tracking-wide">
+                {isCustomCity
+                  ? snapshot?.customCity?.districtName || t.customDistrictBadge
+                  : t.stageLabel.replace('{level}', String(currentLevel))} · {lang === 'zh' ? '暂停中' : 'Paused'}
+              </div>
+              <h2
+                id="modal-heading"
+                className="arcade-stroke text-white text-2xl sm:text-3xl mt-0.5 leading-tight"
+              >
+                {t.pausedTitle}
+              </h2>
+            </div>
+
+            <div className="bg-[#fffdf5] border-[2.5px] border-[#1d1205] rounded-2xl p-3.5 text-xs font-semibold text-slate-800 flex flex-col gap-2">
+              <div>
+                <strong className="font-display text-sm text-[#2b1b08]">
+                  {lang === 'zh' ? '1. 驾驶与喇叭 [Q]：' : '1. Controls & Horn [Q]:'}
+                </strong>{' '}
+                {lang === 'zh'
+                  ? 'W/↑ 前进 · S/↓ 刹车（无倒挡） · A/D 转向 · Q 按喇叭疏散快件！'
+                  : 'W/↑ Drive · S/↓ Brake (No Reverse) · A/D Turn · Q Horn calms scooters!'}
+              </div>
+              <div>
+                <strong className="font-display text-sm text-[#784812]">
+                  {lang === 'zh' ? '2. 右侧通行与维修站：' : '2. Right Lane & Pit-Stops:'}
+                </strong>{' '}
+                {lang === 'zh'
+                  ? '时刻靠右行，飞跃水上跳台避开闭桥，进站喝咖啡冲刺或修车！'
+                  : 'Keep Right, hit Jump Ramps over canal gates, and visit Espresso/Wrench bays!'}
+              </div>
+              <div>
+                <strong className="font-display text-sm text-[#146c1c]">
+                  {lang === 'zh' ? '3. 投掷与包裹 [空格]：' : '3. Bullseye & Parcels [Space]:'}
+                </strong>{' '}
+                {lang === 'zh'
+                  ? '正中金色靶心奖 2x 连击，热食急件要快送，大件包裹请减速停车！'
+                  : 'Hit Gold Bullseye for 2x Combo, deliver Hot Thermal bags fast, and brake for Large Crates!'}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  pokoAudio.playUiClick();
+                  onResume();
+                }}
+                className="arcade-btn-gold w-full py-3 px-5 rounded-2xl cursor-pointer whitespace-nowrap"
+              >
+                <span className="arcade-stroke text-white text-lg sm:text-xl">
+                  {t.resume}
+                </span>
+              </button>
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    pokoAudio.playUiClick();
+                    onOpenShop();
+                  }}
+                  className="arcade-btn-green py-2.5 px-4 rounded-2xl cursor-pointer whitespace-nowrap"
+                >
+                  <span className="arcade-stroke-sm text-white text-sm sm:text-base">
+                    {t.garageShop}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    pokoAudio.playUiClick();
+                    onRestart();
+                  }}
+                  className="arcade-btn-cream py-2.5 px-4 rounded-2xl cursor-pointer whitespace-nowrap"
+                >
+                  <span className="arcade-stroke-sm text-white text-sm sm:text-base">
+                    {t.restart}
+                  </span>
+                </button>
+              </div>
+
+              {onOpenCustomCity && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    pokoAudio.playUiClick();
+                    onOpenCustomCity();
+                  }}
+                  className="arcade-btn-cream w-full py-2.5 px-4 rounded-2xl cursor-pointer whitespace-nowrap"
+                >
+                  <span className="arcade-stroke-sm text-white text-base">
+                    🗺️ {t.customMapBtn}
+                  </span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  pokoAudio.playUiClick();
+                  onBackToTitle();
+                }}
+                className="arcade-btn-cream w-full py-2.5 px-5 rounded-2xl cursor-pointer whitespace-nowrap"
+              >
+                <span className="arcade-stroke-sm text-white text-base sm:text-lg">
+                  {t.welcomeScreen}
+                </span>
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="arcade-pill-brown rounded-2xl px-4 py-3 text-center">
+              <div className="text-xs font-extrabold text-[#ffee1f] tracking-wide">
+                {isCustomCity
+                  ? snapshot?.customCity?.districtName || t.customDistrictBadge
+                  : `${t.stageLabel.replace('{level}', String(snapshot?.level ?? currentLevel))} · ${snapshot?.districtName ?? 'Island Quarter'}`}
+              </div>
+              <h2
+                id="modal-heading"
+                className="arcade-stroke text-white text-2xl sm:text-3xl mt-0.5 leading-tight"
+              >
+                {isVictory
+                  ? t.victoryTitle
+                  : isBreakdown
+                    ? t.breakdownTitle
+                    : t.timeUpTitle}
+              </h2>
+
+              {/* 3 Golden Mastery Stars */}
+              <div
+                className="flex items-center justify-center gap-2 mt-2"
+                aria-label={`${starsEarned} of 3 mastery stars earned`}
+              >
+                {[1, 2, 3].map((st) => (
+                  <svg
+                    key={st}
+                    viewBox="0 0 36 36"
+                    className="w-8 h-8 drop-shadow-sm"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M18 3l4.6 8.9 9.8 1.6-7 7.1 1.6 9.8L18 25.9 9 30.4l1.6-9.8-7-7.1 9.8-1.6L18 3z"
+                      fill={st <= starsEarned ? '#ffe524' : '#2b1b08'}
+                      stroke="#140c04"
+                      strokeWidth="2.6"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ))}
+              </div>
+            </div>
+
+            {/* Stat Tiles */}
+            <div className="grid grid-cols-3 gap-2.5 text-center">
+              <div className="arcade-pill-brown rounded-2xl p-2.5">
+                <div className="text-[11px] font-extrabold text-[#ffee1f]">
+                  {isVictory ? t.timeRemaining : t.delivered}
+                </div>
+                <div className="arcade-stroke-sm text-white text-xl mt-0.5">
+                  {isVictory
+                    ? `${snapshot?.timeRemainingSec ?? 0}s`
+                    : `${snapshot?.deliveredCount ?? 0}/${snapshot?.totalStops ?? 0}`}
+                </div>
+              </div>
+
+              <div className="arcade-pill-brown rounded-2xl p-2.5">
+                <div className="text-[11px] font-extrabold text-[#ffee1f]">
+                  {t.finalScore}
+                </div>
+                <div className="arcade-stroke-sm text-[#ffe524] text-xl mt-0.5">
+                  {(snapshot?.score ?? 0).toLocaleString()}
+                </div>
+              </div>
+
+              <div className="arcade-pill-brown rounded-2xl p-2.5">
+                <div className="text-[11px] font-extrabold text-[#6bf25c]">
+                  {t.coinsEarned}
+                </div>
+                <div className="arcade-stroke-sm text-[#ffe524] text-xl mt-0.5">
+                  +{snapshot?.coinsEarned ?? 0}
+                </div>
+              </div>
+            </div>
+
+            {snapshot?.riderReceipt && (
+              <div className="bg-[#fffdf5] border-[2.5px] border-[#1d1205] rounded-2xl p-3 text-xs text-slate-800 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between border-b border-[#1d1205]/15 pb-1.5">
+                  <span className="font-display text-sm text-[#2b1b08]">
+                    {lang === 'zh' ? '🛵 骑手本趟收入账单' : '🛵 Rider Shift Receipt'}
+                  </span>
+                  <span className="font-extrabold text-[#d97706]">
+                    {lang === 'zh'
+                      ? `好评率 ${snapshot.riderReceipt.praiseRate}%`
+                      : `Rating ${snapshot.riderReceipt.praiseRate}%`}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-slate-600">
+                    {lang === 'zh'
+                      ? `基础配送费 (${snapshot.riderReceipt.totalOrders}单)`
+                      : `Base Delivery Pay (${snapshot.riderReceipt.totalOrders})`}
+                  </span>
+                  <span className="text-slate-900 tabular-nums">
+                    +¥{snapshot.riderReceipt.baseDeliveryFee.toFixed(1)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-slate-600">
+                    {lang === 'zh'
+                      ? '准时/保温/精准/抢单奖励'
+                      : 'On-Time, Thermal & Rush Bonuses'}
+                  </span>
+                  <span className="text-[#16a34a] tabular-nums">
+                    +¥
+                    {(
+                      snapshot.riderReceipt.onTimeBonus +
+                      snapshot.riderReceipt.hotMealTip +
+                      snapshot.riderReceipt.bullseyeTip +
+                      snapshot.riderReceipt.rushHourBonus
+                    ).toFixed(1)}
+                  </span>
+                </div>
+                {(snapshot.riderReceipt.spillDeduction > 0 ||
+                  snapshot.riderReceipt.trafficFines > 0 ||
+                  snapshot.riderReceipt.lateDeduction > 0) && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-[#e11d48]">
+                      {lang === 'zh'
+                        ? '违章罚款 / 餐损 / 超时扣款'
+                        : 'Fines, Spill & Late Deductions'}
+                    </span>
+                    <span className="text-[#e11d48] tabular-nums">
+                      -¥
+                      {(
+                        snapshot.riderReceipt.spillDeduction +
+                        snapshot.riderReceipt.trafficFines +
+                        snapshot.riderReceipt.lateDeduction
+                      ).toFixed(1)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between border-t border-[#1d1205]/15 pt-1.5 font-extrabold text-sm">
+                  <span className="text-[#2b1b08]">
+                    {lang === 'zh' ? '本趟实得净收入' : 'Net Rider Earnings'}
+                  </span>
+                  <span
+                    className={`tabular-nums ${
+                      snapshot.riderReceipt.netEarningsYuan >= 0
+                        ? 'text-[#16a34a]'
+                        : 'text-[#e11d48]'
+                    }`}
+                  >
+                    ¥{snapshot.riderReceipt.netEarningsYuan.toFixed(1)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="text-center text-xs font-extrabold text-[#382307] -mt-0.5">
+              {lang === 'zh' ? '违章记录：' : 'Traffic Record: '}
+              {(snapshot?.ticketsCount ?? 0) === 0 ? (
+                <span className="text-[#146c1c]">
+                  {lang === 'zh' ? '规范文明驾驶 · 0 罚单奖励' : 'Clean Driving · 0 Tickets'}
+                </span>
+              ) : (
+                <span className="text-[#d90429]">
+                  {lang === 'zh'
+                    ? `收到 ${snapshot?.ticketsCount} 张交通罚单`
+                    : `${snapshot?.ticketsCount} Tickets Issued`}
+                </span>
+              )}
+              {snapshot?.earnedSpinToken ? (
+                <span className="text-[#7c3aed]">
+                  {lang === 'zh' ? ' · +1 抽奖券！' : ' · +1 Spin Token!'}
+                </span>
+              ) : null}
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              {isVictory ? (
+                <>
+                  {!isCustomCity && (
+                    <button
+                      type="button"
+                      data-start="true"
+                      onClick={() => {
+                        pokoAudio.playUiClick();
+                        onNextLevel();
+                      }}
+                      className="arcade-btn-gold w-full py-3.5 px-5 rounded-2xl cursor-pointer whitespace-nowrap"
+                    >
+                      <span className="arcade-stroke text-white text-lg sm:text-xl">
+                        {t.nextStage} (STAGE {(snapshot?.level ?? currentLevel) + 1})
+                      </span>
+                    </button>
+                  )}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        pokoAudio.playUiClick();
+                        onOpenShop();
+                      }}
+                      className="arcade-btn-green py-2.5 px-4 rounded-2xl cursor-pointer whitespace-nowrap"
+                    >
+                      <span className="arcade-stroke-sm text-white text-sm sm:text-base">
+                        {t.garageShop}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        pokoAudio.playUiClick();
+                        onBackToTitle();
+                      }}
+                      className="arcade-btn-cream py-2.5 px-4 rounded-2xl cursor-pointer whitespace-nowrap"
+                    >
+                      <span className="arcade-stroke-sm text-white text-sm sm:text-base">
+                        {t.welcomeScreen}
+                      </span>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    data-start="true"
+                    onClick={() => {
+                      pokoAudio.playUiClick();
+                      onRestart();
+                    }}
+                    className="arcade-btn-gold w-full py-3.5 px-5 rounded-2xl cursor-pointer whitespace-nowrap"
+                  >
+                    <span className="arcade-stroke text-white text-lg sm:text-xl">
+                      {t.tryAgain}
+                    </span>
+                  </button>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        pokoAudio.playUiClick();
+                        onOpenShop();
+                      }}
+                      className="arcade-btn-green py-2.5 px-4 rounded-2xl cursor-pointer whitespace-nowrap"
+                    >
+                      <span className="arcade-stroke-sm text-white text-sm sm:text-base">
+                        {t.garageShop}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        pokoAudio.playUiClick();
+                        onBackToTitle();
+                      }}
+                      className="arcade-btn-cream py-2.5 px-4 rounded-2xl cursor-pointer whitespace-nowrap"
+                    >
+                      <span className="arcade-stroke-sm text-white text-sm sm:text-base">
+                        {t.welcomeScreen}
+                      </span>
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {onOpenCustomCity && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    pokoAudio.playUiClick();
+                    onOpenCustomCity();
+                  }}
+                  className="arcade-btn-cream w-full py-2.5 px-4 rounded-2xl cursor-pointer whitespace-nowrap"
+                >
+                  <span className="arcade-stroke-sm text-white text-base">
+                    🗺️ {t.customMapBtn}
+                  </span>
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
