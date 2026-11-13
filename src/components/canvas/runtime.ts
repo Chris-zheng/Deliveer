@@ -5,6 +5,7 @@ import { stepPlay, type PlayStepDeps } from './playStep';
 import { createLevelScene } from './levelScene';
 import { triggerParcelDelivery as triggerParcelDeliveryImpl, type DeliveryDeps } from './delivery';
 import { createHudBridge } from './hudBridge';
+import { stepTitlePreview, type TitleStepDeps } from './titleStep';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CAMERA, POOLS } from '../../config/balance';
@@ -409,6 +410,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       S.frameId = window.setTimeout(poll, 5);
     }
 
+    const titleStepDeps: TitleStepDeps = { camera, camLookTarget, waterPlane };
     const visualDeps: VisualDeps = { fx, truckRig, windStreakRig, refreshForwardRoadPath };
 
     const cameraFramingDeps: CameraFramingDeps = {
@@ -497,36 +499,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       }
 
       if (currentPhase === GamePhase.Title) {
-        // Live World Heading-Up Preview behind the parked Courier Van!
-        stepTrafficSignals(S.currentCity.trafficSignals, dt * 0.85);
-        stepHazardsAndCollisions(
-          S.currentCity.hazards,
-          S.truckState,
-          dt * 0.65,
-          S.currentCity.trafficSignals,
-          S.currentCity,
-        );
-        stepPedestriansPhysics(
-          S.currentCity.pedestrians,
-          S.currentCity,
-          S.truckState,
-          dt * 0.85,
-        );
-        const titleYaw = S.truckState.yaw + Math.sin(S.visualClock * 0.35) * 0.14;
-        const dampAlpha = 1 - Math.exp(-3.5 * dt);
-        S.camYaw = wrapAngleRad(S.camYaw + wrapAngleRad(titleYaw - S.camYaw) * dampAlpha);
-        const leadX = S.truckState.x + Math.sin(S.camYaw) * CHASE_LOOK_AHEAD;
-        const leadZ = S.truckState.z + Math.cos(S.camYaw) * CHASE_LOOK_AHEAD;
-        camLookTarget.x += (leadX - camLookTarget.x) * dampAlpha;
-        camLookTarget.y += (0.35 - camLookTarget.y) * dampAlpha;
-        camLookTarget.z += (leadZ - camLookTarget.z) * dampAlpha;
-        camera.position.set(
-          camLookTarget.x - Math.sin(S.camYaw) * CHASE_BACK_DIST,
-          camLookTarget.y + CHASE_UP_HEIGHT,
-          camLookTarget.z - Math.cos(S.camYaw) * CHASE_BACK_DIST,
-        );
-        camera.lookAt(camLookTarget);
-        waterPlane.position.set(camLookTarget.x, 0.0, camLookTarget.z);
+        stepTitlePreview(dt, S, titleStepDeps);
       } else if (currentPhase === GamePhase.Playing) {
         stepPlay(dt, cdDt, now, S, playStepDeps);
       }
