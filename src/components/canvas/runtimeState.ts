@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { DemoDirectorState, createDemoDirectorState } from '../../game/demoDirector';
 import { OutcomeKind } from '../../game/types';
 import type { WeatherKind } from '../../game/weather';
+import type { GhostSample } from '../../game/ghost';
 import { generateProceduralCity } from '../../game/proceduralCity';
 import {
   ParcelStackWobbleState,
@@ -118,6 +119,9 @@ export function createRuntimeState({
 let rushPromiseSec = -1;
 let weatherElapsedSec = 0;
 let weatherKind: WeatherKind = 'clear';
+let runElapsedSec = 0;
+let ghostSampleTimer = 0;
+let ghostSamples: GhostSample[] = [];
     let riderSpillDeduction = 0;
     let riderTrafficFines = 0;
     let riderLateDeduction = 0;
@@ -187,6 +191,9 @@ let weatherKind: WeatherKind = 'clear';
     rushPromiseSec,
     weatherElapsedSec,
     weatherKind: weatherKind as WeatherKind,
+runElapsedSec,
+ghostSampleTimer,
+ghostSamples,
     riderSpillDeduction,
     riderTrafficFines,
     riderLateDeduction,

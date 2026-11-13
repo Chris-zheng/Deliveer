@@ -13,6 +13,9 @@ import {
 } from '../../game/rules';
 import { touchControls } from '../../game/touchControls';
 import { setActiveWeather } from '../../game/weather';
+import { loadGhost, sampleGhostAt, saveGhost } from '../../game/ghost';
+import type { GhostSample } from '../../game/ghost';
+import { getGhostKey, getRunMode } from '../../game/runMode';
 import type { WeatherKind } from '../../game/weather';
 import { GamePhase, OutcomeKind, ShiftAtmosphere } from '../../game/types';
 import type { LevelConfig, TopperId, VehicleId } from '../../game/types';
@@ -214,14 +217,67 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
         kind !== 'clear' || baseAtmosphere === ShiftAtmosphere.TwilightNeon;
     }
 
+    let ghostRig: THREE.Group | null = null;
+    let ghostTrack: GhostSample[] = [];
+
+    function ensureGhostRig(): THREE.Group {
+      if (ghostRig) return ghostRig;
+      const group = new THREE.Group();
+      const ghostMat = new THREE.MeshBasicMaterial({
+        color: 0x7dd3fc,
+        transparent: true,
+        opacity: 0.3,
+        depthWrite: false,
+      });
+      const cargo = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.15, 2.1), ghostMat);
+      cargo.position.set(0, 0.95, -0.25);
+      const cab = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.8, 1.1), ghostMat);
+      cab.position.set(0, 0.72, 1.1);
+      group.add(cargo, cab);
+      group.visible = false;
+      scene.add(group);
+      ghostRig = group;
+      return group;
+    }
+
+    function setGhostTrack(samples: GhostSample[]) {
+      ghostTrack = samples;
+      const rig = ensureGhostRig();
+      rig.visible = samples.length > 1;
+      if (samples.length > 1) {
+        rig.position.set(samples[0][1], 0, samples[0][2]);
+        rig.rotation.y = samples[0][3];
+      }
+    }
+
+    function updateGhost(elapsedSec: number) {
+      if (!ghostRig || !ghostRig.visible) return;
+      const point = sampleGhostAt(ghostTrack, elapsedSec);
+      if (!point) return;
+      ghostRig.position.set(point[1], 0, point[2]);
+      ghostRig.rotation.y = point[3];
+    }
+
     function buildCityScene(lvl: number, resetScore: boolean, customCfg?: LevelConfig | null) {
+      const runMode = getRunMode();
+      const ghostKey = getGhostKey(lvl, runMode);
+      if (S.ghostSamples.length > 2) {
+        saveGhost(ghostKey, Math.round(S.score), S.ghostSamples);
+      }
+      S.ghostSamples = [];
+      S.ghostSampleTimer = 0;
       clearAllInputs();
       disposeLevelGroup();
       const effectiveCfg =
         customCfg !== undefined
           ? (customCfg ?? undefined)
           : (customCityConfigRef.current ?? undefined);
-      S.currentCity = generateProceduralCity(lvl, undefined, effectiveCfg);
+      S.currentCity = generateProceduralCity(lvl, runMode.seed, effectiveCfg);
+      const storedGhost = loadGhost(ghostKey);
+      setGhostTrack(storedGhost ? storedGhost.samples : []);
+      if (runMode.timeLimitSec) {
+        S.currentCity.config.timeLimitSec = runMode.timeLimitSec;
+      }
       const grantShield =
         !S.demoState.active &&
         startShieldRef.current &&
@@ -271,6 +327,7 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
       S.riderRushHourBonus = 0;
   S.rushPromiseSec = -1;
       S.weatherElapsedSec = 0;
+        S.runElapsedSec = 0;
       S.weatherKind = 'clear';
       setActiveWeather('clear');
       S.riderSpillDeduction = 0;
@@ -417,6 +474,7 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
     disposeLevelGroup,
     applyAtmosphereRig,
     applyWeatherRig,
+    updateGhost,
     buildCityScene,
     startDemoReel,
     stopDemoReel,

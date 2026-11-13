@@ -16,6 +16,14 @@ interface TitleOverlayProps {
   customCityConfig?: LevelConfig | null;
   onSelectLevel?: (lvl: number) => void;
   onStart: () => void;
+  daily?: {
+    dateKey: string;
+    targetScore: number;
+    rewardCoins: number;
+    bestScore: number;
+    cleared: boolean;
+  } | null;
+  onStartDaily?: () => void;
   onToggleMute: () => void;
   onToggleLang: () => void;
   onOpenCustomCity: () => void;
@@ -58,6 +66,8 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
   customCityConfig,
   onSelectLevel,
   onStart,
+  daily,
+  onStartDaily,
   onToggleMute,
   onToggleLang,
   onOpenCustomCity,
@@ -531,6 +541,44 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
           </span>
         </div>
 
+
+        {/* Row 4: Daily challenge */}
+        {daily ? (
+          <div className="relative z-10 flex items-center justify-between gap-2 rounded-[18px] border-[3px] border-[#8B290D]/50 bg-[#FFF3D6]/90 px-3 py-2">
+            <div className="flex flex-col leading-tight">
+              <span className="text-[11px] font-extrabold text-[#9E2B0A]">
+                {(lang === 'zh' ? '每日挑战' : 'Daily Challenge') + ' · ' + daily.dateKey}
+              </span>
+              <span className="text-[11px] font-extrabold text-[#4B1C08]">
+                {(lang === 'zh'
+                  ? '目标 ' + daily.targetScore + ' 分 · 奖励 ' + daily.rewardCoins + ' 币'
+                  : 'Target ' + daily.targetScore + ' pts · Reward ' + daily.rewardCoins + ' coins') +
+                  (daily.cleared
+                    ? lang === 'zh'
+                      ? ' · 今日已达成'
+                      : ' · cleared today'
+                    : daily.bestScore > 0
+                      ? (lang === 'zh' ? ' · 最佳 ' : ' · best ') + daily.bestScore
+                      : '')}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                pokoAudio.playUiClick();
+                onStartDaily?.();
+              }}
+              className="arcade-btn-green h-[42px] px-4 rounded-[16px] flex items-center justify-center cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
+            >
+              <span
+                style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+                className="text-[#FFF8E3] text-sm font-bold tracking-wide"
+              >
+                {lang === 'zh' ? '挑战' : 'Play'}
+              </span>
+            </button>
+          </div>
+        ) : null}
         {/* Row 4: Action Buttons (Custom Map Generator & Start Game) */}
         <div className="relative z-10 flex flex-col sm:flex-row gap-2.5 mt-0.5">
           {/* Custom City Generator Modal Trigger Button */}

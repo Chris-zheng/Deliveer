@@ -24,6 +24,9 @@ import {
   saveProgression,
 } from './game/progression';
 import { applyUpgradeLevels, purchaseUpgrade } from './game/upgrades';
+import { getDailyChallenge, loadDailyProgress, recordDailyRun, saveDailyProgress } from './game/dailyChallenge';
+import type { DailyChallenge, DailyProgress } from './game/dailyChallenge';
+import { getRunMode, setRunMode } from './game/runMode';
 import { CustomCityModal } from './components/CustomCityModal';
 import { SupportedLanguage, getInitialLanguage, saveLanguagePreference } from './game/i18n';
 import {
@@ -76,6 +79,8 @@ export default function App() {
   const [customCityConfig, setCustomCityConfig] =
     useState<LevelConfig | null>(null);
   const [customCityOpen, setCustomCityOpen] = useState<boolean>(false);
+  const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge>(() => getDailyChallenge());
+  const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(() => loadDailyProgress());
 
   const minimapRef = useRef<MinimapSnapshot>({
     city: null,
@@ -163,13 +168,14 @@ export default function App() {
       document.activeElement.blur();
     }
     setShopOpen(false);
-    setQuestsOpen(false);
+    setRunMode({ kind: 'free', level: targetLevel !== undefined ? targetLevel : activeLevel });
     setCustomCityOpen(false);
     document.body.dataset.state = GamePhase.Playing;
     if (targetLevel !== undefined) {
       setActiveLevel(targetLevel);
     }
     setSnapshot(null);
+    setRunMode({ kind: 'free', level: targetLevel !== undefined ? targetLevel : activeLevel });
     setRunNonce((n) => n + 1);
     setPhase(GamePhase.Playing);
     pokoAudio.playStartChime();
@@ -178,9 +184,22 @@ export default function App() {
     if (canvas instanceof HTMLElement) {
       canvas.focus();
     }
-  }, []);
+  }, [activeLevel]);
 
+  const handleStartDaily = useCallback(() => {
+    const challenge = getDailyChallenge();
+    setDailyChallenge(challenge);
+    startPlaying(challenge.level);
+    setRunMode({
+      kind: 'daily',
+      level: challenge.level,
+      seed: challenge.seed,
+      dateKey: challenge.dateKey,
+      timeLimitSec: challenge.timeLimitSec,
+    });
+  }, [startPlaying]);
   const handleRestart = useCallback(() => {
+
     startPlaying(activeLevel);
   }, [activeLevel, startPlaying]);
 
@@ -299,9 +318,17 @@ export default function App() {
     setShopOpen(false);
     setQuestsOpen(false);
     pokoAudio.setMusicPlaying(false);
+    if (getRunMode().kind === 'daily') {
+      const result = recordDailyRun(dailyChallenge, dailyProgress, snap.score);
+      saveDailyProgress(result.progress);
+      setDailyProgress(result.progress);
+      if (result.rewardCoins > 0) {
+        setProgression((prev) => ({ ...prev, coins: prev.coins + result.rewardCoins }));
+      }
+    }
     document.body.dataset.state = GamePhase.GameOver;
     setPhase(GamePhase.GameOver);
-  }, []);
+  }, [dailyChallenge, dailyProgress]);
 
   // Global keyboard shortcuts for Title Start, Mute [M], Restart [R], Garage [G], Quests [J], and Modal Escape
   useEffect(() => {
@@ -429,6 +456,14 @@ export default function App() {
             setActiveLevel(lvl);
           }}
           onStart={() => startPlaying(activeLevel)}
+          onStartDaily={handleStartDaily}
+          daily={{
+            dateKey: dailyChallenge.dateKey,
+            targetScore: dailyChallenge.targetScore,
+            rewardCoins: dailyChallenge.rewardCoins,
+            bestScore: dailyProgress && dailyProgress.dateKey === dailyChallenge.dateKey ? dailyProgress.bestScore : 0,
+            cleared: Boolean(dailyProgress && dailyProgress.dateKey === dailyChallenge.dateKey && dailyProgress.claimed),
+          }}
           onToggleMute={handleToggleMute}
         />
       )}

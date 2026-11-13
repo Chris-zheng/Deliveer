@@ -11,6 +11,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CAMERA, POOLS } from '../../config/balance';
 import { pokoAudio } from '../../game/audio';
 import { setActiveWeather, weatherAt, WEATHER_PROFILES } from '../../game/weather';
+import { encodeGhostSample, GHOST_MAX_SAMPLES } from '../../game/ghost';
 import {
   CitizenStopRig,
   CoffeeKioskRig,
@@ -520,6 +521,21 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
           S.bannerTimer = 2.2;
           emitHudSnapshot();
         }
+      }
+
+      // Ghost line: sample the truck path so the next run can race it.
+      if (currentPhase === GamePhase.Playing && S.finishDelayTimer < 0 && !S.demoState.active) {
+        S.runElapsedSec += cdDt;
+        S.ghostSampleTimer -= cdDt;
+        if (S.ghostSampleTimer <= 0) {
+          S.ghostSampleTimer = 0.2;
+          if (S.ghostSamples.length < GHOST_MAX_SAMPLES) {
+            S.ghostSamples.push(
+              encodeGhostSample(S.runElapsedSec, S.truckState.x, S.truckState.z, S.truckState.yaw),
+            );
+          }
+        }
+        level.updateGhost(S.runElapsedSec);
       }
 
       if (currentPhase === GamePhase.Title) {
