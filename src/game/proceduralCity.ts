@@ -35,7 +35,7 @@ import {
   WorldPos,
 } from './types';
 import { pickArchetype } from './archetypes';
-import { PRESET_CITIES, buildCustomCitySeed, getRealStreetsForCity } from './customCity';
+import { PRESET_CITIES, buildCustomCitySeed, getRealStreetsEnForCity, getRealStreetsForCity } from './customCity';
 
 export function createRng(seed: number): () => number {
   let a = seed >>> 0;
@@ -836,7 +836,12 @@ export function generateProceduralCity(
       : matchedPreset && matchedPreset.streetsZh && matchedPreset.streetsZh.length > 0
         ? matchedPreset.streetsZh
         : getRealStreetsForCity(config.districtName || '北京');
-
+  const activeStreetsEn =
+    config.customCity?.streetsEn && config.customCity.streetsEn.length > 0
+      ? config.customCity.streetsEn
+      : matchedPreset && matchedPreset.streetsEn && matchedPreset.streetsEn.length > 0
+        ? matchedPreset.streetsEn
+        : getRealStreetsEnForCity(config.districtName || '北京');
   const stops: DeliveryStop[] = orderedRaw.map((item, idx) => {
     const pool = isZh ? CUSTOMER_PROFILES_ZH : CUSTOMER_PROFILES;
     const baseProfile = pool[(idx + (level - 1) * 2) % pool.length];
@@ -879,7 +884,7 @@ export function generateProceduralCity(
       delivered: false,
       deliveredViaToss: false,
       streetName: stopStreet,
-      foodCategory: 'foodCategory' in baseProfile ? (baseProfile as { foodCategory?: string }).foodCategory : '特快外卖',
+      streetNameEn: activeStreetsEn[idx % activeStreetsEn.length],
     };
   });
 
@@ -1885,8 +1890,7 @@ export function generateProceduralCity(
             z: pos.z - 0.95,
             yaw: ((streetSigns.length % 2) * Math.PI) / 2,
             streetName: stName,
-            enName: isZh ? undefined : stName,
-            crossStreetName: crossName,
+            enName: activeStreetsEn[streetSigns.length % activeStreetsEn.length],
           });
         }
       }

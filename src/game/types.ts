@@ -180,6 +180,8 @@ export interface DeliveryStop {
   deliveredViaToss: boolean;
   deliveredBullseye?: boolean;
   streetName?: string;
+  /** English twin of streetName so the HUD can stay in one language. */
+  streetNameEn?: string;
   foodCategory?: string;
 }
 
@@ -383,6 +385,7 @@ export interface CustomCityMetadata {
   isCustom: boolean;
   addressDetails?: string;
   streets?: string[];
+  streetsEn?: string[];
 }
 
 export interface StreetSign {
@@ -607,8 +610,10 @@ export interface HudState {
   demoRemainingSec?: number;
   customCity?: CustomCityMetadata;
   currentStreetName?: string;
-  targetStreetName?: string;
   deliveryIncomeYuan?: number;
+  currentStreetNameEn?: string;
+  targetStreetName?: string;
+  targetStreetNameEn?: string;
   deliveryBaseIncome?: number;
   deliveryTipsIncome?: number;
   deliveryPenaltiesYuan?: number;

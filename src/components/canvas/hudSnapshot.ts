@@ -142,6 +142,7 @@ export function buildRunHudState(deps: HudSnapshotDeps): HudState {
   syncMinimapSnapshot();
 
   let currentStreetName = currentCity.streetNames?.[0] ?? '';
+  let currentStreetNameEn = currentStreetName;
   if (currentCity.streetSigns && currentCity.streetSigns.length > 0) {
     let bestDist = Infinity;
     for (let si = 0; si < currentCity.streetSigns.length; si++) {
@@ -150,6 +151,7 @@ export function buildRunHudState(deps: HudSnapshotDeps): HudState {
       if (d < bestDist) {
         bestDist = d;
         currentStreetName = s.streetName;
+        currentStreetNameEn = s.enName ?? s.streetName;
       }
     }
   }
@@ -218,7 +220,9 @@ export function buildRunHudState(deps: HudSnapshotDeps): HudState {
       : 0,
     customCity: currentCity.config.customCity,
     currentStreetName,
+    currentStreetNameEn,
     targetStreetName: activeStop?.streetName,
+    targetStreetNameEn: activeStop?.streetNameEn,
     deliveryIncomeYuan: netIncomeYuan,
     deliveryBaseIncome: Number(riderBaseIncome.toFixed(1)),
     deliveryTipsIncome: tipsIncome,

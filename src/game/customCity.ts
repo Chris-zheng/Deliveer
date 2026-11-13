@@ -589,3 +589,47 @@ export async function fetchRealStreetsOverpass(
   return fallback;
 }
 
+
+/**
+ * Romanised/English counterparts for REAL_CITY_STREETS so the HUD can stay in
+ * one language. Indexes line up 1:1 with the Zh table above.
+ */
+export const REAL_CITY_STREETS_EN: Record<string, string[]> = {
+  beijing: ["Chang'an Ave", 'Wangfujing St', 'Chaoyangmenwai Ave', 'Xidan North Ave', 'Nanluoguxiang', "Ping'anli West Ave", "Di'anmen East Ave", 'Qianmen Ave', 'Dongzhimennei Ave', 'Sanlitun Rd'],
+  shanghai: ['Nanjing East Rd', 'Huaihai Middle Rd', 'Xizang Middle Rd', "Yan'an Elevated Rd", 'Wukang Rd', 'Century Ave', 'Yuyuan Rd', 'Beijing West Rd', 'Lujiazui Ring Rd', 'Hengshan Rd'],
+  hangzhou: ["Yan'an Rd", 'West Lake Ave', 'Nanshan Rd', 'Wensan Rd', 'Qingchun Rd', 'Fengqi Rd', 'Hubin Rd', 'Tianmushan Rd', 'Beishan St', 'Hupao Rd'],
+  guangzhou: ['Beijing Rd', 'Tianhe Rd', 'Zhongshan Ave', 'Shangxiajiu Walking St', 'Dongfeng West Rd', 'Huanshi East Rd', 'Jiangnan Ave', 'Yanjiang Middle Rd', 'Huacheng Ave', 'Baohua Rd'],
+  shenzhen: ['Shennan Ave', 'Keji South Rd', 'Huaqiang North Rd', 'Binhai Ave', 'Yitian Rd', 'Houhai Ave', 'Hongli Rd', 'Qiaoxiang Rd', 'Jintian Rd', 'Minzhi Ave'],
+  chengdu: ['Chunxi Rd', 'Tianfu Ave', 'Renmin South Rd', 'Jinli West Rd', 'Kuanzhai Alley', 'Shudu Ave', 'First Ring Rd Sec 4', 'Jianshe North Rd', 'Dongda St', 'Taikoo Li'],
+  wuhan: ['Jianghan Rd', 'Zhongshan Ave', 'Wuluo Rd', 'Guanggu Ave', 'Jiefang Ave', 'Jianshe Ave', 'Xiongchu Ave', 'Yellow Crane Tower East Rd', 'Yanjiang Ave', 'Zhongnan Rd'],
+  hongkong: ['Nathan Rd', "Queen's Rd Central", 'Hennessy Rd', 'Des Voeux Rd Central', 'Canton Rd', 'Gloucester Rd', 'Salisbury Rd', 'Hollywood Rd', 'Lockhart Rd', 'Argyle St'],
+  taipei: ['Zhongxiao East Rd', 'Xinyi Rd', 'Dunhua South Rd', 'Nanjing East Rd', 'Zhongshan North Rd', 'Heping East Rd', 'Bade Rd', "Ren'ai Rd", 'Keelung Rd', 'Shilin East Rd'],
+  tokyo: ['Ginza Chuo-dori', 'Omotesando', 'Akihabara Chuo-dori', 'Shibuya Dogenzaka', 'Shinjuku Yasukuni-dori', 'Roppongi-dori', 'Asakusa Kaminarimon-dori', 'Harumi-dori'],
+  paris: ['Champs-Elysees', 'Boulevard Saint-Germain', 'Rue de Rivoli', 'Boulevard Saint-Michel', "Avenue de l'Opera", 'Avenue Montaigne', 'Boulevard Raspail'],
+  newyork: ['5th Avenue', 'Broadway', '7th Avenue', 'Wall St', '42nd St Times Square', 'Madison Ave'],
+};
+
+/** English twin of getRealStreetsForCity: same lookup, English strings. */
+export function getRealStreetsEnForCity(cityName: string): string[] {
+  const lower = cityName.toLowerCase();
+  for (const [key, streets] of Object.entries(REAL_CITY_STREETS_EN)) {
+    if (lower.includes(key)) return streets;
+  }
+  for (const preset of PRESET_CITIES) {
+    if (lower.includes(preset.nameZh) || lower.includes(preset.nameEn.toLowerCase())) {
+      if (REAL_CITY_STREETS_EN[preset.id]) return REAL_CITY_STREETS_EN[preset.id];
+    }
+  }
+  const cleanName = cityName.replace(/[市区县镇街道]/g, '');
+  const prefix = cleanName.slice(0, 2) || 'Central';
+  return [
+    `${prefix} Ave`,
+    `${prefix} East Rd`,
+    `${prefix} West Rd`,
+    'Renmin South Rd',
+    'Jiefang Middle Rd',
+    'Jianshe Ave',
+    'Culture St',
+    'Commerce Walking St',
+  ];
+}

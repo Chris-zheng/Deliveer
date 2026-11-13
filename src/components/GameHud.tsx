@@ -352,7 +352,7 @@ export const GameHud: React.FC<GameHudProps> = ({
                   touchControls.boostPulse = true;
                   triggerWindowKeyPulse('ShiftLeft');
                 }}
-                className="hidden md:flex arcade-dock-tab rounded-r-[34px] pl-3 pr-4 pt-2 pb-1.5 flex-col items-center relative cursor-pointer"
+                className="hidden md:flex arcade-dock-tab rounded-r-[34px] pl-3 pr-4 pt-2 pb-1.5 flex-col items-center justify-center min-w-[86px] relative cursor-pointer"
               >
                 {hud.boostReady && <RedAlertBadge />}
                 <svg
@@ -399,7 +399,7 @@ export const GameHud: React.FC<GameHudProps> = ({
                   />
                   <circle cx="28" cy="29" r="2.6" fill="#ff2430" />
                 </svg>
-                <span className="-mt-1.5 arcade-stroke-sm text-white text-sm sm:text-base uppercase leading-none">
+                <span className="-mt-1.5 arcade-stroke-sm text-white text-[11px] sm:text-sm md:text-base uppercase leading-none whitespace-nowrap">
                   {hud.isBoosting ? (lang === 'zh' ? '加速中' : 'ACTIVE') : (lang === 'zh' ? '涡轮' : 'TURBO')}
                 </span>
               </button>
@@ -414,7 +414,7 @@ export const GameHud: React.FC<GameHudProps> = ({
                   e.currentTarget.blur();
                   onRestart();
                 }}
-                className="arcade-dock-tab rounded-r-[26px] md:rounded-r-[34px] pl-2.5 md:pl-3 pr-3 md:pr-4 pt-1.5 md:pt-2 pb-1 md:pb-1.5 flex flex-col items-center relative cursor-pointer"
+                className="arcade-dock-tab rounded-r-[26px] md:rounded-r-[34px] pl-2.5 md:pl-3 pr-3 md:pr-4 pt-1.5 md:pt-2 pb-1 md:pb-1.5 flex flex-col items-center justify-center min-w-[76px] md:min-w-[86px] relative cursor-pointer"
               >
                 <svg
                   viewBox="0 0 56 56"
@@ -463,7 +463,7 @@ export const GameHud: React.FC<GameHudProps> = ({
                   <circle cx="21" cy="38" r="1.5" fill="#475569" />
                   <circle cx="33" cy="38" r="1.5" fill="#475569" />
                 </svg>
-                <span className="-mt-1 md:-mt-1.5 arcade-stroke-sm text-white text-[11px] md:text-base uppercase leading-none">
+                <span className="-mt-1 md:-mt-1.5 arcade-stroke-sm text-white text-[10px] sm:text-[11px] md:text-base uppercase leading-none whitespace-nowrap">
                   {t.retry}
                 </span>
               </button>
@@ -478,7 +478,7 @@ export const GameHud: React.FC<GameHudProps> = ({
                   e.currentTarget.blur();
                   onOpenQuests();
                 }}
-                className="arcade-dock-tab rounded-r-[26px] md:rounded-r-[34px] pl-2.5 md:pl-3 pr-3 md:pr-4 pt-1.5 md:pt-2 pb-1 md:pb-1.5 flex flex-col items-center relative cursor-pointer"
+                className="arcade-dock-tab rounded-r-[26px] md:rounded-r-[34px] pl-2.5 md:pl-3 pr-3 md:pr-4 pt-1.5 md:pt-2 pb-1 md:pb-1.5 flex flex-col items-center justify-center min-w-[76px] md:min-w-[124px] relative cursor-pointer"
               >
                 {(hasClaimableQuest || hud.ticketsCount > 0) && <RedAlertBadge />}
                 <svg
@@ -541,7 +541,7 @@ export const GameHud: React.FC<GameHudProps> = ({
                     fill="none"
                   />
                 </svg>
-                <span className="-mt-1 md:-mt-1.5 arcade-stroke-sm text-white text-[11px] md:text-base uppercase leading-none">
+                <span className="-mt-1 md:-mt-1.5 arcade-stroke-sm text-white text-[10px] sm:text-[11px] md:text-base uppercase leading-none whitespace-nowrap">
                   {t.quests}
                 </span>
               </button>
@@ -554,7 +554,7 @@ export const GameHud: React.FC<GameHudProps> = ({
               {hud.currentStreetName && (
                 <div className="bg-[#165dff] border-[2.5px] border-white ring-2 ring-[#140c04] rounded-xl px-3 py-1 flex items-center gap-1.5 shadow-sm">
                   <span className="text-white text-xs font-extrabold tracking-wide leading-none">
-                    📍 {hud.currentStreetName}
+                    📍 {lang === 'en' ? hud.currentStreetNameEn || hud.currentStreetName : hud.currentStreetName}
                   </span>
                 </div>
               )}
@@ -1046,7 +1046,7 @@ export const GameHud: React.FC<GameHudProps> = ({
                       : ''}
                   </div>
                   <div className="text-[11px] font-extrabold text-[#5c3809] truncate mt-0.5 max-w-[195px]">
-                    {hud.targetStreetName ? `📍${hud.targetStreetName} · ` : ''}
+                    {hud.targetStreetName ? '📍' + (lang === 'en' ? hud.targetStreetNameEn || hud.targetStreetName : hud.targetStreetName) + ' · ' : ''}
                     {hud.nextParcelKind === ParcelKind.HotExpress
                       ? `HOT (${Math.round(hud.thermalPct * 100)}%) · ${hud.nextParcelLabel}`
                       : hud.nextParcelLabel}
@@ -1201,7 +1201,7 @@ export const GameHud: React.FC<GameHudProps> = ({
           <div className="pointer-events-none self-center flex items-center gap-1.5 flex-wrap justify-center max-w-[96%]">
             {hud.currentStreetName && (
               <span className="bg-[#165dff] border-[1.5px] border-white ring-1 ring-[#140c04] rounded-lg px-2 py-0.5 text-[10px] font-extrabold text-white leading-none">
-                📍 {hud.currentStreetName}
+                📍 {lang === 'en' ? hud.currentStreetNameEn || hud.currentStreetName : hud.currentStreetName}
               </span>
             )}
             <span className="arcade-pill-brown rounded-full px-2 py-0.5 text-[10px] font-extrabold text-[#6bf25c] leading-none tabular-nums">
@@ -1359,9 +1359,9 @@ export const GameHud: React.FC<GameHudProps> = ({
               } flex-1 min-w-0 rounded-2xl px-2.5 py-1.5 flex items-center justify-between gap-2 cursor-pointer`}
             >
               <div className="flex items-center gap-1.5 min-w-0">
-                <CustomerPortraitSvg appearance={hud.nextStopAppearance} />
+                <span className="hidden sm:flex shrink-0"><CustomerPortraitSvg appearance={hud.nextStopAppearance} /></span>
                 <div className="text-left min-w-0">
-                  <div className="font-display text-xs text-[#2b1b08] leading-tight truncate">
+                  <div className="font-display text-[11px] sm:text-xs text-[#2b1b08] leading-tight truncate">
                     #{hud.nextStopIndex} {hud.nextCustomerName}
                     {hud.nextVipRole !== 'none' ? ' ★' : ''}
                     {hud.nextArchetype !== 'chill'
@@ -1370,9 +1370,9 @@ export const GameHud: React.FC<GameHudProps> = ({
                     {hud.rushPromiseSec > 0
                       ? ' · 加急 ' + hud.rushPromiseSec.toFixed(1) + 's'
                       : ''}
-                    {hud.targetStreetName ? ` · ${hud.targetStreetName}` : ''}
+                      <span className="hidden sm:inline">{hud.targetStreetName ? ' · ' + (lang === 'en' ? hud.targetStreetNameEn || hud.targetStreetName : hud.targetStreetName) : ''}</span>
                   </div>
-                  <div className="arcade-stroke-sm text-white text-[11px] leading-tight truncate">
+                  <div className="arcade-stroke-sm text-white text-[10px] sm:text-[11px] leading-tight truncate">
                     {hud.needsBrakeForLarge
                       ? `HOLD BRAKE · +${activeRewardPoints}`
                       : hud.canBullseyeToss
@@ -1395,10 +1395,10 @@ export const GameHud: React.FC<GameHudProps> = ({
               </div>
 
               {hud.deliveredCount < hud.totalStops && (
-                <div className="flex items-center gap-1 bg-[#493214] border-2 border-[#140c04] rounded-xl px-2 py-1 shrink-0">
+                <div className="flex items-center gap-0.5 sm:gap-1 bg-[#493214] border-2 border-[#140c04] rounded-xl px-1.5 sm:px-2 py-0.5 sm:py-1 shrink-0">
                   <svg
                     viewBox="0 0 24 24"
-                    className="w-3.5 h-3.5 transition-transform duration-100"
+                    className="w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform duration-100"
                     style={{ transform: `rotate(${Math.round(compassDeg)}deg)` }}
                     aria-hidden="true"
                   >
@@ -1410,7 +1410,7 @@ export const GameHud: React.FC<GameHudProps> = ({
                       strokeLinejoin="round"
                     />
                   </svg>
-                  <span className="arcade-stroke-sm text-white text-xs leading-none">
+                  <span className="arcade-stroke-sm text-white text-[11px] sm:text-xs leading-none whitespace-nowrap">
                     {hud.distanceToStopMeters}m
                   </span>
                 </div>
@@ -1523,7 +1523,7 @@ export const GameHud: React.FC<GameHudProps> = ({
                   steerUiSide === 'left' ? 'translate-y-0.5 brightness-110' : ''
                 }`}
               >
-                <span className="arcade-stroke-sm text-white text-xs">LEFT</span>
+                <span className="arcade-stroke-sm text-white text-[10px] sm:text-xs whitespace-nowrap">LEFT</span>
               </button>
 
               <button
@@ -1534,7 +1534,7 @@ export const GameHud: React.FC<GameHudProps> = ({
                   steerUiSide === 'right' ? 'translate-y-0.5 brightness-110' : ''
                 }`}
               >
-                <span className="arcade-stroke-sm text-white text-xs">RIGHT</span>
+                <span className="arcade-stroke-sm text-white text-[10px] sm:text-xs whitespace-nowrap">RIGHT</span>
               </button>
             </div>
 
@@ -1547,7 +1547,7 @@ export const GameHud: React.FC<GameHudProps> = ({
                 e.preventDefault();
                 touchControls.boostPulse = true;
               }}
-              className="arcade-boost-rim rounded-2xl p-1 min-w-[78px] h-[56px] flex items-stretch cursor-pointer shrink-0"
+              className="arcade-boost-rim rounded-2xl p-1 min-w-[62px] sm:min-w-[78px] h-[56px] flex items-stretch cursor-pointer shrink-0"
             >
               <div className="bg-[#493214] border-2 border-[#1d1205] rounded-xl px-2 w-full relative overflow-hidden flex flex-col items-center justify-center">
                 {!hud.boostReady && !hud.isBoosting && (
@@ -1556,11 +1556,11 @@ export const GameHud: React.FC<GameHudProps> = ({
                     style={{ width: `${boostPct}%` }}
                   />
                 )}
-                <span className="relative z-10 arcade-stroke-sm text-white text-[11px] leading-none">
+                <span className="relative z-10 arcade-stroke-sm text-white text-[10px] sm:text-[11px] leading-none">
                   x{streakMultiplier}
                 </span>
                 <span
-                  className={`relative z-10 arcade-stroke-sm text-xs leading-tight ${
+                  className={`relative z-10 arcade-stroke-sm text-[10px] sm:text-xs leading-tight whitespace-nowrap ${
                     hud.isFever
                       ? 'text-[#ff70a6]'
                       : hud.isBoosting
@@ -1608,10 +1608,10 @@ export const GameHud: React.FC<GameHudProps> = ({
                   brakePressed ? 'translate-y-0.5 brightness-95' : ''
                 }`}
               >
-                <span className="arcade-stroke-sm text-[#ff5964] text-xs leading-none">
+                <span className="arcade-stroke-sm text-[#ff5964] text-[10px] sm:text-xs leading-none whitespace-nowrap">
                   BRAKE
                 </span>
-                <span className="text-[10px] font-extrabold text-[#493214] leading-tight mt-0.5">
+                <span className="text-[9px] sm:text-[10px] font-extrabold text-[#493214] leading-tight mt-0.5 whitespace-nowrap">
                   STOP
                 </span>
               </button>
@@ -1647,10 +1647,10 @@ export const GameHud: React.FC<GameHudProps> = ({
                   gasPressed ? 'translate-y-0.5 brightness-110' : ''
                 }`}
               >
-                <span className="arcade-stroke-sm text-white text-sm leading-none">
+                <span className="arcade-stroke-sm text-white text-[11px] sm:text-sm leading-none whitespace-nowrap">
                   DRIVE
                 </span>
-                <span className="text-[10px] font-extrabold text-[#0b3b12] leading-tight mt-0.5">
+                <span className="text-[9px] sm:text-[10px] font-extrabold text-[#0b3b12] leading-tight mt-0.5 whitespace-nowrap">
                   GO ▲
                 </span>
               </button>
