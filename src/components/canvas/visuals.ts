@@ -350,13 +350,13 @@ export function updateVisuals(
         const nsY = !greenWaveOverride && st === SignalAxisState.NSYellow;
         const nsR = !nsG && !nsY;
 
-        sr.ewGreenMat.emissiveIntensity = ewG ? 1.45 : 0.05;
-        sr.ewYellowMat.emissiveIntensity = ewY ? 1.45 : 0.05;
-        sr.ewRedMat.emissiveIntensity = ewR ? 1.45 : 0.05;
+        sr.ewGreenMat.emissiveIntensity = ewG ? 2.1 : 0.04;
+        sr.ewYellowMat.emissiveIntensity = ewY ? 2.1 : 0.04;
+        sr.ewRedMat.emissiveIntensity = ewR ? 2.1 : 0.04;
 
-        sr.nsGreenMat.emissiveIntensity = nsG ? 1.45 : 0.05;
-        sr.nsYellowMat.emissiveIntensity = nsY ? 1.45 : 0.05;
-        sr.nsRedMat.emissiveIntensity = nsR ? 1.45 : 0.05;
+        sr.nsGreenMat.emissiveIntensity = nsG ? 2.1 : 0.04;
+        sr.nsYellowMat.emissiveIntensity = nsY ? 2.1 : 0.04;
+        sr.nsRedMat.emissiveIntensity = nsR ? 2.1 : 0.04;
       }
 
       for (const kr of S.kioskRigs) {

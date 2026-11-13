@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { TILE_SIZE } from '../../config/balance';
-import { generateProceduralCity, gridToWorld } from '../../game/proceduralCity';
+import { generateProceduralCity, gridToWorld, isDrivableTile } from '../../game/proceduralCity';
 import { TileType } from '../../game/types';
 import {
   createLandmarkMesh,
+  createRoadArrowMesh,
   landmarkKindForLevel,
   createPastelBuildingMesh,
   createProceduralTextures,
@@ -361,6 +362,56 @@ export function buildStaticCityGeometry({
   }
   for (const sign of currentCity.streetSigns ?? []) {
     addStatic(createStreetSignMesh(sign, textures.shadowDiscTex));
+  }
+
+  // 8B. Intersection "which way may I go" arrows painted on the asphalt so the
+  //     player can read a junction before committing to a lane.
+  if (currentCity.trafficSignals.length > 0) {
+    // MeshBasicMaterial + toneMapped:false keeps the paint saturated under ACES,
+    // which would otherwise wash the amber out to near-white.
+    const arrowMat =
+      sharedMats.dirArrowMat ??
+      (sharedMats.dirArrowMat = new THREE.MeshBasicMaterial({
+        color: 0xffb300,
+        transparent: true,
+        opacity: 0.82,
+        depthWrite: false,
+        toneMapped: false,
+      }));
+    const arrowEdgeMat =
+      sharedMats.dirArrowEdgeMat ??
+      (sharedMats.dirArrowEdgeMat = new THREE.MeshBasicMaterial({
+        color: 0x2c1b06,
+        transparent: true,
+        opacity: 0.6,
+        depthWrite: false,
+        toneMapped: false,
+      }));
+    // [colStep, rowStep, arrowYaw] for the four ways out of a junction box.
+    const WAYS: Array<[number, number, number]> = [
+      [0, -1, Math.PI],
+      [1, 0, Math.PI * 0.5],
+      [0, 1, 0],
+      [-1, 0, -Math.PI * 0.5],
+    ];
+    for (const sig of currentCity.trafficSignals) {
+      for (const [dc, dr, yaw] of WAYS) {
+        if (!isDrivableTile(currentCity.tiles[sig.coord.row + dr]?.[sig.coord.col + dc])) continue;
+        const out = gridToWorld({ col: sig.coord.col + dc, row: sig.coord.row + dr }, N);
+        // Halfway between the junction centre and the next tile keeps the paint
+        // off the junction box itself.
+        const ax = (sig.x + out.x) * 0.5;
+        const az = (sig.z + out.z) * 0.5;
+        const arrowEdge = createRoadArrowMesh(yaw, arrowEdgeMat);
+        arrowEdge.position.set(ax, 0.298, az);
+        arrowEdge.scale.setScalar(1.72);
+        addStatic(arrowEdge);
+        const arrow = createRoadArrowMesh(yaw, arrowMat);
+        arrow.position.set(ax, 0.302, az);
+        arrow.scale.setScalar(1.5);
+        addStatic(arrow);
+      }
+    }
   }
 
   // 7Z. Collapse every static prop above into a handful of merged draw calls.

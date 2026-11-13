@@ -2572,6 +2572,31 @@ export function createHazardMesh(
   return { hazard, root, warningBeacon, gateArm };
 }
 
+/**
+ * Flat painted arrow lying on the asphalt, pointing along +Z before rotation.
+ * Used to show which ways an intersection actually allows.
+ */
+export function createRoadArrowMesh(yaw: number, material: THREE.Material): THREE.Mesh {
+  const geo = getSharedGeo('dir_arrow', () => {
+    const shape = new THREE.Shape();
+    shape.moveTo(0, -0.36);
+    shape.lineTo(0.21, -0.06);
+    shape.lineTo(0.085, -0.06);
+    shape.lineTo(0.085, 0.31);
+    shape.lineTo(-0.085, 0.31);
+    shape.lineTo(-0.085, -0.06);
+    shape.lineTo(-0.21, -0.06);
+    shape.closePath();
+    const g = new THREE.ShapeGeometry(shape, 8);
+    g.rotateX(-Math.PI / 2);
+    return g;
+  });
+  const mesh = new THREE.Mesh(geo, material);
+  mesh.rotation.y = yaw;
+  mesh.renderOrder = 2;
+  return mesh;
+}
+
 export interface TrafficSignalRig {
   signal: TrafficSignal;
   root: THREE.Group;
@@ -2680,24 +2705,33 @@ export function createTrafficSignalMesh(signal: TrafficSignal): TrafficSignalRig
   const ewYellowMat = makeBulbMat(0xffcc00);
   const ewGreenMat = makeBulbMat(0x28cd41);
 
-  const bulbGeo = getSharedGeo('sig_bulb', () => new THREE.SphereGeometry(0.088, 12, 10));
+  const bulbGeo = getSharedGeo('sig_bulb', () => new THREE.SphereGeometry(0.125, 12, 10));
 
   // Place bulbs proudly on TOP and SIDES of each housing so they read unmistakably from the elevated chase camera!
   const nsR = new THREE.Mesh(bulbGeo, nsRedMat);
-  nsR.position.set(-1.1, 2.08, 0);
+  nsR.position.set(-1.1, 2.13, 0);
   const nsY = new THREE.Mesh(bulbGeo, nsYellowMat);
-  nsY.position.set(-0.88, 2.08, 0);
+  nsY.position.set(-0.88, 2.13, 0);
   const nsG = new THREE.Mesh(bulbGeo, nsGreenMat);
-  nsG.position.set(-0.66, 2.08, 0);
+  nsG.position.set(-0.66, 2.13, 0);
 
   const ewR = new THREE.Mesh(bulbGeo, ewRedMat);
-  ewR.position.set(0, 2.08, -1.1);
+  ewR.position.set(0, 2.13, -1.1);
   const ewY = new THREE.Mesh(bulbGeo, ewYellowMat);
-  ewY.position.set(0, 2.08, -0.88);
+  ewY.position.set(0, 2.13, -0.88);
   const ewG = new THREE.Mesh(bulbGeo, ewGreenMat);
-  ewG.position.set(0, 2.08, -0.66);
+  ewG.position.set(0, 2.13, -0.66);
 
   root.add(nsR, nsY, nsG, ewR, ewY, ewG);
+
+  // Mirror the mast onto the opposite (NW) corner and turn it 180 degrees so a
+  // signal head faces all four approaches instead of only the two the SE arms reach.
+  const twinParts = [base, mast, armNS, boxNS, armEW, boxEW, nsR, nsY, nsG, ewR, ewY, ewG];
+  const twin = new THREE.Group();
+  twin.position.set(-2 * cornerOff, 0, -2 * cornerOff);
+  twin.rotation.y = Math.PI;
+  for (const part of twinParts) twin.add(part.clone());
+  root.add(twin);
 
   return {
     signal,
