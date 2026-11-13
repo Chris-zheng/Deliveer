@@ -43,6 +43,7 @@ export interface HudSnapshotDeps {
   bestScore: number;
   refreshForwardRoadPath: () => void;
   syncMinimapSnapshot: () => void;
+  rushPromiseSec: number;
 }
 
 /**
@@ -78,6 +79,7 @@ export function buildRunHudState(deps: HudSnapshotDeps): HudState {
     bestScore,
     refreshForwardRoadPath,
     syncMinimapSnapshot,
+    rushPromiseSec,
   } = deps;
 
   const activeStop = getActiveStop(currentCity.stops);
@@ -186,6 +188,8 @@ export function buildRunHudState(deps: HudSnapshotDeps): HudState {
     nextParcelLabel: activeStop ? activeStop.parcelLabel : 'Route Complete',
     nextParcelKind: activeStop ? activeStop.parcelKind : ParcelKind.Small,
     nextVipRole: activeStop ? activeStop.vipRole : 'none',
+    nextArchetype: activeStop ? activeStop.archetype : 'chill',
+    rushPromiseSec,
     thermalPct,
     fragileIntact: truckState.fragileIntact,
     nextStopAppearance: activeStop ? activeStop.appearance : null,

@@ -3,6 +3,10 @@ import {
   COMBO_WINDOW_SEC,
   FEVER_COMBO_THRESHOLD,
   ROCKET_START_POINTS,
+  RUSH_PROMISE_FAIL_REVIEW_PENALTY,
+  RUSH_PROMISE_FAIL_TIME_PENALTY_SEC,
+  RUSH_PROMISE_POINT_MULT,
+  RUSH_PROMISE_WINDOW_SEC,
 } from '../../config/balance';
 import { pokoAudio } from '../../game/audio';
 import { stepDemoDirector } from '../../game/demoDirector';
@@ -104,6 +108,45 @@ export function stepPlay(
           }
         }
 
+        // Rush promise [R]: gamble that the current parcel lands in the window.
+        if (
+          input.keysJustPressed.has('KeyR') &&
+          S.rushPromiseSec < 0 &&
+          getActiveStop(S.currentCity.stops)
+        ) {
+          input.keysJustPressed.delete('KeyR');
+          S.rushPromiseSec = RUSH_PROMISE_WINDOW_SEC;
+          S.bannerEvent = {
+            id: ++S.bannerSeq,
+            label: '加急承诺!',
+            detail: RUSH_PROMISE_WINDOW_SEC + 's 内送达 · 分数 ×' + RUSH_PROMISE_POINT_MULT,
+            tone: 'amber',
+          };
+          S.bannerTimer = 1.8;
+        }
+        // The promise ticks down; reaching zero is the loss condition.
+        if (S.rushPromiseSec >= 0 && !S.demoState.active) {
+          S.rushPromiseSec -= cdDt;
+          if (S.rushPromiseSec < 0) {
+            S.combo = 0;
+            S.comboTimer = 0;
+            S.timeRemainingSec = Math.max(
+              0,
+              S.timeRemainingSec - RUSH_PROMISE_FAIL_TIME_PENALTY_SEC,
+            );
+            S.riderReviewScore = Math.max(
+              3.0,
+              Number((S.riderReviewScore - RUSH_PROMISE_FAIL_REVIEW_PENALTY).toFixed(2)),
+            );
+            S.bannerEvent = {
+              id: ++S.bannerSeq,
+              label: '加急超时!',
+              detail: '-' + RUSH_PROMISE_FAIL_TIME_PENALTY_SEC + 's · 连击清零',
+              tone: 'rose',
+            };
+            S.bannerTimer = 1.8;
+          }
+        }
         const demoOut = S.demoState.active
           ? stepDemoDirector(
               S.demoState,

@@ -4,6 +4,7 @@ import { pokoAudio } from '../../game/audio';
 import { gridToWorld } from '../../game/proceduralCity';
 import {
   COMBO_WINDOW_SEC,
+  RUSH_PROMISE_COIN_BONUS,
   calculateDeliveryScore,
   getActiveStop,
 } from '../../game/rules';
@@ -43,6 +44,8 @@ export function triggerParcelDelivery(
 
   activeStop.delivered = true;
   activeStop.deliveredViaToss = viaExpressToss;
+  const rushPromiseLanded = S.rushPromiseSec >= 0;
+  S.rushPromiseSec = -1;
 
   const wasFragileIntact = S.truckState.fragileIntact;
   const reward = calculateDeliveryScore(
@@ -57,6 +60,8 @@ export function triggerParcelDelivery(
       thermalTimer: S.truckState.thermalTimer,
       vipRole: activeStop.vipRole,
       ticketsCount: S.truckState.ticketsCount,
+      archetype: activeStop.archetype,
+      rushPromise: S.rushPromiseSec >= 0,
     },
   );
   S.score += reward.pointsAwarded;
@@ -94,6 +99,9 @@ export function triggerParcelDelivery(
     isReward: true,
   };
   S.earningEventTimer = 2.4;
+  if (activeStop.archetype === 'picky' && !isBullseye) {
+    S.riderReviewScore = Math.max(3.0, Number((S.riderReviewScore - 0.08).toFixed(2)));
+  }
 
   const boomerangBonusPts = activeStop.isBoomerangTrigger ? 150 : 0;
   const boomerangTimeSec = activeStop.isBoomerangTrigger ? 4 : 0;
@@ -131,8 +139,8 @@ export function triggerParcelDelivery(
 
   S.bannerEvent = {
     id: ++S.bannerSeq,
-    label: dropLabel,
-    detail: `+${reward.pointsAwarded + boomerangBonusPts} pts · +${reward.coinsAwarded} Coins`,
+    label: rushPromiseLanded ? '加急达成! ' + dropLabel : dropLabel,
+    detail: `+${reward.pointsAwarded + boomerangBonusPts} pts · +${reward.coinsAwarded} Coins${rushPromiseLanded ? ' 加急+' + RUSH_PROMISE_COIN_BONUS : ''}`,
     tone:
       isBullseye || reward.isFever || reward.pristineBonus > 0 || viaExpressToss
         ? 'emerald'

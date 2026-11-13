@@ -34,6 +34,7 @@ import {
   VIPRole,
   WorldPos,
 } from './types';
+import { pickArchetype } from './archetypes';
 import { PRESET_CITIES, buildCustomCitySeed, getRealStreetsForCity } from './customCity';
 
 export function createRng(seed: number): () => number {
@@ -863,6 +864,7 @@ export function generateProceduralCity(
       parcelLabel,
       parcelKind: baseProfile.kind,
       vipRole: baseProfile.vip,
+      archetype: pickArchetype(idx, level),
       isBoomerangTrigger: idx === 1 && orderedRaw.length >= 4,
       isMovingCustomer: isMoving,
       patrolStart: isMoving ? { x: cw.x - latX, z: cw.z - latZ } : undefined,

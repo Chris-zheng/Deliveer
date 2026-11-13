@@ -239,6 +239,7 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
       S.riderHotMealTip = 0;
       S.riderBullseyeTip = 0;
       S.riderRushHourBonus = 0;
+  S.rushPromiseSec = -1;
       S.riderSpillDeduction = 0;
       S.riderTrafficFines = 0;
       S.riderLateDeduction = 0;

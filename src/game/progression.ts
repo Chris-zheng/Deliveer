@@ -39,7 +39,7 @@ export const VEHICLE_SPECS: Record<VehicleId, VehicleSpec> = {
     id: VehicleId.KeiTruck,
     name: 'Mint Gelato Kei-Truck',
     tagline: 'Razor 90° drift turns · +12% Accel',
-    costCoins: 450,
+    costCoins: 1200,
     maxSpeedMult: 1.05,
     turnSpeedMult: 1.24,
     accelMult: 1.15,
@@ -52,7 +52,7 @@ export const VEHICLE_SPECS: Record<VehicleId, VehicleSpec> = {
     id: VehicleId.VespaTrike,
     name: 'Turbo Espresso Trike',
     tagline: '+14% Top Speed · +1.6m Toss Reach',
-    costCoins: 850,
+    costCoins: 2000,
     maxSpeedMult: 1.14,
     turnSpeedMult: 1.28,
     accelMult: 1.2,
@@ -65,7 +65,7 @@ export const VEHICLE_SPECS: Record<VehicleId, VehicleSpec> = {
     id: VehicleId.ArmoredVan,
     name: 'Heavy Bullion Step-Van',
     tagline: '5 Hull HP · Fragile Shock-Absorber',
-    costCoins: 1250,
+    costCoins: 3200,
     maxSpeedMult: 0.97,
     turnSpeedMult: 0.96,
     accelMult: 0.98,
@@ -398,7 +398,7 @@ export const SPIN_WHEEL_SLICES: SpinWheelSlice[] = [
   },
 ];
 
-export const SPIN_COST_COINS = 200;
+export const SPIN_COST_COINS = 250;
 
 export function executeLuckySpin(
   prog: PlayerProgression,
@@ -446,8 +446,8 @@ export function computeRunRewards(
   }
 
   let stars = 1;
-  if (ticketsCount === 0 || timeRemainingSec >= 14) stars = 2;
-  if (ticketsCount === 0 && timeRemainingSec >= 12) stars = 3;
+if (ticketsCount === 0 && timeRemainingSec >= 10) stars = 2;
+if (ticketsCount === 0 && timeRemainingSec >= 20) stars = 3;
 
   const coinsEarned = Math.round(140 + score * 0.14 + stars * 45);
   return {

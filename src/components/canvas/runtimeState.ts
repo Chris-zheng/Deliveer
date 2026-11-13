@@ -114,6 +114,7 @@ export function createRuntimeState({
     let riderHotMealTip = 0;
     let riderBullseyeTip = 0;
     let riderRushHourBonus = 0;
+let rushPromiseSec = -1;
     let riderSpillDeduction = 0;
     let riderTrafficFines = 0;
     let riderLateDeduction = 0;
@@ -180,6 +181,7 @@ export function createRuntimeState({
     riderHotMealTip,
     riderBullseyeTip,
     riderRushHourBonus,
+  rushPromiseSec,
     riderSpillDeduction,
     riderTrafficFines,
     riderLateDeduction,

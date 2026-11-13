@@ -17,6 +17,7 @@ import { RedAlertBadge } from './hud/RedAlertBadge';
 import { deriveHudMetrics } from './hud/selectors';
 import { useMinimapRadar } from './hud/useMinimapRadar';
 import { formatClock, toHexColor, triggerWindowKeyPulse } from './hud/utils';
+import { archetypeLabel } from '../game/archetypes';
 
 export type { MinimapSnapshot };
 
@@ -1037,6 +1038,12 @@ export const GameHud: React.FC<GameHudProps> = ({
                   <div className="font-display text-base text-[#2b1b08] leading-none truncate">
                     #{hud.nextStopIndex} {hud.nextCustomerName}
                     {hud.nextVipRole !== 'none' ? ' ★' : ''}
+                    {hud.nextArchetype !== 'chill'
+                      ? ' · ' + archetypeLabel(hud.nextArchetype, lang ?? 'zh')
+                      : ''}
+                    {hud.rushPromiseSec > 0
+                      ? ' · 加急 ' + hud.rushPromiseSec.toFixed(1) + 's'
+                      : ''}
                   </div>
                   <div className="text-[11px] font-extrabold text-[#5c3809] truncate mt-0.5 max-w-[195px]">
                     {hud.targetStreetName ? `📍${hud.targetStreetName} · ` : ''}
@@ -1357,6 +1364,12 @@ export const GameHud: React.FC<GameHudProps> = ({
                   <div className="font-display text-xs text-[#2b1b08] leading-tight truncate">
                     #{hud.nextStopIndex} {hud.nextCustomerName}
                     {hud.nextVipRole !== 'none' ? ' ★' : ''}
+                    {hud.nextArchetype !== 'chill'
+                      ? ' · ' + archetypeLabel(hud.nextArchetype, lang ?? 'zh')
+                      : ''}
+                    {hud.rushPromiseSec > 0
+                      ? ' · 加急 ' + hud.rushPromiseSec.toFixed(1) + 's'
+                      : ''}
                     {hud.targetStreetName ? ` · ${hud.targetStreetName}` : ''}
                   </div>
                   <div className="arcade-stroke-sm text-white text-[11px] leading-tight truncate">

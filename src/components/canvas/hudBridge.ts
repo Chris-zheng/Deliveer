@@ -67,6 +67,7 @@ function emitHudSnapshot() {
       riderHotMealTip: S.riderHotMealTip,
       riderBullseyeTip: S.riderBullseyeTip,
       riderRushHourBonus: S.riderRushHourBonus,
+    rushPromiseSec: S.rushPromiseSec,
       riderSpillDeduction: S.riderSpillDeduction,
       riderTrafficFines: S.riderTrafficFines,
       riderLateDeduction: S.riderLateDeduction,

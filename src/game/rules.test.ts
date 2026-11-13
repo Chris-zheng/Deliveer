@@ -18,10 +18,13 @@ import {
   computeRunRewards,
   createDefaultProgression,
   executeLuckySpin,
+  SPIN_COST_COINS,
+  SPIN_WHEEL_SLICES,
   incrementQuestProgress,
   purchaseOrSelectTopper,
   purchaseOrSelectVehicle,
 } from './progression';
+import { RUSH_PROMISE_COIN_BONUS } from '../config/balance';
 import {
   FEVER_COMBO_THRESHOLD,
    ROCKET_START_BOOST_SEC,
@@ -408,15 +411,15 @@ test('progression shop, toppers, lucky spin wheel, quests, and 3-star mastery re
   assert.notEqual(claimed.quests[0].id, firstQuest.id, 'Claimed quest should rotate');
   prog = claimed;
 
-  // Give enough coins to unlock Mint Gelato Kei-Truck (450 coins)
-  prog = { ...prog, coins: 600 };
+  // Give enough coins to unlock Mint Gelato Kei-Truck (1200 coins)
+  prog = { ...prog, coins: 1500 };
   const vehRes = purchaseOrSelectVehicle(prog, VehicleId.KeiTruck);
   assert.equal(vehRes.purchased, true);
   assert.equal(vehRes.next.selectedVehicle, VehicleId.KeiTruck);
 
   // Mastery stars: clean 0-ticket fast victory = 3 stars + spin token
-  const perfectRun = computeRunRewards(OutcomeKind.Victory, 1800, 5, 0, 18);
-  assert.equal(perfectRun.starsEarned, 3);
+  // Mastery stars: clean 0-ticket fast victory = 3 stars + spin token
+  const perfectRun = computeRunRewards(OutcomeKind.Victory, 1800, 5, 0, 22);
   assert.equal(perfectRun.earnedSpinToken, true);
   assert.ok(perfectRun.coinsEarned >= 450);
 });
@@ -1010,3 +1013,47 @@ test('45-second Autopilot Demo Director choreographs all 5 scenes, swaps fleet v
 });
 
 
+test('customer archetypes, rush promise, star tiers and spin economics stay balanced', () => {
+  const baseline = calculateDeliveryScore(0, 0, false, 1, ParcelKind.Small, true, {
+    archetype: 'chill',
+  });
+  const generous = calculateDeliveryScore(0, 0, false, 1, ParcelKind.Small, true, {
+    archetype: 'generous',
+  });
+  const impatient = calculateDeliveryScore(0, 0, false, 1, ParcelKind.Small, true, {
+    archetype: 'impatient',
+  });
+  const pickyPlain = calculateDeliveryScore(0, 0, false, 1, ParcelKind.Small, true, {
+    archetype: 'picky',
+  });
+  const pickyBullseye = calculateDeliveryScore(0, 0, false, 1, ParcelKind.Small, true, {
+    archetype: 'picky',
+    bullseye: true,
+  });
+
+  assert.equal(generous.tipBonusYuan, baseline.tipBonusYuan + 2.0);
+  assert.equal(impatient.timeBonusSec, baseline.timeBonusSec - 1);
+  assert.equal(impatient.tipBonusYuan, baseline.tipBonusYuan + 1.5);
+  assert.equal(pickyPlain.tipBonusYuan, 0, 'Picky customer voids tips without a bullseye');
+  assert.ok(pickyBullseye.tipBonusYuan > baseline.tipBonusYuan + 2.0);
+
+  // Rush promise: same delivery scores more points and more coins when gambled.
+  const plain = calculateDeliveryScore(3, 5, false, 2, ParcelKind.Small, true, {});
+  const rushed = calculateDeliveryScore(3, 5, false, 2, ParcelKind.Small, true, {
+    rushPromise: true,
+  });
+  assert.ok(rushed.pointsAwarded > plain.pointsAwarded, 'Rush promise must multiply points');
+  assert.equal(rushed.coinsAwarded - plain.coinsAwarded, RUSH_PROMISE_COIN_BONUS);
+
+  // Star tiers: 3 stars needs a clean run AND 20s left, 2 stars needs 10s left.
+  assert.equal(computeRunRewards(OutcomeKind.Victory, 1800, 5, 0, 24).starsEarned, 3);
+  assert.equal(computeRunRewards(OutcomeKind.Victory, 1800, 5, 0, 12).starsEarned, 2);
+  assert.equal(computeRunRewards(OutcomeKind.Victory, 1800, 5, 0, 8).starsEarned, 1);
+  assert.equal(computeRunRewards(OutcomeKind.Victory, 1800, 5, 1, 40).starsEarned, 1);
+
+  // Spin wheel must be a coin sink, never a positive expected-value printer.
+  const wheelEv =
+    SPIN_WHEEL_SLICES.reduce((sum, slice) => sum + slice.coinsAward, 0) /
+    SPIN_WHEEL_SLICES.length;
+  assert.ok(wheelEv < SPIN_COST_COINS, `wheel EV ${wheelEv} must stay below cost ${SPIN_COST_COINS}`);
+});

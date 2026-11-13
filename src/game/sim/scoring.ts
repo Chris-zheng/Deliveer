@@ -11,10 +11,15 @@ import {
   ParcelKind,
   VIPRole,
 } from '../types';
+import type { CustomerArchetype } from '../types';
 
 import {
   FEVER_COMBO_THRESHOLD,
+  RUSH_PROMISE_COIN_BONUS,
+  RUSH_PROMISE_POINT_MULT,
 } from '../../config/balance';
+
+import { ARCHETYPE_RULES } from '../archetypes';
 
 import {
   DeliveryReward,
@@ -32,12 +37,17 @@ export function calculateDeliveryScore(
     thermalTimer?: number;
     vipRole?: VIPRole;
     ticketsCount?: number;
+    archetype?: CustomerArchetype;
+    rushPromise?: boolean;
   },
 ): DeliveryReward {
   const bullseye = Boolean(options?.bullseye);
   const thermalTimer = options?.thermalTimer ?? 0;
   const vipRole = options?.vipRole ?? 'none';
   const ticketsCount = options?.ticketsCount ?? 0;
+  const archetype = options?.archetype ?? 'chill';
+  const rushPromise = Boolean(options?.rushPromise);
+  const archetypeRule = ARCHETYPE_RULES[archetype];
 
   const comboStep = bullseye ? 2 : 1;
   const nextCombo = comboTimer > 0 ? currentCombo + comboStep : comboStep;
@@ -75,29 +85,37 @@ export function calculateDeliveryScore(
       thermalBonus +
       bullseyeBonus +
       vipBonus) *
-      comboMultiplier,
+      comboMultiplier *
+      (rushPromise ? RUSH_PROMISE_POINT_MULT : 1),
   );
 
   const mayorTimeExtra = vipRole === 'mayor' && ticketsCount === 0 ? 5 : 0;
-  const timeBonusSec =
+  const timeBonusSec = Math.max(
+    2,
     (parcelKind === ParcelKind.Large ? 5 : viaExpressToss ? 4 : 3) +
-    mayorTimeExtra;
+      mayorTimeExtra +
+      archetypeRule.timeBonusDeltaSec,
+  );
 
   const coinsAwarded =
-    (25 + (bullseye ? 15 : 0) + (vipBonus > 0 ? 20 : 0)) * (isFever ? 2 : 1);
+    (25 + (bullseye ? 15 : 0) + (vipBonus > 0 ? 20 : 0)) * (isFever ? 2 : 1) +
+    (rushPromise ? RUSH_PROMISE_COIN_BONUS : 0);
 
   // Food Delivery Rider Monetary Economy (RMB ¥)
   const baseDeliveryFeeYuan = Number(
     (6.5 + Math.min(4.0, (level - 1) * 0.6) + (parcelKind === ParcelKind.Large ? 3.0 : 0)).toFixed(1),
   );
   const onTimeBonusYuan = 2.5;
+  const archetypeTipVoided = archetypeRule.requiresBullseyeTip && !bullseye;
   const tipBonusYuan = Number(
     (
-      (thermalBonus > 0 ? 3.5 : 0) +
-      (bullseye ? 2.0 : 0) +
-      (pristineBonus > 0 ? 2.0 : 0) +
-      (vipBonus > 0 ? 3.5 : 0) +
-      (isFever ? 2.0 : 0)
+      (archetypeTipVoided
+        ? 0
+        : (thermalBonus > 0 ? 3.5 : 0) +
+          (bullseye ? 2.0 : 0) +
+          (pristineBonus > 0 ? 2.0 : 0) +
+          (vipBonus > 0 ? 3.5 : 0) +
+          (isFever ? 2.0 : 0) + archetypeRule.extraTipYuan)
     ).toFixed(1),
   );
   const spillPenaltyYuan =

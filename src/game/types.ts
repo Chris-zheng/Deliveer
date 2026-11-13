@@ -73,6 +73,9 @@ export enum ParcelKind {
 
 export type VIPRole = 'none' | 'chef' | 'mayor' | 'captain';
 
+/** Customer personality; nudges tip and time-bonus math in sim/scoring.ts. */
+export type CustomerArchetype = 'chill' | 'impatient' | 'picky' | 'generous';
+
 export enum SignalAxisState {
   NSGreen = 'ns_green',
   NSYellow = 'ns_yellow',
@@ -160,6 +163,7 @@ export interface DeliveryStop {
   parcelLabel: string;
   parcelKind: ParcelKind;
   vipRole: VIPRole;
+  archetype: CustomerArchetype;
   isBoomerangTrigger?: boolean;
   isBonusStop?: boolean;
   isMovingCustomer?: boolean;
@@ -572,6 +576,9 @@ export interface HudState {
   nextParcelLabel: string;
   nextParcelKind: ParcelKind;
   nextVipRole: VIPRole;
+  nextArchetype: CustomerArchetype;
+  /** Seconds left on an armed rush promise; negative when none is armed. */
+  rushPromiseSec: number;
   thermalPct: number; // 0..1 when HotExpress active
   fragileIntact: boolean;
   nextStopAppearance: PersonAppearance | null;

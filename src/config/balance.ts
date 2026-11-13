@@ -91,3 +91,14 @@ export const POOLS = {
   flyingCoins: 8,
   crashBursts: 6,
 } as const;
+
+/**
+ * Rush promise ("加急承诺"): the player gambles that the current parcel lands
+ * within the window. Success multiplies the points and adds a coin bonus;
+ * failure costs time, the combo and a slice of review score.
+ */
+export const RUSH_PROMISE_WINDOW_SEC = 9.0;
+export const RUSH_PROMISE_POINT_MULT = 1.3;
+export const RUSH_PROMISE_COIN_BONUS = 25;
+export const RUSH_PROMISE_FAIL_TIME_PENALTY_SEC = 5.0;
+export const RUSH_PROMISE_FAIL_REVIEW_PENALTY = 0.1;

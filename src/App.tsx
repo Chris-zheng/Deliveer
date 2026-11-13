@@ -115,6 +115,8 @@ export default function App() {
     nextParcelLabel: 'Matcha Pocket Tin',
     nextParcelKind: ParcelKind.Small,
     nextVipRole: 'none',
+    nextArchetype: 'chill',
+    rushPromiseSec: -1,
     thermalPct: 0,
     fragileIntact: true,
     nextStopAppearance: null,
