@@ -112,6 +112,7 @@ import {
 } from '../game/types';
 import { MinimapSnapshot } from './GameHud';
 import { createEffectsSystem } from './canvas/effects';
+import { batchStaticDecor } from './canvas/staticBatcher';
 
 // Pre-allocated scratch math helpers (Zero GC in per-frame tick!)
 const _mat4 = new THREE.Matrix4();
@@ -459,6 +460,7 @@ export function GameCanvas({
 
     // Level World Container (rebuilt cleanly per level)
     let levelGroup = new THREE.Group();
+    let staticDecor: THREE.Object3D[] = [];
     scene.add(levelGroup);
 
     let currentCity: GeneratedCity = generateProceduralCity(levelRef.current);
@@ -579,6 +581,7 @@ export function GameCanvas({
       boatRigs = [];
       birdRigs = [];
       rampBeaconGroups = [];
+      staticDecor = [];
       for (const fc of flyingCoins) {
         fc.active = false;
         fc.mesh.visible = false;
@@ -1201,20 +1204,31 @@ export function GameCanvas({
         levelGroup.add(cwInst);
       }
 
+      const addStatic = (obj: THREE.Object3D) => {
+        levelGroup.add(obj);
+        staticDecor.push(obj);
+      };
+
       // 8. Architectural Buildings, Lush Trees, Street Furniture & Canal Boats
       for (const lot of currentCity.buildings) {
         const wp = gridToWorld(lot.coord, N);
-        levelGroup.add(createPastelBuildingMesh(lot, wp, textures.clayBumpTex));
+        addStatic(createPastelBuildingMesh(lot, wp, textures.clayBumpTex));
       }
       for (const tree of currentCity.trees) {
-        levelGroup.add(createTreeMesh(tree, textures.shadowDiscTex));
+        addStatic(createTreeMesh(tree, textures.shadowDiscTex));
       }
       for (const sp of currentCity.streetProps) {
-        levelGroup.add(createStreetPropMesh(sp, textures.shadowDiscTex));
+        addStatic(createStreetPropMesh(sp, textures.shadowDiscTex));
       }
       for (const sign of currentCity.streetSigns ?? []) {
-        levelGroup.add(createStreetSignMesh(sign, textures.shadowDiscTex));
+        addStatic(createStreetSignMesh(sign, textures.shadowDiscTex));
       }
+
+      // 7Z. Collapse every static prop above into a handful of merged draw calls.
+      const batchStats = batchStaticDecor(levelGroup, staticDecor);
+      staticDecor = [];
+      if (import.meta.env.DEV) console.info("[batch] " + JSON.stringify(batchStats));
+
       for (const boat of currentCity.canalBoats) {
         const bMesh = createCanalBoatMesh(boat);
         levelGroup.add(bMesh);
@@ -3441,6 +3455,7 @@ export function GameCanvas({
       fx.update(dt, camYaw);
 
       renderer.render(scene, camera);
+
 
       if (isSoftwareGl) {
         afterDraw(tick);
