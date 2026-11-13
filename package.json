@@ -6,13 +6,14 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "vite preview --port=4173 --host=127.0.0.1",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
-    "verify": "bun run typecheck && bun test && bun run build"
+    "verify": "bun run typecheck && bun test && bun run build",
+    "deploy": "bun run build && bunx wrangler pages deploy dist --project-name deliveer --branch main"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -40,3 +41,4 @@
   },
   "description": "Procedural 3D isometric pastel-city parcel delivery game (Three.js + React)."
 }
+
