@@ -113,6 +113,7 @@ import {
 import { MinimapSnapshot } from './GameHud';
 import { createEffectsSystem } from './canvas/effects';
 import { buildStaticCityGeometry } from './canvas/cityGeometry';
+import { attachInputListeners, clearInputState, createInputState } from './canvas/input';
 
 // Pre-allocated scratch math helpers (Zero GC in per-frame tick!)
 const _mat4 = new THREE.Matrix4();
@@ -548,18 +549,10 @@ export function GameCanvas({
     }
 
     // Unified Input State (hoisted so buildCityScene always starts with clean held/edge keys!)
-    const keysHeld = new Set<string>();
-    const keysJustPressed = new Set<string>();
-    let spaceBufferTimer = 0;
-    let pointerDown = false;
-    let pointerClientX = 0;
-    let pointerClientY = 0;
+    const input = createInputState();
 
     function clearAllInputs() {
-      keysHeld.clear();
-      keysJustPressed.clear();
-      pointerDown = false;
-      spaceBufferTimer = 0;
+      clearInputState(input);
       resetTouchControls();
     }
 
@@ -1182,91 +1175,16 @@ export function GameCanvas({
     buildCityScene(levelRef.current, true);
 
     // 5. Unified Input Listeners (held vs justPressed, Space buffer, focus-loss reset, pointer steer)
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (
-        ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(
-          e.code,
-        )
-      ) {
-        if (phaseRef.current === GamePhase.Playing) {
-          e.preventDefault();
-        }
-      }
-      if (
-        e.code === 'Escape' &&
-        !e.repeat &&
-        demoState.active &&
-        phaseRef.current === GamePhase.Playing
-      ) {
-        e.preventDefault();
-        clearAllInputs();
-        pokoAudio.playUiClick();
-        stopDemoReel();
-        return;
-      }
-      if (phaseRef.current === GamePhase.Playing) {
-        if (!keysHeld.has(e.code)) {
-          keysJustPressed.add(e.code);
-        }
-        keysHeld.add(e.code);
-
-        if (e.code === 'Space' || e.code === 'KeyE') {
-          spaceBufferTimer = 0.14;
-        }
-      }
-
-      if (
-        (e.code === 'Escape' || e.code === 'KeyP') &&
-        !e.repeat &&
-        (phaseRef.current === GamePhase.Playing ||
-          phaseRef.current === GamePhase.Paused)
-      ) {
-        clearAllInputs();
-        pokoAudio.playUiClick();
-        onPhaseChangeRef.current(
-          phaseRef.current === GamePhase.Playing
-            ? GamePhase.Paused
-            : GamePhase.Playing,
-        );
-      }
-    };
-
-    const onKeyUp = (e: KeyboardEvent) => {
-      keysHeld.delete(e.code);
-    };
-
-    const onBlurOrHidden = () => {
-      clearAllInputs();
-    };
-
-    const onPointerDown = (e: PointerEvent) => {
-      if (phaseRef.current !== GamePhase.Playing) return;
-      if (e.button !== 0) return;
-      pointerDown = true;
-      pointerClientX = e.clientX;
-      pointerClientY = e.clientY;
-    };
-
-    const onPointerMove = (e: PointerEvent) => {
-      if (!pointerDown) return;
-      pointerClientX = e.clientX;
-      pointerClientY = e.clientY;
-    };
-
-    const onPointerUp = () => {
-      pointerDown = false;
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
-    window.addEventListener('blur', onBlurOrHidden);
-    const onVisChange = () => {
-      if (document.hidden) onBlurOrHidden();
-    };
-    document.addEventListener('visibilitychange', onVisChange);
-    renderer.domElement.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
+    const detachInput = attachInputListeners({
+      state: input,
+      canvas: renderer.domElement,
+      getPhase: () => phaseRef.current,
+      isDemoActive: () => demoState.active,
+      playClick: () => pokoAudio.playUiClick(),
+      onExitDemo: stopDemoReel,
+      onTogglePause: (next) => onPhaseChangeRef.current(next),
+      onFocusLost: clearAllInputs,
+    });
 
     function screenToWorldOnRoad(clientX: number, clientY: number): THREE.Vector3 | null {
       const rect = renderer.domElement.getBoundingClientRect();
@@ -1565,9 +1483,9 @@ export function GameCanvas({
         waterPlane.position.set(camLookTarget.x, 0.0, camLookTarget.z);
       } else if (currentPhase === GamePhase.Playing) {
         // Toggle 45-second Choreographed Demo Reel [Bottom HUD Timer Button or T]
-        if (touchControls.demoTogglePulse || keysJustPressed.has('KeyT')) {
+        if (touchControls.demoTogglePulse || input.keysJustPressed.has('KeyT')) {
           touchControls.demoTogglePulse = false;
-          keysJustPressed.delete('KeyT');
+          input.keysJustPressed.delete('KeyT');
           if (demoState.active) {
             stopDemoReel();
           } else {
@@ -1684,8 +1602,8 @@ export function GameCanvas({
           }
         }
 
-        if (spaceBufferTimer > 0) {
-          spaceBufferTimer = Math.max(0, spaceBufferTimer - dt);
+        if (input.spaceBufferTimer > 0) {
+          input.spaceBufferTimer = Math.max(0, input.spaceBufferTimer - dt);
         }
 
         // Ambient Sunny & Sunset Songbird Chirps!
@@ -1707,17 +1625,17 @@ export function GameCanvas({
           countdownState.isFrozen &&
           countdownState.remainingSec > 0.06 &&
           countdownState.remainingSec < countdownState.totalSec - 0.3 &&
-          keysJustPressed.has('Enter')
+          input.keysJustPressed.has('Enter')
         ) {
           countdownState.remainingSec = 0.03;
         }
 
         const gasHeldForCountdown = demoState.active
           ? Boolean(demoOut?.gasForCountdown)
-          : keysHeld.has('KeyW') ||
-            keysHeld.has('ArrowUp') ||
+          : input.keysHeld.has('KeyW') ||
+            input.keysHeld.has('ArrowUp') ||
             touchControls.gas ||
-            pointerDown;
+            input.pointerDown;
 
         if (countdownState.isFrozen || countdownState.stage !== null) {
           const prevRocketStatus = countdownState.rocketStatus;
@@ -1862,14 +1780,14 @@ export function GameCanvas({
             wantsHorn = demoOut.wantsHorn;
             touchControls.hornPulse = false;
           } else {
-            if (keysHeld.has('KeyW') || keysHeld.has('ArrowUp') || touchControls.gas) {
+            if (input.keysHeld.has('KeyW') || input.keysHeld.has('ArrowUp') || touchControls.gas) {
               throttle += 1;
             }
-            if (keysHeld.has('KeyS') || keysHeld.has('ArrowDown') || touchControls.brake) {
+            if (input.keysHeld.has('KeyS') || input.keysHeld.has('ArrowDown') || touchControls.brake) {
               throttle -= 1;
             }
-            if (keysHeld.has('KeyA') || keysHeld.has('ArrowLeft')) steer -= 1;
-            if (keysHeld.has('KeyD') || keysHeld.has('ArrowRight')) steer += 1;
+            if (input.keysHeld.has('KeyA') || input.keysHeld.has('ArrowLeft')) steer -= 1;
+            if (input.keysHeld.has('KeyD') || input.keysHeld.has('ArrowRight')) steer += 1;
             if (touchControls.steerTouchActive) {
               steer += touchControls.steerAnalog;
             } else {
@@ -1880,8 +1798,8 @@ export function GameCanvas({
             steer = Math.max(-1, Math.min(1, steer));
 
             wantsHorn =
-              keysJustPressed.has('KeyQ') ||
-              keysJustPressed.has('KeyH') ||
+              input.keysJustPressed.has('KeyQ') ||
+              input.keysJustPressed.has('KeyH') ||
               touchControls.hornPulse;
             touchControls.hornPulse = false;
           }
@@ -1927,9 +1845,9 @@ export function GameCanvas({
             !anyTouchDeckHeld &&
             Math.abs(throttle) < 0.01 &&
             Math.abs(steer) < 0.01 &&
-            pointerDown
+            input.pointerDown
           ) {
-            const worldPt = screenToWorldOnRoad(pointerClientX, pointerClientY);
+            const worldPt = screenToWorldOnRoad(input.pointerClientX, input.pointerClientY);
             if (worldPt) {
               const dx = worldPt.x - truckState.x;
               const dz = worldPt.z - truckState.z;
@@ -1966,30 +1884,30 @@ export function GameCanvas({
             : touchControls.deliverPulse;
           touchControls.deliverPulse = false;
           if (usedTouchDeliver) {
-            spaceBufferTimer = 0.16;
+            input.spaceBufferTimer = 0.16;
           }
 
           // Consume buffered Space/E/Touch-Deliver: if in Express Toss range, toss parcel! Otherwise trigger Turbo Boost!
           let wantsBoost = demoState.active
             ? Boolean(demoOut?.wantsBoost)
-            : keysJustPressed.has('ShiftLeft') ||
-              keysJustPressed.has('ShiftRight') ||
+            : input.keysJustPressed.has('ShiftLeft') ||
+              input.keysJustPressed.has('ShiftRight') ||
               touchControls.boostPulse;
           touchControls.boostPulse = false;
-          if (spaceBufferTimer > 0) {
+          if (input.spaceBufferTimer > 0) {
             const demoBlockEarlyFinalDrop =
               demoState.active &&
               demoState.sceneId !== 'scene5_finale_orbit' &&
               currentCity.stops.filter((s) => !s.delivered).length <= 1;
             if (preElig.canExpressToss && !demoBlockEarlyFinalDrop) {
-              spaceBufferTimer = 0;
+              input.spaceBufferTimer = 0;
               triggerParcelDelivery(true, preElig.canBullseyeToss);
             } else if (
               !demoState.active &&
-              (keysJustPressed.has('Space') || usedTouchDeliver) &&
+              (input.keysJustPressed.has('Space') || usedTouchDeliver) &&
               truckState.boostCooldown <= 0
             ) {
-              spaceBufferTimer = 0;
+              input.spaceBufferTimer = 0;
               wantsBoost = true;
             }
           }
@@ -2005,7 +1923,7 @@ export function GameCanvas({
               wantsBoost,
               wantsDrift: demoState.active
                 ? Boolean(demoOut?.wantsDrift)
-                : keysHeld.has('KeyC'),
+                : input.keysHeld.has('KeyC'),
             },
             currentCity,
             simDt,
@@ -2742,7 +2660,7 @@ export function GameCanvas({
         }
       }
 
-      keysJustPressed.clear();
+      input.keysJustPressed.clear();
 
       // 7. Update Visual Meshes (Truck Gait/Roll/Pitch/Steer/Jump/Shield, Citizens, Pedestrians, Hazards, Particles)
       truckRig.root.position.set(
@@ -3180,13 +3098,7 @@ export function GameCanvas({
       cancelAnimationFrame(frameId);
       clearTimeout(frameId);
       resizeObs.disconnect();
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
-      window.removeEventListener('blur', onBlurOrHidden);
-      document.removeEventListener('visibilitychange', onVisChange);
-      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
+      detachInput();
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
 
       disposeLevelGroup();
@@ -3237,3 +3149,4 @@ export function GameCanvas({
     />
   );
 }
+
