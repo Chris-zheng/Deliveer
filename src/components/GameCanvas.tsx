@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { CAMERA, POOLS } from '../config/balance';
 import { pokoAudio } from '../game/audio';
 import {
   CitizenStopRig,
@@ -123,17 +124,17 @@ const _raycaster = new THREE.Raycaster();
 const _groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.24);
 const _intersectPt = new THREE.Vector3();
 
-const PARTICLE_POOL_SIZE = 96;
-const BREADCRUMB_MAX = 42;
-const FLYING_PARCEL_POOL = 4;
-const FLYING_COIN_POOL = 8;
-const CRASH_BURST_POOL = 6;
+const PARTICLE_POOL_SIZE = POOLS.particles;
+const BREADCRUMB_MAX = POOLS.breadcrumbs;
+const FLYING_PARCEL_POOL = POOLS.flyingParcels;
+const FLYING_COIN_POOL = POOLS.flyingCoins;
+const CRASH_BURST_POOL = POOLS.crashBursts;
 
 // Elevated Top-Down "Heading-Up" Google Maps 3D Chase Camera Constants
-const CHASE_BASE_FOV = 30;
-const CHASE_LOOK_AHEAD = 4.8;
-const CHASE_BACK_DIST = 21.5;
-const CHASE_UP_HEIGHT = 26.0;
+const CHASE_BASE_FOV = CAMERA.baseFov;
+const CHASE_LOOK_AHEAD = CAMERA.lookAhead;
+const CHASE_BACK_DIST = CAMERA.backDist;
+const CHASE_UP_HEIGHT = CAMERA.upHeight;
 
 function wrapAngleRad(angle: number): number {
   let a = angle;

@@ -128,10 +128,14 @@ function makeAppearance(rng: () => number, overrideTop?: number, overrideAccent?
 export function getLevelConfig(level: number): LevelConfig {
   const safeLevel = Math.max(1, Math.floor(level));
   const themeEntry = DISTRICT_THEMES[(safeLevel - 1) % DISTRICT_THEMES.length];
-  const gridSize = safeLevel === 1 ? 15 : safeLevel <= 3 ? 17 : 19;
-  const finalStops = Math.min(9, 3 + safeLevel);
-  const baseTime = 78 + finalStops * 9 - Math.min(22, (safeLevel - 1) * 3);
-  const timeLimitSec = Math.max(60, baseTime);
+  const gridSize =
+    safeLevel === 1 ? LEVEL.gridSizeSmall : safeLevel <= 3 ? LEVEL.gridSizeMedium : LEVEL.gridSizeLarge;
+  const finalStops = Math.min(LEVEL.stopsMax, LEVEL.stopsBase + safeLevel);
+  const baseTime =
+    LEVEL.timeBaseSec +
+    finalStops * LEVEL.timePerStopSec -
+    Math.min(LEVEL.timeShortenMaxSec, (safeLevel - 1) * LEVEL.timeShortenPerLevelSec);
+  const timeLimitSec = Math.max(LEVEL.timeMinSec, baseTime);
 
   const atmosCycle: ShiftAtmosphere[] = [
     ShiftAtmosphere.SunnyHarbor,
@@ -150,15 +154,18 @@ export function getLevelConfig(level: number): LevelConfig {
     gridSize,
     stopCount: finalStops,
     timeLimitSec,
-    cruiserCount: Math.min(10, 5 + safeLevel),
-    scooterCount: safeLevel >= 2 ? Math.min(5, Math.floor((safeLevel + 1) / 2)) : 1,
-    bridgeGateCount: safeLevel >= 2 ? Math.min(3, Math.floor(safeLevel / 2)) : 0,
-    boostPadCount: Math.min(6, 3 + Math.floor(safeLevel / 2)),
-    signalCount: Math.min(8, 4 + safeLevel),
+    cruiserCount: Math.min(LEVEL.cruisersMax, LEVEL.cruisersBase + safeLevel),
+    scooterCount:
+      safeLevel >= 2 ? Math.min(LEVEL.scootersMax, Math.floor((safeLevel + 1) / 2)) : 1,
+    bridgeGateCount:
+      safeLevel >= 2 ? Math.min(LEVEL.bridgeGatesMax, Math.floor(safeLevel / 2)) : 0,
+    boostPadCount: Math.min(LEVEL.boostPadsMax, LEVEL.boostPadsBase + Math.floor(safeLevel / 2)),
+    signalCount: Math.min(LEVEL.signalsMax, LEVEL.signalsBase + safeLevel),
   };
 }
 
-export const PEDESTRIAN_RADIUS = 0.22;
+import { LEVEL, PEDESTRIAN_RADIUS } from '../config/balance';
+export { PEDESTRIAN_RADIUS } from '../config/balance';
 
 export function isDrivableTile(tile: TileType): boolean {
   return (

@@ -43,7 +43,18 @@ src/
 │  └─ balance.ts           # ALL gameplay tuning numbers (single source of truth)
 └─ game/
    ├─ types.ts             # domain model (city, truck, parcels, HUD state)
-   ├─ rules.ts             # simulation: physics, traffic law, scoring, delivery
+   ├─ rules.ts             # barrel: the public simulation API (keeps `from './rules'` working)
+   ├─ sim/                 # simulation, split by responsibility
+   │  ├─ geometry.ts       # shared math + grid helpers
+   │  ├─ truck.ts          # createInitialTruckState + stepTruckPhysics
+   │  ├─ collision.ts      # capsule specs, contacts, drivability
+   │  ├─ traffic.ts        # signals, kiosks, garages, ducks, customers, rival, horn
+   │  ├─ pedestrians.ts    # sidewalk pedestrian physics
+   │  ├─ hazards.ts        # hazard stepping + vehicle/obstacle collisions
+   │  ├─ delivery.ts       # stop eligibility + parcel/toss rules
+   │  ├─ scoring.ts        # run outcome + delivery score
+   │  ├─ countdown.ts      # 3-2-1-GO state machine + rocket start
+   │  └─ cargo.ts          # roof-rack parcel stack spring-damper
    ├─ proceduralCity.ts    # procedural city generation + level config curve
    ├─ progression.ts       # coins, fleet, toppers, quests, persistence
    ├─ meshes.ts            # Three.js mesh/material factories
@@ -71,9 +82,11 @@ roof-rack physics, the rocket-start state machine and the demo director. They ar
 
 ## Known debt
 
-- `GameCanvas.tsx` and `rules.ts` are monolithic (100 KB+). They are being split by
-  responsibility (`update` / `render` / `input` / `collision` / `audio`, and
-  `traffic` / `collision` / `delivery` / `scoring` respectively).
+- `GameCanvas.tsx` (~140 KB) is still monolithic and is next in line to be split into
+  `update` / `render` / `input` / `collision` / `audio` layers. `GameHud.tsx` (~82 KB)
+  needs its ~50-field `HudState` reduced to a few selector groups.
+- `sim/truck.ts` and `sim/hazards.ts` each still hold one very long step function
+  (`stepTruckPhysics`, `stepHazardsAndCollisions`); decompose them next.
 - `metadata.json` declares `MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API`, but the repo has no
   server entry point yet. Do not ship `GEMINI_API_KEY` into the client bundle: the key
   must be read server-side only.
