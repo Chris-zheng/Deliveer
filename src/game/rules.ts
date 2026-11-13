@@ -37,20 +37,45 @@ import {
   WorldPos,
 } from './types';
 
-export const TRUCK_MAX_SPEED = 8.6;
-export const TRUCK_BOOST_SPEED = 13.4;
-export const TRUCK_RADIUS = 0.46;
-export const AUTO_DROP_RADIUS = 1.6;
-export const BULLSEYE_PAD_RADIUS = 1.05;
-export const EXPRESS_TOSS_RADIUS = 4.2;
-export const SMALL_TOSS_RADIUS = 5.3;
-export const LARGE_UNLOAD_RADIUS = 2.45;
-export const LARGE_MAX_UNLOAD_SPEED = 3.1;
-export const COMBO_WINDOW_SEC = 8.0;
-export const FEVER_COMBO_THRESHOLD = 4;
-export const MAX_CONCURRENT_SCOOTER_ATTACKS = 2;
-export const BOOST_COOLDOWN_MAX_SEC = 3.2;
-export const WRONG_WAY_LIMIT_SEC = 1.75;
+import {
+  AUTO_DROP_RADIUS,
+  BOOST_COOLDOWN_MAX_SEC,
+  BULLSEYE_PAD_RADIUS,
+  COMBO_WINDOW_SEC,
+  EXPRESS_TOSS_RADIUS,
+  FEVER_COMBO_THRESHOLD,
+  LARGE_MAX_UNLOAD_SPEED,
+  LARGE_UNLOAD_RADIUS,
+  MAX_CONCURRENT_SCOOTER_ATTACKS,
+  ROCKET_START_BOOST_SEC,
+  ROCKET_START_POINTS,
+  SMALL_TOSS_RADIUS,
+  TRUCK_BOOST_SPEED,
+  TRUCK_MAX_SPEED,
+  TRUCK_RADIUS,
+  WRONG_WAY_LIMIT_SEC,
+} from '../config/balance';
+
+// Historical public API: keep re-exporting these from ./rules so downstream
+// imports (tests, HUD, canvas) do not need to change.
+export {
+  AUTO_DROP_RADIUS,
+  BOOST_COOLDOWN_MAX_SEC,
+  BULLSEYE_PAD_RADIUS,
+  COMBO_WINDOW_SEC,
+  EXPRESS_TOSS_RADIUS,
+  FEVER_COMBO_THRESHOLD,
+  LARGE_MAX_UNLOAD_SPEED,
+  LARGE_UNLOAD_RADIUS,
+  MAX_CONCURRENT_SCOOTER_ATTACKS,
+  ROCKET_START_BOOST_SEC,
+  ROCKET_START_POINTS,
+  SMALL_TOSS_RADIUS,
+  TRUCK_BOOST_SPEED,
+  TRUCK_MAX_SPEED,
+  TRUCK_RADIUS,
+  WRONG_WAY_LIMIT_SEC,
+} from '../config/balance';
 
 export interface TruckInput {
   throttle: number; // -1 (brake to stop; reverse prohibited!) .. +1 (drive straight ahead)
@@ -2294,8 +2319,6 @@ export interface CountdownStepEvents {
   revIntensity: number; // > 0 when van should rumble & puff exhaust during countdown
 }
 
-export const ROCKET_START_POINTS = 75;
-export const ROCKET_START_BOOST_SEC = 1.55;
 
 export function createStartCountdownState(
   mode: CountdownMode = 'full',

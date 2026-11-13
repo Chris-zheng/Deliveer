@@ -609,5 +609,6 @@ export interface HudState {
   } | null;
 }
 
-export const TILE_SIZE = 2.6;
-export const RIGHT_LANE_OFFSET = 0.44;
+
+// Moved to src/config/balance.ts; re-exported so `from './types'` keeps working.
+export { RIGHT_LANE_OFFSET, TILE_SIZE } from '../config/balance';
