@@ -3,6 +3,8 @@ import { TILE_SIZE } from '../../config/balance';
 import { generateProceduralCity, gridToWorld } from '../../game/proceduralCity';
 import { TileType } from '../../game/types';
 import {
+  createLandmarkMesh,
+  landmarkKindForLevel,
   createPastelBuildingMesh,
   createProceduralTextures,
   createStreetPropMesh,
@@ -330,10 +332,27 @@ export function buildStaticCityGeometry({
   };
 
   // 8. Architectural Buildings, Lush Trees, Street Furniture & Canal Boats
-  for (const lot of currentCity.buildings) {
-    const wp = gridToWorld(lot.coord, N);
-    addStatic(createPastelBuildingMesh(lot, wp, textures.clayBumpTex));
+  const landmarkSlots = new Map<number, ReturnType<typeof landmarkKindForLevel>>();
+  if (currentCity.buildings.length >= 10) {
+    const cx = currentCity.buildings.reduce((sum, b) => sum + b.coord.col, 0) / currentCity.buildings.length;
+    const cz = currentCity.buildings.reduce((sum, b) => sum + b.coord.row, 0) / currentCity.buildings.length;
+    const ranked = currentCity.buildings
+      .map((b, i) => ({ i, score: Math.hypot(b.coord.col - cx, b.coord.row - cz) - b.floors * 0.4 }))
+      .sort((a, b) => a.score - b.score);
+    const wanted = currentCity.buildings.length >= 24 ? 2 : 1;
+    for (let slot = 0; slot < Math.min(wanted, ranked.length); slot += 1) {
+      landmarkSlots.set(ranked[slot].i, landmarkKindForLevel(currentCity.config.level ?? 1, slot));
+    }
   }
+  currentCity.buildings.forEach((lot, bIdx) => {
+    const wp = gridToWorld(lot.coord, N);
+    const landmarkKind = landmarkSlots.get(bIdx);
+    addStatic(
+      landmarkKind
+        ? createLandmarkMesh(lot, wp, landmarkKind)
+        : createPastelBuildingMesh(lot, wp, textures.clayBumpTex),
+    );
+  });
   for (const tree of currentCity.trees) {
     addStatic(createTreeMesh(tree, textures.shadowDiscTex));
   }

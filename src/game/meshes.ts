@@ -3569,3 +3569,177 @@ export function createStreetSignMesh(
 }
 
 
+
+/* ------------------------------------------------------------------------- */
+/* City Landmarks: one or two signature towers per city so every level reads  */
+/* as a real place instead of interchangeable pastel blocks.                  */
+/* ------------------------------------------------------------------------- */
+
+export type LandmarkKind = 'clock-tower' | 'radio-mast' | 'grand-arch';
+
+const LANDMARK_ROTATION: LandmarkKind[] = ['clock-tower', 'radio-mast', 'grand-arch'];
+
+/** Deterministic per-city landmark pick so a level always looks the same. */
+export function landmarkKindForLevel(level: number, slot: number): LandmarkKind {
+  const idx = (((level - 1) * 1 + slot * 1) % LANDMARK_ROTATION.length + LANDMARK_ROTATION.length) % LANDMARK_ROTATION.length;
+  return LANDMARK_ROTATION[idx];
+}
+
+export function createLandmarkMesh(
+  lot: BuildingLot,
+  worldPos: { x: number; z: number },
+  kind: LandmarkKind,
+): THREE.Group {
+  const g = new THREE.Group();
+  g.position.set(worldPos.x, 0.42, worldPos.z);
+  g.rotation.y = lot.facingYaw;
+  g.userData.landmarkKind = kind;
+
+  const w = TILE_SIZE * 0.78;
+  const stoneMat = getCachedStandardMat(0xf3e3c6, 0.72, 0.03);
+  const creamMat = getCachedStandardMat(0xfffcf5, 0.5, 0.04);
+  const copperMat = getCachedStandardMat(0x4ea898, 0.55, 0.22);
+  const goldMat = getCachedStandardMat(0xf7c948, 0.34, 0.6);
+  const glassMat = getCachedStandardMat(0x5c7fa6, 0.18, 0.32, 0x9fd8ff, 0.18);
+  const redMat = getCachedStandardMat(0xe23b3b, 0.4, 0.1, 0xff2f2f, 0.6);
+
+  const block = (
+    bw: number,
+    bh: number,
+    bd: number,
+    y: number,
+    mat: THREE.Material,
+    radius = 0.12,
+  ): THREE.Mesh => {
+    const m = new THREE.Mesh(createBeveledBlockGeometry(bw, bh, bd, radius, 0.04), mat);
+    m.position.y = y + bh * 0.5;
+    m.castShadow = true;
+    m.receiveShadow = true;
+    g.add(m);
+    return m;
+  };
+
+  // Shared civic stone podium under every landmark.
+  const podium = block(w * 1.16, 0.26, w * 1.16, 0, creamMat, 0.16);
+  podium.receiveShadow = true;
+
+  if (kind === 'clock-tower') {
+    let y = 0.26;
+    const tiers: Array<{ h: number; s: number }> = [
+      { h: 1.55, s: 0.95 },
+      { h: 1.15, s: 0.78 },
+      { h: 0.95, s: 0.62 },
+    ];
+    for (const tier of tiers) {
+      block(w * tier.s, tier.h, w * tier.s, y, stoneMat);
+      block(w * tier.s * 1.08, 0.09, w * tier.s * 1.08, y + tier.h, creamMat, 0.08);
+      y += tier.h + 0.09;
+    }
+    // Civic clock faces on the two street-facing sides.
+    const r = w * 0.24;
+    const faceGeo = getSharedGeo(`lm_clock_${r.toFixed(3)}`, () => new THREE.CylinderGeometry(r, r, 0.08, 20));
+    for (const dir of [1, -1]) {
+      const face = new THREE.Mesh(faceGeo, creamMat);
+      face.rotation.x = Math.PI / 2;
+      face.position.set(0, y - 0.62, dir * w * 0.34);
+      g.add(face);
+      const hub = new THREE.Mesh(
+        getSharedGeo('lm_clock_hub', () => new THREE.CylinderGeometry(r * 0.42, r * 0.42, 0.1, 12)),
+        goldMat,
+      );
+      hub.rotation.x = Math.PI / 2;
+      hub.position.set(0, y - 0.62, dir * (w * 0.34 + 0.02));
+      g.add(hub);
+    }
+    // Copper spire + gilded finial.
+    const spire = new THREE.Mesh(
+      getSharedGeo('lm_clock_spire', () => new THREE.ConeGeometry(1, 1, 4)),
+      copperMat,
+    );
+    spire.scale.set(w * 0.4, 1.35, w * 0.4);
+    spire.position.y = y + 0.675;
+    spire.castShadow = true;
+    g.add(spire);
+    const finial = new THREE.Mesh(getSharedGeo('lm_finial', () => new THREE.SphereGeometry(0.11, 10, 8)), goldMat);
+    finial.position.y = y + 1.42;
+    g.add(finial);
+    return g;
+  }
+
+  if (kind === 'radio-mast') {
+    block(w * 0.88, 1.05, w * 0.88, 0.26, stoneMat);
+    const doorPlate = block(w * 0.46, 0.46, 0.06, 0.42, glassMat, 0.02);
+    doorPlate.position.z = -w * 0.48;
+    doorPlate.position.y = 0.65;
+
+    // Tapering lattice mast built from three stacked octagonal drums.
+    const drums: Array<{ r1: number; r2: number; h: number; mat: THREE.Material }> = [
+      { r1: 0.36, r2: 0.27, h: 1.9, mat: copperMat },
+      { r1: 0.27, r2: 0.18, h: 1.7, mat: stoneMat },
+      { r1: 0.18, r2: 0.09, h: 1.5, mat: copperMat },
+    ];
+    let y = 1.31;
+    for (const drum of drums) {
+      const geo = getSharedGeo(
+        `lm_mast_${drum.r1}_${drum.r2}_${drum.h}`,
+        () => new THREE.CylinderGeometry(drum.r2, drum.r1, drum.h, 8),
+      );
+      const seg = new THREE.Mesh(geo, drum.mat);
+      seg.position.y = y + drum.h * 0.5;
+      seg.castShadow = true;
+      g.add(seg);
+      y += drum.h;
+    }
+    // Cross arms + satellite dish + aviation beacon.
+    for (const armY of [y - 1.65, y - 0.85]) {
+      const arm = block(1.7, 0.07, 0.07, armY, creamMat, 0.02);
+      arm.rotation.y = Math.PI * 0.25;
+    }
+    // Observation deck collar between the drums so the silhouette reads as a tower.
+    block(1.0, 0.16, 1.0, y - 2.05, creamMat, 0.06);
+    const dish = new THREE.Mesh(
+      getSharedGeo('lm_dish', () => new THREE.CylinderGeometry(0.42, 0.42, 0.06, 14)),
+      creamMat,
+    );
+    dish.rotation.set(Math.PI * 0.42, 0, Math.PI * 0.16);
+    dish.position.set(w * 0.34, y - 1.1, 0);
+    g.add(dish);
+    const beacon = new THREE.Mesh(getSharedGeo('lm_beacon', () => new THREE.SphereGeometry(0.15, 10, 8)), redMat);
+    beacon.position.y = y + 0.08;
+    g.add(beacon);
+    return g;
+  }
+
+  // grand-arch: a ceremonial delivery gate over the boulevard.
+  const pillarW = w * 0.3;
+  for (const dir of [1, -1]) {
+    block(pillarW, 2.9, pillarW, 0.26, stoneMat);
+    block(pillarW * 1.22, 0.12, pillarW * 1.22, 3.16, creamMat, 0.08);
+    const lantern = new THREE.Mesh(
+      getSharedGeo('lm_lantern', () => new THREE.SphereGeometry(0.13, 10, 8)),
+      redMat,
+    );
+    lantern.position.set(dir * w * 0.34, 3.42, 0);
+    g.add(lantern);
+  }
+  const lintel = block(w * 0.98, 0.44, w * 0.3, 3.2, creamMat, 0.14);
+  lintel.castShadow = true;
+  const banner = block(w * 0.74, 0.22, 0.05, 3.32, goldMat, 0.02);
+  banner.position.z = -w * 0.16;
+  const arch = new THREE.Mesh(
+    getSharedGeo('lm_arch', () => new THREE.TorusGeometry(1, 0.09, 8, 18, Math.PI)),
+    copperMat,
+  );
+  arch.scale.setScalar(w * 0.34);
+  arch.position.y = 3.66;
+  arch.castShadow = true;
+  g.add(arch);
+  const crown = new THREE.Mesh(
+    getSharedGeo('lm_crown', () => new THREE.ConeGeometry(1, 1, 4)),
+    goldMat,
+  );
+  crown.scale.set(w * 0.2, 0.5, w * 0.2);
+  crown.position.y = 3.98 + 0.25;
+  g.add(crown);
+  return g;
+}
