@@ -13,6 +13,8 @@ import {
 
 // Framing blend so switching view mode never snaps the camera.
 const viewBlend = { back: 1, up: 1, lookAhead: 1, fov: 1 };
+// 0 = driving forward, 1 = fully backed up so the player can see behind the van.
+let reverseBlend = 0;
 
 function stepViewBlend(dt: number): void {
   const target = VIEW_FRAMING[getViewMode()];
@@ -39,26 +41,34 @@ export function updateCameraFraming(dt: number, S: RuntimeState, deps: CameraFra
         // Camera Framing: Bird's-Eye 3-2-1 Island Swoop / Demo Drone Zoom -> Heading-Up Chase -> Victory Orbit!
         // The player-selected view mode (chase / far / top) is blended in on top.
         stepViewBlend(dt);
+        reverseBlend +=
+          ((S.truckState.isReversing ? 1 : 0) - reverseBlend) *
+          (1 - Math.exp(-7.5 * Math.max(dt, 0.001)));
         const isPortraitMobile = camera.aspect < 0.95;
         const zoomScale = S.demoState.active ? S.demoState.cameraZoomScale : 1;
         const yawOffset = S.demoState.active ? S.demoState.cameraYawOffset : 0;
         const activeLookAhead =
           (isPortraitMobile ? 6.1 : CHASE_LOOK_AHEAD) *
           viewBlend.lookAhead *
-          (S.demoState.active ? 0.8 + 0.2 * zoomScale : 1);
+          (S.demoState.active ? 0.8 + 0.2 * zoomScale : 1) *
+          (1 - 0.42 * reverseBlend);
         const activeBackDist =
           (isPortraitMobile ? CHASE_BACK_DIST * 1.07 : CHASE_BACK_DIST) *
           viewBlend.back *
-          zoomScale;
+          zoomScale *
+          (1 + 0.24 * reverseBlend);
         const activeUpHeight =
           (isPortraitMobile ? CHASE_UP_HEIGHT * 1.07 : CHASE_UP_HEIGHT) *
           viewBlend.up *
-          zoomScale;
+          zoomScale *
+          (1 + 0.07 * reverseBlend);
         const baseFov = isPortraitMobile ? 42 : CHASE_BASE_FOV;
         const speedNorm = Math.min(1, Math.max(0, S.truckState.speed / 10));
         const boostFovKick = S.truckState.boostTimer > 0 ? 2.4 : 0;
+        const cockpitFov = getViewMode() === 'cockpit' ? 24 : 0;
         const targetFov =
           baseFov * viewBlend.fov +
+          cockpitFov +
           (S.demoState.active ? 0 : speedNorm * 1.8 + boostFovKick);
         const fovDamp = 1 - Math.exp(-7.5 * Math.max(dt, 0.001));
         const nextFov = camera.fov + (targetFov - camera.fov) * fovDamp;
@@ -153,6 +163,8 @@ export function updateCameraFraming(dt: number, S: RuntimeState, deps: CameraFra
           );
           camera.lookAt(camLookTarget);
         } else {
+          // Cockpit: ride on the bonnet so the player steers from the driver's eye.
+          const cockpit = getViewMode() === 'cockpit' ? 1 : 0;
           const desiredCamYaw = wrapAngleRad(S.truckState.yaw + yawOffset);
           const yawDamp = 1 - Math.exp(-7.5 * dt);
           S.camYaw = wrapAngleRad(
@@ -160,10 +172,12 @@ export function updateCameraFraming(dt: number, S: RuntimeState, deps: CameraFra
           );
 
           const followDamp = 1 - Math.exp(-9.5 * dt);
-          const leadX = S.truckState.x + Math.sin(S.camYaw) * activeLookAhead;
-          const leadZ = S.truckState.z + Math.cos(S.camYaw) * activeLookAhead;
+          const lookAheadDist = cockpit > 0 ? 12 : activeLookAhead;
+          const leadX = S.truckState.x + Math.sin(S.camYaw) * lookAheadDist;
+          const leadZ = S.truckState.z + Math.cos(S.camYaw) * lookAheadDist;
           camLookTarget.x += (leadX - camLookTarget.x) * followDamp;
-          camLookTarget.y += (targetLookY - camLookTarget.y) * followDamp;
+          const lookTargetY = cockpit > 0 ? 1.35 : targetLookY;
+          camLookTarget.y += (lookTargetY - camLookTarget.y) * followDamp;
           camLookTarget.z += (leadZ - camLookTarget.z) * followDamp;
 
           const rightX = -Math.cos(S.camYaw);
@@ -174,17 +188,27 @@ export function updateCameraFraming(dt: number, S: RuntimeState, deps: CameraFra
           const shakeFwd =
             shakeAmt > 0.001 ? Math.cos(S.visualClock * 47) * shakeAmt : 0;
 
-          camera.position.set(
-            camLookTarget.x -
-              Math.sin(S.camYaw) * activeBackDist +
-              rightX * shakeLat +
-              Math.sin(S.camYaw) * shakeFwd,
-            camLookTarget.y + activeUpHeight,
-            camLookTarget.z -
-              Math.cos(S.camYaw) * activeBackDist +
-              rightZ * shakeLat +
-              Math.cos(S.camYaw) * shakeFwd,
-          );
+          if (cockpit > 0) {
+            // Eye at the driver's head, just behind the windscreen: the van body is
+            // hidden in this mode so nothing clips through the lens.
+            camera.position.set(
+              S.truckState.x + Math.sin(S.camYaw) * 0.42 + rightX * shakeLat,
+              1.58,
+              S.truckState.z + Math.cos(S.camYaw) * 0.42 + rightZ * shakeLat,
+            );
+          } else {
+            camera.position.set(
+              camLookTarget.x -
+                Math.sin(S.camYaw) * activeBackDist +
+                rightX * shakeLat +
+                Math.sin(S.camYaw) * shakeFwd,
+              camLookTarget.y + activeUpHeight,
+              camLookTarget.z -
+                Math.cos(S.camYaw) * activeBackDist +
+                rightZ * shakeLat +
+                Math.cos(S.camYaw) * shakeFwd,
+            );
+          }
           camera.lookAt(camLookTarget);
         }
 

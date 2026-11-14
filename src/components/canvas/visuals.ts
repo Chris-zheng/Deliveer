@@ -2,6 +2,7 @@ import type * as THREE from 'three';
 import { DRIFT_TIER1_SEC, DRIFT_TIER2_SEC } from '../../config/balance';
 import { gridToWorld } from '../../game/proceduralCity';
 import type { TrafficHazard } from '../../game/types';
+import { getViewMode } from '../../game/controls';
 import { ParcelKind } from '../../game/types';
 import { getActiveStop, stepParcelStackWobble } from '../../game/rules';
 import { GamePhase, HazardKind, HazardPhase, SignalAxisState } from '../../game/types';
@@ -84,8 +85,17 @@ export function updateVisuals(
       for (const w of truckRig.wheels) {
         w.rotation.x = S.truckState.distanceTraveled * 2.4;
       }
-      // Glow brake taillights bright crimson when braking!
-      truckRig.taillightMat.emissiveIntensity = S.truckState.isBraking ? 1.9 : 0.45;
+      // In cockpit view the camera sits inside the van, so drop the body but keep
+      // the shadow blob readable from the low eye-line.
+      truckRig.root.traverse(() => {});
+      truckRig.bodyTiltGroup.visible = getViewMode() !== 'cockpit';
+      truckRig.shadowMesh.visible = getViewMode() !== 'cockpit';
+      // Brake lights glow crimson; reversing keeps them hot plus a wider rig.
+      truckRig.taillightMat.emissiveIntensity = S.truckState.isReversing
+        ? 2.45
+        : S.truckState.isBraking
+          ? 1.9
+          : 0.45;
 
       // Drift Tire Smoke + Tier 1 Cyan / Tier 2 Gold Mini-Turbo Sparks!
       if (S.truckState.isDrifting && currentPhase === GamePhase.Playing) {
