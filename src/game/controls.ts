@@ -53,18 +53,24 @@ export interface HandlingProfile {
   steerSmoothSec: number;
   /** Implicit throttle added while only steering (0 disables the assist). */
   steerAssistThrottle: number;
+  /**
+   * Speed (world units/s) at which steering reaches full authority.
+   * Below it the van only creeps round, so a tap at a standstill cannot spin it.
+   */
+  steerRampSpeed: number;
 }
 
 export const HANDLING_PROFILES: Record<HandlingPreset, HandlingProfile> = {
   // Soft launch, speed-sensitive steering, long coast: readable for new players.
   balanced: {
-    turnSpeedRad: 3.4,
-    highSpeedTurnMult: 0.55,
+    turnSpeedRad: 2.9,
+    highSpeedTurnMult: 0.5,
     accelExp: 8.5,
     boostAccelExp: 9.5,
     coastDrag: 6.5,
-    steerSmoothSec: 0.12,
+    steerSmoothSec: 0.16,
     steerAssistThrottle: 0,
+    steerRampSpeed: 2.2,
   },
   // The pre-tuning arcade feel, kept for players who liked the sharp response.
   arcade: {
@@ -75,6 +81,7 @@ export const HANDLING_PROFILES: Record<HandlingPreset, HandlingProfile> = {
     coastDrag: 9.5,
     steerSmoothSec: 0,
     steerAssistThrottle: 0.68,
+    steerRampSpeed: 0,
   },
 };
 
@@ -155,3 +162,4 @@ export function setHandlingPreset(next: HandlingPreset): HandlingPreset {
   persist();
   return handling;
 }
+

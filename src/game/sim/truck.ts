@@ -262,12 +262,19 @@ export function stepTruckPhysics(
     // Speed-sensitive yaw: nimble in tight lots, calm at full tilt.
     const speedRatio = Math.min(1, Math.abs(truck.speed) / Math.max(0.01, TRUCK_MAX_SPEED));
     const turnFalloff = 1 + (handling.highSpeedTurnMult - 1) * speedRatio;
+    // Crawl authority: near a standstill the yaw rate fades to nothing, so a
+    // single tap can no longer pirouette the van in place.
+    const lowSpeedRamp =
+      handling.steerRampSpeed > 0
+        ? Math.min(1, Math.abs(truck.speed) / handling.steerRampSpeed)
+        : 1;
     const turnSpeedRad =
       handling.turnSpeedRad *
       spec.turnSpeedMult *
       driftTurnBonus *
       trailBrakeMult *
-      turnFalloff;
+      turnFalloff *
+      lowSpeedRamp;
     let nextYaw = wrapAngleRad(truck.yaw + turnDir * turnSpeedRad * clampedDt);
 
     const cardinalYaw = Math.round(truck.yaw / halfPi) * halfPi;
