@@ -5,17 +5,17 @@ import { toHexColor } from './utils';
 const CustomerPortraitSvg: React.FC<{ appearance: PersonAppearance | null }> = ({
   appearance,
 }) => {
-  const skin = appearance ? toHexColor(appearance.skinColor) : '#f7d5bc';
-  const hair = appearance ? toHexColor(appearance.hairColor) : '#593a27';
-  const top = appearance ? toHexColor(appearance.topColor) : '#4ea8de';
-  const accent = appearance ? toHexColor(appearance.accentColor) : '#f4845f';
+  const skin = appearance ? toHexColor(appearance.skinColor) : 'var(--cream)';
+  const hair = appearance ? toHexColor(appearance.hairColor) : 'var(--ink-soft)';
+  const top = appearance ? toHexColor(appearance.topColor) : 'var(--blue)';
+  const accent = appearance ? toHexColor(appearance.accentColor) : 'var(--red)';
   const isHat =
     appearance?.hairStyle === 'cap' || appearance?.hairStyle === 'sunhat';
 
   return (
     <svg
       viewBox="0 0 40 40"
-      className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-sky-100 border-[2.5px] border-[#140c04]"
+      className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-sky-100 border-2 border-[var(--ink)]"
       aria-hidden="true"
     >
       <path
@@ -52,7 +52,7 @@ const CustomerPortraitSvg: React.FC<{ appearance: PersonAppearance | null }> = (
             width="24"
             height="3"
             rx="1.5"
-            fill={appearance?.hairStyle === 'sunhat' ? '#f3d48e' : accent}
+            fill={appearance?.hairStyle === 'sunhat' ? 'var(--cream)' : accent}
             stroke="#140c04"
             strokeWidth="2"
           />

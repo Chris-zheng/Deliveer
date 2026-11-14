@@ -90,18 +90,18 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
         {/* Top Banner */}
         <div className="arcade-pill-brown rounded-2xl px-4 py-2.5 flex items-center justify-between gap-2">
           <div className="flex flex-col min-w-0">
-            <span className="text-[11px] font-extrabold text-[#ffee1f] truncate">
+            <span className="text-xs font-extrabold text-[var(--yellow)] truncate">
               <MapPinIcon className="mr-1" />{cityName} · {district}
             </span>
-            <span className="text-[11px] font-bold text-amber-100/90 truncate">
+            <span className="text-xs font-bold text-amber-100/90 truncate">
               {isLandmark ? t.discoveryCategoryLandmark : t.discoveryCategoryDish}
             </span>
           </div>
           <span
-            className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-extrabold border-2 border-[#140c04] ${
+            className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-extrabold border-2 border-[var(--ink)] ${
               item.isFirstDiscovery
-                ? 'bg-[#ffe524] text-[#4b1c08]'
-                : 'bg-[#38bdf8] text-[#082f49]'
+                ? 'bg-[var(--yellow)] text-[var(--ink-soft)]'
+                : 'bg-[var(--blue)] text-[var(--ink-soft)]'
             }`}
           >
             {item.isFirstDiscovery ? (<><SparkIcon className="mr-1" />{t.discoveryNewBadge}</>) : t.discoveryAlreadyKnown}
@@ -109,9 +109,9 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
         </div>
 
         {/* Hero Item Header */}
-        <div className="bg-[#fffdf5] border-[3px] border-[#140c04] rounded-2xl p-4 flex items-center gap-3.5 shadow-inner">
+        <div className="bg-[var(--paper)] border-2 border-[var(--ink)] rounded-2xl p-4 flex items-center gap-3.5 shadow-inner">
           <div
-            className={`w-16 h-16 sm:w-18 sm:h-18 rounded-2xl border-[3px] border-[#140c04] flex items-center justify-center text-4xl shrink-0 shadow-sm ${
+            className={`w-16 h-16 sm:w-18 sm:h-18 rounded-2xl border-2 border-[var(--ink)] flex items-center justify-center text-4xl shrink-0 shadow-sm ${
               isLandmark ? 'bg-amber-200' : 'bg-sky-100'
             }`}
           >
@@ -120,22 +120,22 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
           <div className="flex flex-col min-w-0 flex-1 gap-1">
             <h2
               id="discovery-modal-title"
-              className="font-display text-lg sm:text-xl text-[#2b1b08] leading-snug"
+              className="font-display text-lg sm:text-xl text-[var(--ink-soft)] leading-snug"
             >
               {title}
             </h2>
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-extrabold text-[#9a3412] bg-amber-100 border border-amber-400 rounded-lg px-2 py-0.5">
+              <span className="text-xs font-extrabold text-[var(--orange)] bg-amber-100 border border-amber-400 rounded-lg px-2 py-0.5">
                 {subtitle}
               </span>
               {!isLandmark && (
-                <span className="text-[11px] font-extrabold text-[#1e3a8a] bg-sky-100 border border-sky-300 rounded-lg px-2 py-0.5">
+                <span className="text-xs font-extrabold text-[var(--blue)] bg-sky-100 border border-sky-300 rounded-lg px-2 py-0.5">
                   {parcelTag}
                 </span>
               )}
             </div>
             {(item.merchantName || street) && (
-              <div className="text-[11px] font-bold text-slate-600 truncate">
+              <div className="text-xs font-bold text-slate-600 truncate">
                 {item.merchantName ? `${t.discoveryMerchantLabel}: ${item.merchantName}` : ''}
                 {item.merchantName && street ? ' · ' : ''}
                 {street ? (<><FlagIcon className="mr-1" />{street}</>) : ''}
@@ -145,19 +145,19 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
         </div>
 
         {/* Cultural Lore Fact Box */}
-        <div className="bg-[#fff8e7] border-[2.5px] border-[#784812] rounded-2xl p-3.5 flex flex-col gap-1.5">
-          <div className="text-xs font-extrabold text-[#9a3412] flex items-center gap-1.5">
+        <div className="bg-[var(--cream)] border-2 border-[var(--ink-soft)] rounded-2xl p-3.5 flex flex-col gap-1.5">
+          <div className="text-xs font-extrabold text-[var(--orange)] flex items-center gap-1.5">
             <span><BookIcon /></span>
             <span>{lang === 'zh' ? '城市风物文化档案' : 'Cultural & City Lore'}</span>
           </div>
-          <p className="text-xs sm:text-sm font-semibold text-[#2b1b08] leading-relaxed">
+          <p className="text-xs sm:text-sm font-semibold text-[var(--ink-soft)] leading-relaxed">
             {fact}
           </p>
         </div>
 
         {/* Rider Delivery Tip */}
         {tip && (
-          <div className="bg-emerald-50 border-[2.5px] border-emerald-700 rounded-2xl p-3 flex items-start gap-2">
+          <div className="bg-emerald-50 border-2 border-emerald-700 rounded-2xl p-3 flex items-start gap-2">
             <span className="text-base leading-none mt-0.5"><TruckIcon /></span>
             <div className="text-xs font-bold text-emerald-950 leading-snug">
               <span className="font-extrabold">{t.discoveryTipLabel}: </span>
@@ -172,9 +172,9 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
             type="checkbox"
             checked={!alwaysShowEveryStop}
             onChange={(e) => onToggleAlwaysShow(!e.target.checked)}
-            className="w-4 h-4 accent-[#2ea836] rounded cursor-pointer"
+            className="w-4 h-4 accent-[var(--green)] rounded cursor-pointer"
           />
-          <span className="text-[11px] font-bold text-[#4b1c08]">
+          <span className="text-xs font-bold text-[var(--ink-soft)]">
             {t.discoveryAutoShowToggle}
           </span>
         </label>
@@ -196,7 +196,7 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
           </span>
         </button>
 
-        <div className="text-center text-[11px] font-bold text-[#5c3809]">
+        <div className="text-center text-xs font-bold text-[var(--ink-soft)]">
           ⏸ {t.discoveryPauseNote} · [{lang === 'zh' ? '按 空格 / Enter 继续' : 'Press Space / Enter'}]
         </div>
       </div>

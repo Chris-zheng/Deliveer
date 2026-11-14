@@ -15,7 +15,7 @@ export const CenterStrip: React.FC<CenterStripProps> = (p) => {
 <div className="hidden md:flex flex-col items-center gap-1.5 pt-1">
             <div className="flex items-center gap-2 flex-wrap justify-center">
               {hud.currentStreetName && (
-                <div className="bg-[#165dff] border-[2.5px] border-white ring-2 ring-[#140c04] rounded-xl px-3 py-1 flex items-center gap-1.5 shadow-sm">
+                <div className="bg-[var(--blue)] border-2 border-white ring-2 ring-[var(--ink)] rounded-xl px-3 py-1 flex items-center gap-1.5 shadow-sm">
                   <span className="text-white text-xs font-extrabold tracking-wide leading-none">
                     <MapPinIcon className="mr-0.5" />
                     {lang === 'en' ? hud.currentStreetNameEn || hud.currentStreetName : hud.currentStreetName}
@@ -26,10 +26,10 @@ export const CenterStrip: React.FC<CenterStripProps> = (p) => {
                 className="arcade-pill-brown rounded-full px-3 py-1 flex items-center gap-2 shadow-sm"
                 title={lang === 'zh' ? '本趟外卖实时净收入与顾客评分' : 'Live Rider Net Earnings & Review Score'}
               >
-                <span className="arcade-stroke-sm text-[#6bf25c] text-xs sm:text-sm leading-none tabular-nums">
+                <span className="arcade-stroke-sm text-[var(--green)] text-xs sm:text-sm leading-none tabular-nums">
                   ¥{(hud.deliveryIncomeYuan ?? 0).toFixed(1)}
                 </span>
-                <span className="text-[11px] font-extrabold text-[#ffee1f] leading-none">
+                <span className="text-xs font-extrabold text-[var(--yellow)] leading-none">
                   ★ {(hud.customerReviewScore ?? 5.0).toFixed(1)}
                 </span>
               </div>
@@ -38,15 +38,15 @@ export const CenterStrip: React.FC<CenterStripProps> = (p) => {
                   key={`earn-${hud.lastEarningEvent.id}`}
                   className={`${
                     hud.lastEarningEvent.isReward
-                      ? 'bg-[#16a34a] border-[#052e16]'
-                      : 'bg-[#e11d48] border-[#4c0519]'
+                      ? 'bg-[var(--green)] border-[var(--ink-soft)]'
+                      : 'bg-[var(--red)] border-[var(--ink-soft)]'
                   } border-2 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-sm`}
                 >
                   <span className="arcade-stroke-sm text-white text-xs leading-none tabular-nums">
                     {hud.lastEarningEvent.amountYuan >= 0 ? '+' : '-'}¥
                     {Math.abs(hud.lastEarningEvent.amountYuan).toFixed(1)}
                   </span>
-                  <span className="text-[11px] font-extrabold text-white/95 leading-none">
+                  <span className="text-xs font-extrabold text-white/95 leading-none">
                     {hud.lastEarningEvent.label}
                   </span>
                 </div>
@@ -54,11 +54,11 @@ export const CenterStrip: React.FC<CenterStripProps> = (p) => {
             </div>
 
             {hud.isWrongWay && (
-              <div className="arcade-pill-brown border-[#140c04] rounded-full px-4 py-1.5 flex items-center gap-2.5 whitespace-nowrap">
-                <span className="arcade-stroke-sm text-[#ff4d5a] text-sm sm:text-base">
+              <div className="arcade-pill-brown border-[var(--ink)] rounded-full px-4 py-1.5 flex items-center gap-2.5 whitespace-nowrap">
+                <span className="arcade-stroke-sm text-[var(--red)] text-sm sm:text-base">
                   {t.wrongWayWarning}
                 </span>
-                <span className="w-16 h-3 bg-black/50 rounded-full overflow-hidden border-2 border-[#140c04]">
+                <span className="w-16 h-3 bg-black/50 rounded-full overflow-hidden border-2 border-[var(--ink)]">
                   <span
                     className="block h-full arcade-bar-gold transition-all duration-75"
                     style={{
@@ -71,11 +71,11 @@ export const CenterStrip: React.FC<CenterStripProps> = (p) => {
 
             {(hud.driftTier ?? 0) > 0 && (
               <div
-                className={`border-2 border-[#140c04] rounded-full px-4 py-1 flex items-center gap-2 shadow-sm ${
-                  hud.driftTier === 2 ? 'bg-[#facc15]' : 'bg-[#38bdf8]'
+                className={`border-2 border-[var(--ink)] rounded-full px-4 py-1 flex items-center gap-2 shadow-sm ${
+                  hud.driftTier === 2 ? 'bg-[var(--orange)]' : 'bg-[var(--blue)]'
                 }`}
               >
-                <span className="font-display text-xs sm:text-sm text-[#140c04] leading-none">
+                <span className="font-display text-xs sm:text-sm text-[var(--ink)] leading-none">
                   {hud.driftTier === 2 ? (
                     <>
                       <FlameIcon className="mr-0.5" />
@@ -96,14 +96,14 @@ export const CenterStrip: React.FC<CenterStripProps> = (p) => {
                 key={hud.bannerEvent.id}
                 className="arcade-boost-rim rounded-full p-1 whitespace-nowrap"
               >
-                <div className="bg-[#4b1c08] border-2 border-[#140c04] rounded-full px-4 py-1 flex items-center gap-2">
+                <div className="bg-[var(--ink-soft)] border-2 border-[var(--ink)] rounded-full px-4 py-1 flex items-center gap-2">
                   <span
                     className={`arcade-stroke-sm text-sm sm:text-base ${
                       hud.bannerEvent.tone === 'emerald'
-                        ? 'text-[#6bf25c]'
+                        ? 'text-[var(--green)]'
                         : hud.bannerEvent.tone === 'amber'
-                          ? 'text-[#ffee1f]'
-                          : 'text-[#ff5c6a]'
+                          ? 'text-[var(--yellow)]'
+                          : 'text-[var(--red)]'
                     }`}
                   >
                     {hud.bannerEvent.label}

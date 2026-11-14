@@ -124,7 +124,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-20 flex items-start sm:items-center justify-center p-3 sm:p-4 bg-[#241309]/55 overflow-y-auto"
+      className="fixed inset-0 z-20 flex items-start sm:items-center justify-center p-3 sm:p-4 bg-[var(--ink)]/55 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby="welcome-heading"
@@ -138,7 +138,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
             pokoAudio.playUiClick();
             onToggleLang();
           }}
-          className="group pointer-events-auto relative px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-gradient-to-b from-[#ffe524] to-[#f59b14] border-[3px] border-[#5a270f] shadow-[inset_0_2px_0_rgba(255,255,255,0.6),0_3px_0_rgba(50,20,5,0.4)] flex items-center justify-center gap-1.5 cursor-pointer transition-transform hover:-translate-y-0.5 active:translate-y-0.5"
+          className="group pointer-events-auto relative px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-gradient-to-b from-[var(--yellow)] to-[var(--orange)] border-2 border-[var(--ink-soft)] shadow-[inset_0_2px_0_rgba(255,255,255,0.6),0_3px_0_rgba(50,20,5,0.4)] flex items-center justify-center gap-1.5 cursor-pointer transition-transform hover:-translate-y-0.5 active:translate-y-0.5"
           aria-label={lang === 'zh' ? 'Switch to English' : '切换为简体中文'}
         >
           <span className="text-sm">🌐</span>
@@ -155,11 +155,11 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
             onToggleMute();
           }}
           aria-label={muted ? 'Unmute audio' : 'Mute audio'}
-          className="group pointer-events-auto relative w-12 h-13 sm:w-14 sm:h-15 flex items-center justify-center cursor-pointer transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFF3B0]"
+          className="group pointer-events-auto relative w-12 h-13 sm:w-14 sm:h-15 flex items-center justify-center cursor-pointer transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--yellow)]"
         >
           <svg
             viewBox="0 0 64 68"
-            className="absolute inset-0 w-full h-full drop-shadow-[0_4px_0_rgba(62,21,6,0.45)]"
+            className="absolute inset-0 w-full h-full drop-shadow-[0_2px_0_rgba(62,21,6,0.45)]"
             fill="none"
             aria-hidden="true"
           >
@@ -240,7 +240,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
       </div>
 
       {/* Single Centered Illustrated Storybook Welcome Dialogue */}
-      <div className="pointer-events-auto relative overflow-hidden rounded-[34px] border-[4px] border-[#61270E] shadow-[0_14px_34px_rgba(28,11,3,0.52),inset_0_-7px_0_#C88242] p-4 sm:px-7 sm:py-5 w-full max-w-[680px] my-auto flex flex-col gap-3.5 bg-[#F5C882]">
+      <div className="pointer-events-auto relative overflow-hidden rounded-[34px] border-[4px] border-[var(--ink-soft)] shadow-[0_14px_34px_rgba(28,11,3,0.52),inset_0_-7px_0_#C88242] p-4 sm:px-7 sm:py-5 w-full max-w-[680px] my-auto flex flex-col gap-3.5 bg-[var(--cream)]">
         {/* Illustrated Dusk-to-Sunlit-Avenue Backdrop SVG */}
         <svg
           viewBox="0 0 630 480"
@@ -324,7 +324,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
 
         {/* Subtle inner cream highlight border */}
         <div
-          className="pointer-events-none absolute inset-[3px] rounded-[29px] border-2 border-[#FFF6DC]/45"
+          className="pointer-events-none absolute inset-[3px] rounded-[29px] border-2 border-[var(--cream)]/45"
           aria-hidden="true"
         />
 
@@ -332,7 +332,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
         <div className="relative z-10 flex flex-col items-center text-center pt-0.5">
           <div
             style={{ fontFamily: 'var(--font-display)' }}
-            className="text-xs sm:text-sm font-bold tracking-wider text-[#FFF9E6] drop-shadow-[0_2px_0_#6B2D12]"
+            className="text-xs sm:text-sm font-bold tracking-wider text-[var(--cream)] drop-shadow-[0_2px_0_#6B2D12]"
           >
             {t.gameSubtitle}
           </div>
@@ -344,10 +344,10 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
           {/* Bilingual Logo SVG Lockup */}
           {lang === 'zh' ? (
             <div className="my-1 flex flex-col items-center">
-              <div className="arcade-stroke-lg text-4xl sm:text-6xl text-[#ffe524] tracking-wider drop-shadow-md">
+              <div className="arcade-stroke-lg text-4xl sm:text-6xl text-[var(--yellow)] tracking-wider drop-shadow-md">
                 极速派送
               </div>
-              <div className="arcade-stroke text-2xl sm:text-4xl text-[#9ef01a] -mt-1 sm:-mt-2 tracking-widest">
+              <div className="arcade-stroke text-2xl sm:text-4xl text-[var(--green)] -mt-1 sm:-mt-2 tracking-widest">
                 快递乐园
               </div>
             </div>
@@ -491,13 +491,13 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
           )}
 
           {/* Mission Pitch */}
-          <p className="mt-1 sm:mt-2 text-xs sm:text-[13px] font-extrabold text-[#4B1C08] leading-snug text-balance max-w-[490px]">
+          <p className="mt-1 sm:mt-2 text-xs sm:text-[13px] font-extrabold text-[var(--ink-soft)] leading-snug text-balance max-w-[490px]">
             {t.pitchText}
           </p>
 
           {/* If custom city active, show custom badge */}
           {customCityConfig?.customCity && (
-            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#2ea836] border-2 border-[#145a1a] shadow-sm text-white text-xs font-bold animate-pulse">
+            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--green)] border-2 border-[var(--ink-soft)] shadow-sm text-white text-xs font-bold animate-pulse">
               <span>📍</span>
               <span>
                 {lang === 'zh' ? '当前定制街区：' : 'Active Custom City: '}
@@ -508,11 +508,11 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
         </div>
 
         {/* Row 2: compact how-to strip (replaces the three banner cards) */}
-        <div className="relative z-10 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-[16px] border-[3px] border-[#8B290D]/30 bg-[#FFF3D6]/85 px-3 py-1.5 text-[11px] font-extrabold text-[#4B1C08]">
+        <div className="relative z-10 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-[16px] border-2 border-[var(--ink-soft)]/30 bg-[var(--cream)]/85 px-3 py-1.5 text-xs font-extrabold text-[var(--ink-soft)]">
           <span>{lang === 'zh' ? '跟箭头跑' : 'Follow arrows'}</span>
-          <span className="text-[#8B4C20]">·</span>
+          <span className="text-[var(--orange)]">·</span>
           <span>{lang === 'zh' ? '限时送达' : 'Beat the clock'}</span>
-          <span className="text-[#8B4C20]">·</span>
+          <span className="text-[var(--orange)]">·</span>
           <span>{lang === 'zh' ? '命中圆环 ×2' : 'Bullseye ×2'}</span>
         </div>
 
@@ -532,7 +532,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
             >
               {lang === 'zh' ? '环球挑战' : 'WORLD TOUR'}
             </span>
-            <span className="text-[10px] font-extrabold text-[#4B1C08] whitespace-nowrap">
+            <span className="text-xs font-extrabold text-[var(--ink-soft)] whitespace-nowrap">
               {lang === 'zh' ? '20 城 · 6 大洲' : '20 cities · 6 continents'}
             </span>
           </button>
@@ -548,11 +548,11 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
           >
             <span
               style={{ fontFamily: 'var(--font-display)' }}
-              className="text-[#FFF8E3] text-base font-bold tracking-wide whitespace-nowrap"
+              className="text-[var(--cream)] text-base font-bold tracking-wide whitespace-nowrap"
             >
               {lang === 'zh' ? '每日挑战' : 'DAILY CHALLENGE'}
             </span>
-            <span className="text-[10px] font-extrabold text-[#F3FFE4] whitespace-nowrap">
+            <span className="text-xs font-extrabold text-[var(--cream)] whitespace-nowrap">
               {daily
                 ? lang === 'zh'
                   ? `今日奖励 ${daily.rewardCoins} 币`
@@ -563,7 +563,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
 
           {daily ? (
             <div className="flex items-center justify-between gap-2 -mt-0.5 px-1">
-              <span className="text-[10px] font-extrabold text-[#4B1C08] leading-tight">
+              <span className="text-xs font-extrabold text-[var(--ink-soft)] leading-tight">
                 {lang === 'zh'
                   ? `铜 ${daily.targetScore} / 银 ${daily.silverScore ?? daily.targetScore} / 金 ${daily.goldScore ?? daily.targetScore} 分`
                   : `B ${daily.targetScore} / S ${daily.silverScore ?? daily.targetScore} / G ${daily.goldScore ?? daily.targetScore}`}
@@ -583,7 +583,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                     pokoAudio.playUiClick();
                     onOpenCareerLedger('daily');
                   }}
-                  className="relative shrink-0 text-[10px] font-extrabold text-[#8b290d] underline decoration-[#8b290d]/50 underline-offset-2 cursor-pointer"
+                  className="relative shrink-0 text-xs font-extrabold text-[var(--ink-soft)] underline decoration-[var(--ink-soft)]/50 underline-offset-2 cursor-pointer"
                 >
                   {daily.canCheckInToday
                     ? lang === 'zh'
@@ -594,7 +594,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                       : 'Medals'}
                   {daily.canCheckInToday && (
                     <span
-                      className="absolute -top-1.5 -right-2 w-2 h-2 rounded-full bg-[#ff3b30] animate-pulse"
+                      className="absolute -top-1.5 -right-2 w-2 h-2 rounded-full bg-[var(--red)] animate-pulse"
                       aria-hidden="true"
                     />
                   )}
@@ -611,16 +611,16 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
               pokoAudio.playUiClick();
               onStart();
             }}
-            className="group relative h-[62px] rounded-[22px] bg-gradient-to-b from-[#F8843E] via-[#E85D25] to-[#CE4316] border-[3.5px] border-[#8B290D] shadow-[inset_0_3px_0_rgba(255,198,150,0.62),inset_0_-5px_0_#A33210,0_5px_0_rgba(88,28,8,0.38)] flex items-center justify-center cursor-pointer whitespace-nowrap transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:brightness-105 active:translate-y-1"
+            className="group relative h-[62px] rounded-[22px] bg-gradient-to-b from-[var(--orange)] via-[var(--orange)] to-[var(--red)] border-[3.5px] border-[var(--ink-soft)] shadow-[inset_0_3px_0_rgba(255,198,150,0.62),inset_0_-5px_0_#A33210,0_5px_0_rgba(88,28,8,0.38)] flex items-center justify-center cursor-pointer whitespace-nowrap transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:brightness-105 active:translate-y-1"
           >
             <span className="relative z-10 flex flex-col items-center justify-center leading-none">
               <span
                 style={{ fontFamily: 'var(--font-display)' }}
-                className="text-[#FFF8E3] text-xl sm:text-2xl font-bold tracking-[0.06em] drop-shadow-[0_3px_0_#8B290D] group-hover:scale-[1.02] transition-transform"
+                className="text-[var(--cream)] text-xl sm:text-2xl font-bold tracking-[0.06em] drop-shadow-[0_2px_0_#8B290D] group-hover:scale-[1.02] transition-transform"
               >
                 {lang === 'zh' ? '随机挑战' : 'RANDOM RUN'}
               </span>
-              <span className="mt-1 text-[10px] font-extrabold text-[#FFE3C7]">
+              <span className="mt-1 text-xs font-extrabold text-[var(--cream)]">
                 {lang === 'zh' ? '随机街区 · 随机天气' : 'random district · random weather'}
               </span>
             </span>
@@ -635,30 +635,30 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
             setSettingsOpen((v) => !v);
           }}
           aria-expanded={settingsOpen}
-          className="relative z-10 h-[44px] rounded-[16px] border-[3px] border-[#8B290D]/40 bg-[#FFF3D6]/90 flex items-center justify-center gap-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
+          className="relative z-10 h-[44px] rounded-[16px] border-2 border-[var(--ink-soft)]/40 bg-[var(--cream)]/90 flex items-center justify-center gap-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
         >
           <span
             style={{ fontFamily: 'var(--font-display)' }}
-            className="text-[#4B1C08] text-sm font-bold tracking-wide"
+            className="text-[var(--ink-soft)] text-sm font-bold tracking-wide"
           >
             {lang === 'zh' ? '设置' : 'SETTINGS'}
           </span>
-          <span className="text-[10px] font-extrabold text-[#8B4C20]">
+          <span className="text-xs font-extrabold text-[var(--orange)]">
             {settingsOpen ? '▾' : '▸'}
           </span>
           {careerSummary?.hasLedgerNotice && !settingsOpen && (
             <span
-              className="absolute top-1 right-2 w-2 h-2 rounded-full bg-[#ff3b30] animate-pulse"
+              className="absolute top-1 right-2 w-2 h-2 rounded-full bg-[var(--red)] animate-pulse"
               aria-hidden="true"
             />
           )}
         </button>
 
         {settingsOpen ? (
-          <div className="relative z-10 flex flex-col gap-2 rounded-[18px] border-[3px] border-[#8B290D]/35 bg-[#FFF3D6]/92 px-3 py-2">
+          <div className="relative z-10 flex flex-col gap-2 rounded-[18px] border-2 border-[var(--ink-soft)]/35 bg-[var(--cream)]/92 px-3 py-2">
             <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-extrabold text-[#8B4C20]">
+                <span className="text-xs font-extrabold text-[var(--orange)]">
                   {lang === 'zh' ? '视角' : 'View'}
                 </span>
                 {VIEW_MODES.map((mode) => {
@@ -668,10 +668,10 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                       key={mode}
                       type="button"
                       onClick={() => pickView(mode)}
-                      className={`rounded-[10px] border-[2px] px-2 py-0.5 text-[11px] font-extrabold transition ${
+                      className={`rounded-[10px] border-[2px] px-2 py-0.5 text-xs font-extrabold transition ${
                         active
-                          ? 'border-[#8B290D] bg-[#FFB800] text-[#4B1C08] shadow-[0_2px_0_#8B290D]'
-                          : 'border-[#8B290D]/35 bg-[#FFFCF5] text-[#8B4C20] hover:bg-[#FFF0C2]'
+                          ? 'border-[var(--ink-soft)] bg-[var(--orange)] text-[var(--ink-soft)] shadow-[0_2px_0_#8B290D]'
+                          : 'border-[var(--ink-soft)]/35 bg-[var(--paper)] text-[var(--orange)] hover:bg-[var(--cream)]'
                       }`}
                       aria-pressed={active}
                     >
@@ -681,7 +681,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                 })}
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-extrabold text-[#8B4C20]">
+                <span className="text-xs font-extrabold text-[var(--orange)]">
                   {lang === 'zh' ? '手感' : 'Handling'}
                 </span>
                 {HANDLING_PRESETS.map((preset) => {
@@ -691,10 +691,10 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                       key={preset}
                       type="button"
                       onClick={() => pickHandling(preset)}
-                      className={`rounded-[10px] border-[2px] px-2 py-0.5 text-[11px] font-extrabold transition ${
+                      className={`rounded-[10px] border-[2px] px-2 py-0.5 text-xs font-extrabold transition ${
                         active
-                          ? 'border-[#8B290D] bg-[#FFB800] text-[#4B1C08] shadow-[0_2px_0_#8B290D]'
-                          : 'border-[#8B290D]/35 bg-[#FFFCF5] text-[#8B4C20] hover:bg-[#FFF0C2]'
+                          ? 'border-[var(--ink-soft)] bg-[var(--orange)] text-[var(--ink-soft)] shadow-[0_2px_0_#8B290D]'
+                          : 'border-[var(--ink-soft)]/35 bg-[var(--paper)] text-[var(--orange)] hover:bg-[var(--cream)]'
                       }`}
                       aria-pressed={active}
                     >
@@ -705,18 +705,18 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
               </div>
             </div>
 
-            <div className="text-center text-[10px] font-extrabold text-[#4B1C08] leading-relaxed">
+            <div className="text-center text-xs font-extrabold text-[var(--ink-soft)] leading-relaxed">
               <span className="sm:hidden">{t.controlsTouch}</span>
               <span className="hidden sm:inline">
-                <span className="text-[#8b290d]">W/↑</span> {t.controlsDesktopDrive} ·{' '}
-                <span className="text-[#8b290d]">S/↓</span> {t.controlsDesktopBrake} ·{' '}
-                <span className="text-[#8b290d]">A/D</span> {t.controlsDesktopTurn} ·{' '}
-                <span className="text-[#8b290d]">C</span> {lang === 'zh' ? '漂移喷射' : 'Drift'} ·{' '}
-                <span className="text-[#8b290d]">F</span> {lang === 'zh' ? '加急' : 'Rush'} ·{' '}
-                <span className="text-[#8b290d]">Space</span> {t.controlsDesktopDrop} ·{' '}
-                <span className="text-[#8b290d]">Shift</span> {t.controlsDesktopBoost} ·{' '}
-                <span className="text-[#8b290d]">V</span> {lang === 'zh' ? '视角' : 'View'} ·{' '}
-                <span className="text-[#8b290d]">Q</span> {t.controlsDesktopHorn}
+                <span className="text-[var(--ink-soft)]">W/↑</span> {t.controlsDesktopDrive} ·{' '}
+                <span className="text-[var(--ink-soft)]">S/↓</span> {t.controlsDesktopBrake} ·{' '}
+                <span className="text-[var(--ink-soft)]">A/D</span> {t.controlsDesktopTurn} ·{' '}
+                <span className="text-[var(--ink-soft)]">C</span> {lang === 'zh' ? '漂移喷射' : 'Drift'} ·{' '}
+                <span className="text-[var(--ink-soft)]">F</span> {lang === 'zh' ? '加急' : 'Rush'} ·{' '}
+                <span className="text-[var(--ink-soft)]">Space</span> {t.controlsDesktopDrop} ·{' '}
+                <span className="text-[var(--ink-soft)]">Shift</span> {t.controlsDesktopBoost} ·{' '}
+                <span className="text-[var(--ink-soft)]">V</span> {lang === 'zh' ? '视角' : 'View'} ·{' '}
+                <span className="text-[var(--ink-soft)]">Q</span> {t.controlsDesktopHorn}
               </span>
             </div>
 
@@ -731,7 +731,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
               >
                 <span
                   style={{ fontFamily: 'var(--font-display)' }}
-                  className="arcade-stroke-sm text-white text-[11px] sm:text-xs font-bold tracking-wide leading-tight text-center"
+                  className="arcade-stroke-sm text-white text-xs sm:text-xs font-bold tracking-wide leading-tight text-center"
                 >
                   {t.customMapBtn}
                 </span>
@@ -746,7 +746,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
               >
                 <span
                   style={{ fontFamily: 'var(--font-display)' }}
-                  className="arcade-stroke-sm text-white text-[11px] sm:text-xs font-bold tracking-wide leading-tight text-center"
+                  className="arcade-stroke-sm text-white text-xs sm:text-xs font-bold tracking-wide leading-tight text-center"
                 >
                   {t.almanacBtn}
                 </span>
@@ -761,12 +761,12 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
               >
                 <span
                   style={{ fontFamily: 'var(--font-display)' }}
-                  className="arcade-stroke-sm text-white text-[11px] sm:text-xs font-bold tracking-wide leading-tight text-center"
+                  className="arcade-stroke-sm text-white text-xs sm:text-xs font-bold tracking-wide leading-tight text-center"
                 >
                   {t.careerLedgerBtn}
                 </span>
                 {careerSummary && (
-                  <span className="text-[9px] font-extrabold text-[#fef08a] leading-none mt-0.5">
+                  <span className="text-xs font-extrabold text-[var(--yellow)] leading-none mt-0.5">
                     {careerSummary.rankBadge} {careerSummary.rankName}
                   </span>
                 )}

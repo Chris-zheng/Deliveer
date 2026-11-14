@@ -142,7 +142,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
         {/* Header Banner + Coin / Spin Token Balance */}
         <div className="arcade-pill-brown rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-extrabold text-[#ffee1f] tracking-wide">
+            <div className="text-xs font-extrabold text-[var(--yellow)] tracking-wide">
               {lang === 'zh' ? '特工装备工坊 · 载具改装' : 'Courier Depot & Customization'}
             </div>
             <h2
@@ -154,17 +154,17 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
           </div>
 
           <div className="flex flex-col items-end gap-1">
-            <div className="bg-[#2b1b08] border-2 border-[#140c04] rounded-full px-3 py-1 flex items-center gap-1.5">
-              <span className="inline-block w-3.5 h-3.5 rounded-full bg-[#ffe524] border border-[#140c04]" />
+            <div className="bg-[var(--ink-soft)] border-2 border-[var(--ink)] rounded-full px-3 py-1 flex items-center gap-1.5">
+              <span className="inline-block w-3.5 h-3.5 rounded-full bg-[var(--yellow)] border border-[var(--ink)]" />
               <span
-                className="arcade-stroke-sm text-[#ffe524] text-base leading-none"
+                className="arcade-stroke-sm text-[var(--yellow)] text-base leading-none"
                 aria-label={`${progression.coins} coins available`}
               >
                 {progression.coins.toLocaleString()}
               </span>
             </div>
             {progression.spinTokens > 0 && (
-              <span className="text-[11px] font-extrabold text-[#6bf25c]">
+              <span className="text-xs font-extrabold text-[var(--green)]">
                 {progression.spinTokens} {lang === 'zh' ? '张免费转盘抽奖券！' : 'Free Spin Tokens!'}
               </span>
             )}
@@ -201,7 +201,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                   active ? 'arcade-btn-gold' : 'arcade-pill-brown'
                 } py-2 px-1 rounded-xl cursor-pointer text-center relative`}
               >
-                <span className="arcade-stroke-sm text-white text-[11px] sm:text-xs">
+                <span className="arcade-stroke-sm text-white text-xs sm:text-xs">
                   {item.label}
                 </span>
               </button>
@@ -231,12 +231,12 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                         <div className="arcade-stroke-sm text-white text-base leading-snug">
                           {displayName}
                         </div>
-                        <div className="text-[11px] font-bold text-[#ffe8a3] mt-0.5">
+                        <div className="text-xs font-bold text-[var(--yellow)] mt-0.5">
                           {displayTag}
                         </div>
                       </div>
                       <span
-                        className="w-5 h-5 rounded-lg border-2 border-[#140c04] shrink-0 mt-0.5"
+                        className="w-5 h-5 rounded-lg border-2 border-[var(--ink)] shrink-0 mt-0.5"
                         style={{ backgroundColor: v.accentHex }}
                         aria-hidden="true"
                       />
@@ -256,7 +256,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                             ? 'arcade-btn-cream'
                             : canAfford
                               ? 'arcade-btn-gold'
-                              : 'bg-stone-700 border-2 border-[#140c04] opacity-60 cursor-not-allowed'
+                              : 'bg-stone-700 border-2 border-[var(--ink)] opacity-60 cursor-not-allowed'
                       } w-full py-2 px-3 rounded-xl cursor-pointer text-center`}
                     >
                       <span className="arcade-stroke-sm text-white text-sm">
@@ -295,7 +295,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                       <div className="arcade-stroke-sm text-white text-base leading-snug">
                         {displayName}
                       </div>
-                      <div className="text-[11px] font-bold text-[#ffe8a3] mt-0.5">
+                      <div className="text-xs font-bold text-[var(--yellow)] mt-0.5">
                         {displayTag}
                       </div>
                     </div>
@@ -314,7 +314,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                             ? 'arcade-btn-cream'
                             : canAfford
                               ? 'arcade-btn-gold'
-                              : 'bg-stone-700 border-2 border-[#140c04] opacity-60 cursor-not-allowed'
+                              : 'bg-stone-700 border-2 border-[var(--ink)] opacity-60 cursor-not-allowed'
                       } w-full py-2 px-3 rounded-xl cursor-pointer text-center`}
                     >
                       <span className="arcade-stroke-sm text-white text-sm">
@@ -352,18 +352,18 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                         <div className="arcade-stroke-sm text-white text-base leading-snug">
                           {displayName}
                         </div>
-                        <div className="text-[11px] font-bold text-[#ffe8a3] mt-0.5">
+                        <div className="text-xs font-bold text-[var(--yellow)] mt-0.5">
                           {displayTag}
                         </div>
                       </div>
                       <div className="flex items-center gap-0.5 shrink-0 mt-0.5">
                         <span
-                          className="w-4 h-4 rounded-l-md border-2 border-[#140c04]"
+                          className="w-4 h-4 rounded-l-md border-2 border-[var(--ink)]"
                           style={{ backgroundColor: `#${lv.cabHex.toString(16).padStart(6, '0')}` }}
                           aria-hidden="true"
                         />
                         <span
-                          className="w-4 h-4 rounded-r-md border-2 border-l-0 border-[#140c04]"
+                          className="w-4 h-4 rounded-r-md border-2 border-l-0 border-[var(--ink)]"
                           style={{ backgroundColor: `#${lv.stripeHex.toString(16).padStart(6, '0')}` }}
                           aria-hidden="true"
                         />
@@ -382,7 +382,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                           ? 'arcade-btn-green'
                           : owned
                             ? 'arcade-btn-cream'
-                            : 'bg-stone-700 border-2 border-[#140c04] opacity-70 cursor-not-allowed'
+                            : 'bg-stone-700 border-2 border-[var(--ink)] opacity-70 cursor-not-allowed'
                       } w-full py-2 px-3 rounded-xl cursor-pointer text-center`}
                     >
                       <span className="arcade-stroke-sm text-white text-xs sm:text-sm">
@@ -415,7 +415,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                 ? 'arcade-btn-green'
                 : canAfford
                   ? 'arcade-btn-gold'
-                  : 'bg-stone-700 border-2 border-[#140c04] opacity-60 cursor-not-allowed';
+                  : 'bg-stone-700 border-2 border-[var(--ink)] opacity-60 cursor-not-allowed';
 
               return (
                 <div
@@ -427,11 +427,11 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                       <div className="arcade-stroke-sm text-white text-base leading-snug">
                         {lang === 'zh' ? spec.nameZh : spec.nameEn}
                       </div>
-                      <div className="text-[11px] font-bold text-[#ffe8a3] mt-0.5">
+                      <div className="text-xs font-bold text-[var(--yellow)] mt-0.5">
                         {lang === 'zh' ? spec.summaryZh : spec.summaryEn}
                       </div>
                     </div>
-                    <div className="shrink-0 text-[11px] font-extrabold text-[#ffee1f]">
+                    <div className="shrink-0 text-xs font-extrabold text-[var(--yellow)]">
                       {'Lv ' + level + ' / ' + MAX_UPGRADE_LEVEL}
                     </div>
                   </div>
@@ -442,14 +442,14 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                         key={step.level}
                         className={`${
                           step.level <= level
-                            ? 'flex-1 h-1.5 rounded-full bg-[#6bf25c]'
-                            : 'flex-1 h-1.5 rounded-full bg-[#2b1b08]'
+                            ? 'flex-1 h-1.5 rounded-full bg-[var(--green)]'
+                            : 'flex-1 h-1.5 rounded-full bg-[var(--ink-soft)]'
                         }`}
                       />
                     ))}
                   </div>
 
-                  <div className="text-[11px] font-bold text-white/80">
+                  <div className="text-xs font-bold text-white/80">
                     {tier
                       ? lang === 'zh'
                         ? tier.nameZh + ' · ' + tier.detailZh
@@ -492,13 +492,13 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
             <div className="relative w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center">
               {/* Pointer Triangle */}
               <div
-                className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[18px] border-t-[#ffe524] drop-shadow-md"
+                className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[18px] border-t-[var(--yellow)] drop-shadow-md"
                 aria-hidden="true"
               />
 
               {/* Rotating Wheel Disc */}
               <div
-                className="w-full h-full rounded-full border-4 border-[#140c04] overflow-hidden shadow-xl transition-transform duration-800 cubic-bezier(0.16,1,0.3,1)"
+                className="w-full h-full rounded-full border-4 border-[var(--ink)] overflow-hidden shadow-xl transition-transform duration-800 cubic-bezier(0.16,1,0.3,1)"
                 style={{
                   transform: `rotate(${wheelDeg}deg)`,
                   background:
@@ -516,7 +516,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                         transform: `rotate(${slice.index * 60 + 30}deg)`,
                       }}
                     >
-                      <span className="arcade-stroke-sm text-white text-[11px] sm:text-xs">
+                      <span className="arcade-stroke-sm text-white text-xs sm:text-xs">
                         {label}
                       </span>
                     </div>
@@ -526,7 +526,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
 
               {/* Center Hub Nut */}
               <div
-                className="absolute w-12 h-12 rounded-full bg-[#140c04] border-3 border-[#ffe524] flex items-center justify-center"
+                className="absolute w-12 h-12 rounded-full bg-[var(--ink)] border-2 border-[var(--yellow)] flex items-center justify-center"
                 aria-hidden="true"
               >
                 <span className="arcade-stroke text-white text-xs">GO</span>
@@ -555,7 +555,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
 
             {lastSpinReward && !spinning && (
               <div className="arcade-pill-brown rounded-xl px-4 py-2 text-center -mt-1 animate-bounce">
-                <div className="text-xs font-extrabold text-[#6bf25c]">
+                <div className="text-xs font-extrabold text-[var(--green)]">
                   {lang === 'zh' ? '恭喜获得大奖！' : 'PRIZE UNLOCKED!'}
                 </div>
                 <div className="arcade-stroke-sm text-white text-sm sm:text-base">

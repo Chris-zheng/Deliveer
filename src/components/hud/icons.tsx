@@ -72,7 +72,7 @@ export const TrophyIcon: React.FC<IconProps> = ({ className }) => (
 export type MedalTier = 'bronze' | 'silver' | 'gold';
 
 export const MedalIcon: React.FC<IconProps & { tier?: MedalTier }> = ({ className, tier = 'bronze' }) => {
-  const fill = tier === 'gold' ? '#f7c948' : tier === 'silver' ? '#cfd8e3' : '#d08a4a';
+  const fill = tier === 'gold' ? 'var(--cream)' : tier === 'silver' ? 'var(--blue)' : 'var(--orange)';
   return (
     <Svg className={className} fill={fill}>
       <circle cx="12" cy="14.5" r="5.5" />
@@ -175,5 +175,46 @@ export const FlagIcon: React.FC<IconProps> = ({ className }) => (
 export const SparkIcon: React.FC<IconProps> = ({ className }) => (
   <Svg className={className}>
     <path d="M12 3.5 13.4 9l5.1 1.4-5.1 1.4L12 17.4l-1.4-5.6L5.5 10.4 10.6 9z" />
+  </Svg>
+);
+
+export const CheckIcon: React.FC<IconProps> = (p) => (
+  <Svg {...p}>
+    <path d="M2 6.5l3 3 5-6" />
+  </Svg>
+);
+
+export const ShieldIcon: React.FC<IconProps> = (p) => (
+  <Svg {...p}>
+    <path d="M6 1.4l4 1.6v3.2c0 2.4-1.7 4.4-4 5.2-2.3-.8-4-2.8-4-5.2V3z" />
+  </Svg>
+);
+
+export const GiftIcon: React.FC<IconProps> = (p) => (
+  <Svg {...p}>
+    <path d="M1.5 4.6h9v1.8h-9z" />
+    <path d="M2.4 6.4h7.2v4.1H2.4zM6 4.6v5.9" />
+    <path d="M6 4.6C4.9 4.6 3.4 4.2 3.4 2.9c0-.9.8-1.3 1.5-1.1C6 2.1 6 4.6 6 4.6zM6 4.6c1.1 0 2.6-.4 2.6-1.7 0-.9-.8-1.3-1.5-1.1C6 2.1 6 4.6 6 4.6z" />
+  </Svg>
+);
+
+export const SunIcon: React.FC<IconProps> = (p) => (
+  <Svg {...p}>
+    <circle cx="6" cy="6" r="2.6" />
+    <path d="M6 .9v1.6M6 9.5v1.6M.9 6h1.6M9.5 6h1.6M2.4 2.4l1.1 1.1M8.5 8.5l1.1 1.1M9.6 2.4L8.5 3.5M3.5 8.5L2.4 9.6" />
+  </Svg>
+);
+
+export const MoonIcon: React.FC<IconProps> = (p) => (
+  <Svg {...p}>
+    <path d="M9.4 7.6A4.2 4.2 0 0 1 4.4 2.6a4.4 4.4 0 1 0 5 5z" />
+  </Svg>
+);
+
+export const SunsetIcon: React.FC<IconProps> = (p) => (
+  <Svg {...p}>
+    <path d="M3 8.4h6" />
+    <path d="M4.1 6.1a1.9 1.9 0 0 1 3.8 0" />
+    <path d="M1.4 9.9h9.2M2.6 2.2l1 1M9.4 2.2l-1 1M6 .7v1.4" />
   </Svg>
 );

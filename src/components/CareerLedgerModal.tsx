@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { pokoAudio } from '../game/audio';
+import { BookIcon, CheckIcon, CoinIcon, FlagIcon, FlameIcon, GiftIcon, MedalIcon, ShieldIcon, TrophyIcon } from './hud/icons';
 import {
   CAREER_MILESTONES,
   LIVERY_SPECS,
@@ -103,7 +104,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
         {/* Header */}
         <div className="arcade-pill-brown rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-extrabold text-[#ffee1f] tracking-wide">
+            <div className="text-xs font-extrabold text-[var(--yellow)] tracking-wide">
               {rankInfo.current.badge}{' '}
               {lang === 'zh'
                 ? `段位 ${rankInfo.current.tier}/6 · ${rankInfo.current.nameZh}`
@@ -118,13 +119,13 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
           </div>
 
           <div className="flex flex-col items-end gap-1 shrink-0">
-            <div className="bg-[#2b1b08] border-2 border-[#140c04] rounded-full px-3 py-1 flex items-center gap-1.5">
-              <span className="inline-block w-3.5 h-3.5 rounded-full bg-[#ffe524] border border-[#140c04]" />
-              <span className="arcade-stroke-sm text-[#ffe524] text-base leading-none">
+            <div className="bg-[var(--ink-soft)] border-2 border-[var(--ink)] rounded-full px-3 py-1 flex items-center gap-1.5">
+              <span className="inline-block w-3.5 h-3.5 rounded-full bg-[var(--yellow)] border border-[var(--ink)]" />
+              <span className="arcade-stroke-sm text-[var(--yellow)] text-base leading-none">
                 {progression.coins.toLocaleString()}
               </span>
             </div>
-            <span className="text-[11px] font-extrabold text-[#6bf25c]">
+            <span className="text-xs font-extrabold text-[var(--green)]">
               {lang === 'zh'
                 ? (<>当前汇率 ¥1 = {rankInfo.current.exchangeRate} <CoinIcon /></>)
                 : `Rate: ¥1 = ${rankInfo.current.exchangeRate} Coins`}
@@ -164,7 +165,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
             </span>
             {checkInAvailable && (
               <span
-                className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#ff3b30] border-2 border-[#140c04] animate-pulse"
+                className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[var(--red)] border-2 border-[var(--ink)] animate-pulse"
                 aria-hidden="true"
               />
             )}
@@ -172,7 +173,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
         </div>
 
         {lastFlashMsg && (
-          <div className="rounded-xl bg-[#2ea836] border-2 border-[#145a1a] px-3 py-2 text-center text-xs font-extrabold text-white">
+          <div className="rounded-xl bg-[var(--green)] border-2 border-[var(--ink-soft)] px-3 py-2 text-center text-xs font-extrabold text-white">
             {lastFlashMsg}
           </div>
         )}
@@ -180,20 +181,20 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
         {tab === 'career' ? (
           <div className="flex flex-col gap-3">
             {/* Rank Progression Card */}
-            <div className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3.5 flex flex-col gap-2">
+            <div className="bg-[var(--paper)] border-2 border-[var(--ink)] rounded-2xl p-3.5 flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span
-                    className="w-10 h-10 rounded-xl border-2 border-[#140c04] flex items-center justify-center text-xl shadow-xs"
+                    className="w-10 h-10 rounded-xl border-2 border-[var(--ink)] flex items-center justify-center text-xl shadow-xs"
                     style={{ backgroundColor: rankInfo.current.accentHex }}
                   >
                     {rankInfo.current.badge}
                   </span>
                   <div>
-                    <div className="font-display text-base text-[#2b1b08]">
+                    <div className="font-display text-base text-[var(--ink-soft)]">
                       {lang === 'zh' ? rankInfo.current.nameZh : rankInfo.current.nameEn}
                     </div>
-                    <div className="text-[11px] font-bold text-slate-600">
+                    <div className="text-xs font-bold text-slate-600">
                       {lang === 'zh'
                         ? `兑换特权：¥1 可兑换 ${rankInfo.current.exchangeRate} 车库金币`
                         : `Exchange Privilege: ¥1 → ${rankInfo.current.exchangeRate} Garage Coins`}
@@ -201,10 +202,10 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-extrabold text-[#d97706] tabular-nums">
+                  <div className="text-xs font-extrabold text-[var(--orange)] tabular-nums">
                     {career.careerXp} XP
                   </div>
-                  <div className="text-[11px] font-bold text-slate-500 tabular-nums">
+                  <div className="text-xs font-bold text-slate-500 tabular-nums">
                     {rankInfo.next
                       ? lang === 'zh'
                         ? `距「${rankInfo.next.nameZh}」还差 ${rankInfo.next.minXp - career.careerXp} XP`
@@ -216,7 +217,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                 </div>
               </div>
 
-              <div className="w-full h-3 rounded-full bg-[#e9dcc5] border border-[#140c04]/40 overflow-hidden">
+              <div className="w-full h-3 rounded-full bg-[var(--cream)] border border-[var(--ink)]/40 overflow-hidden">
                 <div
                   className="h-full transition-all duration-300"
                   style={{
@@ -226,28 +227,28 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-2 pt-1 text-center text-[11px]">
-                <div className="rounded-xl bg-[#fff3d6] border border-[#140c04]/20 py-1.5 px-2">
+              <div className="grid grid-cols-3 gap-2 pt-1 text-center text-xs">
+                <div className="rounded-xl bg-[var(--cream)] border border-[var(--ink)]/20 py-1.5 px-2">
                   <div className="text-slate-600 font-bold">
                     {lang === 'zh' ? '累计送达' : 'Deliveries'}
                   </div>
-                  <div className="font-extrabold text-sm text-[#2b1b08] tabular-nums">
+                  <div className="font-extrabold text-sm text-[var(--ink-soft)] tabular-nums">
                     {career.totalDeliveries}
                   </div>
                 </div>
-                <div className="rounded-xl bg-[#fff3d6] border border-[#140c04]/20 py-1.5 px-2">
+                <div className="rounded-xl bg-[var(--cream)] border border-[var(--ink)]/20 py-1.5 px-2">
                   <div className="text-slate-600 font-bold">
                     {lang === 'zh' ? '累计外卖收入' : 'Lifetime ¥'}
                   </div>
-                  <div className="font-extrabold text-sm text-[#16a34a] tabular-nums">
+                  <div className="font-extrabold text-sm text-[var(--green)] tabular-nums">
                     ¥{career.totalEarningsYuan.toFixed(1)}
                   </div>
                 </div>
-                <div className="rounded-xl bg-[#fff3d6] border border-[#140c04]/20 py-1.5 px-2">
+                <div className="rounded-xl bg-[var(--cream)] border border-[var(--ink)]/20 py-1.5 px-2">
                   <div className="text-slate-600 font-bold">
                     {lang === 'zh' ? '零罚单安全班次' : 'Clean Shifts'}
                   </div>
-                  <div className="font-extrabold text-sm text-[#2563eb] tabular-nums">
+                  <div className="font-extrabold text-sm text-[var(--blue)] tabular-nums">
                     {career.cleanShifts}
                   </div>
                 </div>
@@ -260,9 +261,9 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                   return (
                     <div
                       key={r.id}
-                      className={`rounded-lg py-1 px-1 text-center border text-[10px] font-extrabold ${
+                      className={`rounded-lg py-1 px-1 text-center border text-xs font-extrabold ${
                         unlocked
-                          ? 'bg-[#fef3c7] border-[#d97706] text-[#78350f]'
+                          ? 'bg-[var(--cream)] border-[var(--orange)] text-[var(--ink-soft)]'
                           : 'bg-slate-100 border-slate-300 text-slate-400'
                       }`}
                     >
@@ -277,16 +278,16 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
             {/* ¥ -> Coins Exchange Counter */}
             <div className="arcade-pill-brown rounded-2xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div>
-                <div className="text-xs font-extrabold text-[#ffee1f]">
+                <div className="text-xs font-extrabold text-[var(--yellow)]">
                   {t.exchangeCounterTitle}
                 </div>
                 <div className="text-white text-sm font-bold mt-0.5">
                   {lang === 'zh'
                     ? `待结算账本余额：¥${unconverted.toFixed(1)} × ${rankInfo.current.exchangeRate} = `
                     : `Pending Pay: ¥${unconverted.toFixed(1)} × ${rankInfo.current.exchangeRate} = `}
-                  <span className="text-[#ffe524] font-extrabold">{previewCoins} <CoinIcon /></span>
+                  <span className="text-[var(--yellow)] font-extrabold">{previewCoins} <CoinIcon /></span>
                 </div>
-                <div className="text-[11px] text-[#ffe8a3]/85 mt-0.5">
+                <div className="text-xs text-[var(--yellow)]/85 mt-0.5">
                   {lang === 'zh'
                     ? (<>历史已累计兑换 {career.totalExchangedCoins.toLocaleString()} 金币 · 提升段位最高享 ¥1 = 10 <CoinIcon /></>)
                     : `Total converted: ${career.totalExchangedCoins.toLocaleString()} Coins (max ¥1 = 10)`}
@@ -308,7 +309,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                 className={`${
                   previewCoins > 0
                     ? 'arcade-btn-green cursor-pointer'
-                    : 'bg-stone-700 border-2 border-[#140c04] opacity-55 cursor-not-allowed'
+                    : 'bg-stone-700 border-2 border-[var(--ink)] opacity-55 cursor-not-allowed'
                 } px-4 py-2.5 rounded-xl shrink-0 text-center`}
               >
                 <span className="arcade-stroke-sm text-white text-xs sm:text-sm whitespace-nowrap">
@@ -342,29 +343,29 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                 return (
                   <div
                     key={ms.id}
-                    className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3 flex items-center justify-between gap-3"
+                    className="bg-[var(--paper)] border-2 border-[var(--ink)] rounded-2xl p-3 flex items-center justify-between gap-3"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-lg">{ms.icon}</span>
-                        <span className="font-display text-sm text-[#2b1b08] truncate">
+                        <span className="font-display text-sm text-[var(--ink-soft)] truncate">
                           {lang === 'zh' ? ms.titleZh : ms.titleEn}
                         </span>
                       </div>
-                      <div className="text-[11px] font-bold text-slate-600 mt-0.5">
+                      <div className="text-xs font-bold text-slate-600 mt-0.5">
                         {lang === 'zh' ? ms.descZh : ms.descEn} ·{' '}
-                        <span className="text-[#b45309]">
+                        <span className="text-[var(--orange)]">
                           {rewardName} + {ms.rewardCoins} <CoinIcon />
                         </span>
                       </div>
                       <div className="mt-1.5 flex items-center gap-2">
-                        <div className="flex-1 h-2 rounded-full bg-[#e9dcc5] overflow-hidden">
+                        <div className="flex-1 h-2 rounded-full bg-[var(--cream)] overflow-hidden">
                           <div
-                            className="h-full bg-[#16a34a]"
+                            className="h-full bg-[var(--green)]"
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        <span className="text-[10px] font-extrabold text-slate-700 tabular-nums">
+                        <span className="text-xs font-extrabold text-slate-700 tabular-nums">
                           {Math.min(ms.target, Math.floor(val))}/{ms.target}
                         </span>
                       </div>
@@ -384,10 +385,10 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                       }}
                       className={`${
                         isClaimed
-                          ? 'bg-[#e2e8f0] border-2 border-slate-400 text-slate-600 cursor-default'
+                          ? 'bg-[var(--cream)] border-2 border-slate-400 text-slate-600 cursor-default'
                           : ready
                             ? 'arcade-btn-gold cursor-pointer'
-                            : 'bg-stone-600 border-2 border-[#140c04] opacity-60 cursor-not-allowed'
+                            : 'bg-stone-600 border-2 border-[var(--ink)] opacity-60 cursor-not-allowed'
                       } px-3 py-2 rounded-xl shrink-0 text-center`}
                     >
                       <span
@@ -414,15 +415,15 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
         ) : (
           <div className="flex flex-col gap-3">
             {/* Daily Challenge Bronze / Silver / Gold Medal Card */}
-            <div className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3.5 flex flex-col gap-2.5">
+            <div className="bg-[var(--paper)] border-2 border-[var(--ink)] rounded-2xl p-3.5 flex flex-col gap-2.5">
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <div className="text-[11px] font-extrabold text-[#d97706]">
+                  <div className="text-xs font-extrabold text-[var(--orange)]">
                     {lang === 'zh'
                       ? `今日赛道 (${dailyChallenge.dateKey}) · 第 ${dailyChallenge.level} 关布局`
                       : `Today's Seed (${dailyChallenge.dateKey}) · Stage ${dailyChallenge.level}`}
                   </div>
-                  <div className="font-display text-base text-[#2b1b08]">
+                  <div className="font-display text-base text-[var(--ink-soft)]">
                     {lang === 'zh'
                       ? `今日最高：${todayBestScore.toLocaleString()} 分`
                       : `Today's Best: ${todayBestScore.toLocaleString()} pts`}
@@ -448,7 +449,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                   className="arcade-btn-green px-4 py-2 rounded-xl cursor-pointer shrink-0"
                 >
                   <span className="arcade-stroke-sm text-white text-xs sm:text-sm">
-                    {lang === 'zh' ? '🚀 出发冲榜' : '🚀 Play Daily'}
+                    {lang === 'zh' ? <> <FlagIcon className="inline-block w-3.5 h-3.5" /> 出发冲榜</> : <> <FlagIcon className="inline-block w-3.5 h-3.5" /> Play Daily</>}
                   </span>
                 </button>
               </div>
@@ -459,26 +460,26 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                   [
                     {
                       key: 'bronze',
-                      icon: '🥉',
+                      icon: 'bronze' as const,
                       name: t.bronzeMedal,
                       score: dailyChallenge.bronzeScore,
-                      reward: `+${dailyChallenge.rewardCoins} 🪙`,
+                      reward: `+${dailyChallenge.rewardCoins} ${lang === 'zh' ? '币' : 'coins'}`,
                       claimed: claimedMedals.bronze,
                     },
                     {
                       key: 'silver',
-                      icon: '🥈',
+                      icon: 'silver' as const,
                       name: t.silverMedal,
                       score: dailyChallenge.silverScore,
-                      reward: `+${dailyChallenge.silverBonusCoins} 🪙`,
+                      reward: `+${dailyChallenge.silverBonusCoins} ${lang === 'zh' ? '币' : 'coins'}`,
                       claimed: claimedMedals.silver,
                     },
                     {
                       key: 'gold',
-                      icon: '🥇',
+                      icon: 'gold' as const,
                       name: t.goldMedal,
                       score: dailyChallenge.goldScore,
-                      reward: `+${dailyChallenge.goldBonusCoins} 🪙 +${dailyChallenge.goldSpinTokens}券`,
+                      reward: `+${dailyChallenge.goldBonusCoins} ${lang === 'zh' ? '币' : 'coins'} +${dailyChallenge.goldSpinTokens}${lang === 'zh' ? '券' : ' spins'}`,
                       claimed: claimedMedals.gold,
                     },
                   ] as const
@@ -487,23 +488,23 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                     key={tier.key}
                     className={`rounded-xl border-2 p-2.5 text-center flex flex-col gap-0.5 ${
                       tier.claimed
-                        ? 'bg-[#dcfce7] border-[#16a34a]'
-                        : 'bg-[#fff3d6] border-[#140c04]/25'
+                        ? 'bg-[var(--cream)] border-[var(--green)]'
+                        : 'bg-[var(--cream)] border-[var(--ink)]/25'
                     }`}
                   >
-                    <div className="text-2xl">{tier.icon}</div>
-                    <div className="font-extrabold text-xs text-[#2b1b08]">
+                    <div className="flex justify-center text-[var(--ink-soft)]"><MedalIcon tier={tier.icon} className="w-6 h-6" /></div>
+                    <div className="font-extrabold text-xs text-[var(--ink-soft)]">
                       {tier.name}
                     </div>
-                    <div className="text-[11px] font-bold text-slate-600 tabular-nums">
+                    <div className="text-xs font-bold text-slate-600 tabular-nums">
                       {tier.score.toLocaleString()} {lang === 'zh' ? '分' : 'pts'}
                     </div>
-                    <div className="text-[11px] font-extrabold text-[#d97706]">
+                    <div className="text-xs font-extrabold text-[var(--orange)]">
                       {tier.reward}
                     </div>
                     <div
-                      className={`text-[10px] font-extrabold mt-0.5 ${
-                        tier.claimed ? 'text-[#15803d]' : 'text-slate-400'
+                      className={`text-xs font-extrabold mt-0.5 ${
+                        tier.claimed ? 'text-[var(--ink-soft)]' : 'text-slate-400'
                       }`}
                     >
                       {tier.claimed
@@ -520,16 +521,18 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
             </div>
 
             {/* 7-Day Check-In & Challenge Streak Card */}
-            <div className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3.5 flex flex-col gap-2.5">
+            <div className="bg-[var(--paper)] border-2 border-[var(--ink)] rounded-2xl p-3.5 flex flex-col gap-2.5">
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <div className="font-display text-base text-[#2b1b08]">
-                    {lang === 'zh' ? '🔥 连续签到 & 连胜奖励' : '🔥 Check-In & Challenge Streak'}
+                  <div className="font-display text-base text-[var(--ink-soft)]">
+                    <>
+<span className="inline-flex items-center gap-1"><FlameIcon className="w-4 h-4 text-[var(--orange)]" />{lang === 'zh' ? '连续签到 & 连胜奖励' : 'Check-In & Challenge Streak'}</span>
+</>
                   </div>
-                  <div className="text-[11px] font-bold text-slate-600">
+                  <div className="text-xs font-bold text-slate-600">
                     {lang === 'zh'
-                      ? `已连续签到 ${displayStreakDays} 天 · 每日挑战连胜 ${dailyStreak.challengeStreakDays} 天 (连胜次日起额外 +40~200 🪙)`
-                      : `Check-In Streak: ${displayStreakDays}d · Daily Clear Streak: ${dailyStreak.challengeStreakDays}d (+40~200 bonus Coins)`}
+                      ? `已连续签到 ${displayStreakDays} 天 · 每日挑战连胜 ${dailyStreak.challengeStreakDays} 天 (连胜次日起额外 +40~200 币)`
+                      : `Check-In Streak: ${displayStreakDays}d · Daily Clear Streak: ${dailyStreak.challengeStreakDays}d (+40~200 bonus coins)`}
                   </div>
                 </div>
                 <button
@@ -548,7 +551,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                   className={`${
                     checkInAvailable
                       ? 'arcade-btn-gold cursor-pointer'
-                      : 'bg-[#e2e8f0] border-2 border-slate-400 cursor-default'
+                      : 'bg-[var(--cream)] border-2 border-slate-400 cursor-default'
                   } px-3.5 py-2 rounded-xl shrink-0`}
                 >
                   <span
@@ -577,19 +580,27 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                       key={item.day}
                       className={`rounded-xl border-2 p-1.5 text-center flex flex-col items-center justify-between gap-0.5 ${
                         isDone
-                          ? 'bg-[#dcfce7] border-[#16a34a]'
+                          ? 'bg-[var(--cream)] border-[var(--green)]'
                           : isTodayTarget
-                            ? 'bg-[#fef3c7] border-[#f59e0b] ring-2 ring-[#fbbf24]/50'
+                            ? 'bg-[var(--cream)] border-[var(--orange)] ring-2 ring-[var(--orange)]/50'
                             : 'bg-slate-50 border-slate-200'
                       }`}
                     >
-                      <span className="text-[10px] font-extrabold text-slate-600">
+                      <span className="text-xs font-extrabold text-slate-600">
                         {lang === 'zh' ? `第${item.day}天` : `D${item.day}`}
                       </span>
                       <span className="text-sm">
-                        {isDone ? '✅' : item.day === 7 ? '🎁' : item.freeShield ? '🛡️' : '🪙'}
+                        {isDone ? (
+<CheckIcon className="w-4 h-4 text-[var(--green)]" />
+) : item.day === 7 ? (
+<GiftIcon className="w-4 h-4 text-[var(--red)]" />
+) : item.freeShield ? (
+<ShieldIcon className="w-4 h-4 text-[var(--blue)]" />
+) : (
+<CoinIcon className="w-4 h-4 text-[var(--orange)]" />
+)}
                       </span>
-                      <span className="text-[9px] font-extrabold text-[#92400e] leading-tight">
+                      <span className="text-xs font-extrabold text-[var(--orange)] leading-tight">
                         {lang === 'zh' ? item.labelZh : item.labelEn}
                       </span>
                     </div>
@@ -617,4 +628,3 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
     </div>
   );
 };
-import { BookIcon, CoinIcon, MedalIcon, TrophyIcon } from './hud/icons';

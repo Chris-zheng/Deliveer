@@ -88,17 +88,17 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
             >
               {t.worldTourTitle}
             </h2>
-            <p className="text-[11px] sm:text-xs font-bold text-amber-100/90 mt-0.5">
+            <p className="text-xs sm:text-xs font-bold text-amber-100/90 mt-0.5">
               {t.worldTourSubtitle}
             </p>
           </div>
           <div className="flex items-center gap-2.5">
-            <div className="bg-[#2b1b08] border-2 border-[#ffe524] rounded-full px-3 py-1 flex items-center gap-1.5">
+            <div className="bg-[var(--ink-soft)] border-2 border-[var(--yellow)] rounded-full px-3 py-1 flex items-center gap-1.5">
               <span className="text-sm">⭐</span>
-              <span className="arcade-stroke-sm text-[#ffe524] text-sm tabular-nums">
+              <span className="arcade-stroke-sm text-[var(--yellow)] text-sm tabular-nums">
                 {totalStars}
               </span>
-              <span className="text-[10px] font-bold text-amber-200">
+              <span className="text-xs font-bold text-amber-200">
                 {t.totalWorldStars}
               </span>
             </div>
@@ -125,8 +125,8 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
             }}
             className={`px-3 py-1.5 rounded-xl border-2 text-xs font-extrabold cursor-pointer transition ${
               continentFilter === 'all'
-                ? 'bg-[#ffe524] border-[#5a270f] text-[#2b1b08]'
-                : 'bg-[#fffdf5] border-[#784812]/40 text-[#5c3809] hover:bg-amber-50'
+                ? 'bg-[var(--yellow)] border-[var(--ink-soft)] text-[var(--ink-soft)]'
+                : 'bg-[var(--paper)] border-[var(--ink-soft)]/40 text-[var(--ink-soft)] hover:bg-amber-50'
             }`}
           >
             <MapIcon className="mr-1" />{t.allContinents} ({WORLD_CITIES.length})
@@ -146,8 +146,8 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
               }}
               className={`px-3 py-1.5 rounded-xl border-2 text-xs font-extrabold cursor-pointer transition ${
                 continentFilter === cont.id
-                  ? 'bg-[#ffe524] border-[#5a270f] text-[#2b1b08]'
-                  : 'bg-[#fffdf5] border-[#784812]/40 text-[#5c3809] hover:bg-amber-50'
+                  ? 'bg-[var(--yellow)] border-[var(--ink-soft)] text-[var(--ink-soft)]'
+                  : 'bg-[var(--paper)] border-[var(--ink-soft)]/40 text-[var(--ink-soft)] hover:bg-amber-50'
               }`}
             >
               {cont.icon} {lang === 'zh' ? cont.nameZh : cont.nameEn}
@@ -172,28 +172,28 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
                     setSelectedCityId(city.id);
                     setSelectedStage(1);
                   }}
-                  className={`text-left rounded-2xl border-[2.5px] p-2.5 transition flex items-center justify-between gap-2 cursor-pointer ${
+                  className={`text-left rounded-2xl border-2 p-2.5 transition flex items-center justify-between gap-2 cursor-pointer ${
                     isSelected
-                      ? 'bg-[#fff3c4] border-[#140c04] shadow-[0_3px_0_#140c04]'
+                      ? 'bg-[var(--cream)] border-[var(--ink)] shadow-[0_2px_0_#140c04]'
                       : unlocked
-                        ? 'bg-[#fffdf5] border-[#784812]/50 hover:bg-amber-50'
+                        ? 'bg-[var(--paper)] border-[var(--ink-soft)]/50 hover:bg-amber-50'
                         : 'bg-stone-200/85 border-stone-400 text-stone-600'
                   }`}
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0 border border-[#140c04]"
+                        className="w-2.5 h-2.5 rounded-full shrink-0 border border-[var(--ink)]"
                         style={{ backgroundColor: city.accentHex }}
                       />
-                      <span className="font-display text-sm text-[#2b1b08] truncate">
+                      <span className="font-display text-sm text-[var(--ink-soft)] truncate">
                         {lang === 'zh' ? city.nameZh : city.nameEn}
                       </span>
-                      <span className="text-[11px] font-bold text-[#784812] truncate">
+                      <span className="text-xs font-bold text-[var(--ink-soft)] truncate">
                         · {lang === 'zh' ? city.countryZh : city.countryEn}
                       </span>
                     </div>
-                    <div className="text-[10px] font-bold text-slate-600 truncate mt-0.5">
+                    <div className="text-xs font-bold text-slate-600 truncate mt-0.5">
                       {lang === 'zh' ? city.taglineZh : city.taglineEn}
                     </div>
                   </div>
@@ -203,7 +203,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
                         ⭐ {earned}/30
                       </div>
                     ) : (
-                      <div className="text-[11px] font-extrabold text-rose-700 bg-rose-100 border border-rose-300 rounded-lg px-2 py-0.5">
+                      <div className="text-xs font-extrabold text-rose-700 bg-rose-100 border border-rose-300 rounded-lg px-2 py-0.5">
                         <LockIcon className="mr-1" />{t.unlockNeedStars.replace('{stars}', String(city.unlockStarsRequired))}
                       </div>
                     )}
@@ -214,14 +214,14 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
           </div>
 
           {/* Selected City Detail + Stage 1-10 Grid (Right 7 cols) */}
-          <div className="md:col-span-7 bg-[#fffdf5] border-[3px] border-[#140c04] rounded-2xl p-3.5 sm:p-4 flex flex-col gap-3">
-            <div className="flex flex-wrap items-start justify-between gap-2 border-b border-[#140c04]/15 pb-2.5">
+          <div className="md:col-span-7 bg-[var(--paper)] border-2 border-[var(--ink)] rounded-2xl p-3.5 sm:p-4 flex flex-col gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-2 border-b border-[var(--ink)]/15 pb-2.5">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-display text-xl text-[#2b1b08]">
+                  <h3 className="font-display text-xl text-[var(--ink-soft)]">
                     {lang === 'zh' ? activeCity.nameZh : activeCity.nameEn}
                   </h3>
-                  <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-amber-100 border border-amber-400 text-[#784812]">
+                  <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-amber-100 border border-amber-400 text-[var(--ink-soft)]">
                     {lang === 'zh' ? activeCity.countryZh : activeCity.countryEn}
                   </span>
                 </div>
@@ -239,8 +239,8 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
             {/* Landmarks & Signature Dishes Preview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div className="bg-amber-50 border border-amber-300 rounded-xl p-2">
-                <div className="font-extrabold text-[#784812] mb-1"><LandmarkIcon className="mr-1" />{t.cityLandmarks}</div>
-                <div className="flex flex-col gap-0.5 font-bold text-[#2b1b08]">
+                <div className="font-extrabold text-[var(--ink-soft)] mb-1"><LandmarkIcon className="mr-1" />{t.cityLandmarks}</div>
+                <div className="flex flex-col gap-0.5 font-bold text-[var(--ink-soft)]">
                   {activeCity.landmarks.map((lm) => (
                     <span key={lm.loreId} className="truncate">
                       {lm.icon} {lang === 'zh' ? lm.nameZh : lm.nameEn}
@@ -254,7 +254,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
                   {activeCity.dishes.slice(0, 4).map((d) => (
                     <span
                       key={d.loreId}
-                      className="text-[10px] font-bold bg-white border border-sky-200 rounded-md px-1.5 py-0.5 truncate max-w-[130px]"
+                      className="text-xs font-bold bg-white border border-sky-200 rounded-md px-1.5 py-0.5 truncate max-w-[130px]"
                     >
                       {d.icon} {lang === 'zh' ? d.nameZh : d.nameEn}
                     </span>
@@ -265,7 +265,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
 
             {/* 10 District Stages Grid */}
             <div>
-              <div className="text-xs font-extrabold text-[#2b1b08] mb-1.5">
+              <div className="text-xs font-extrabold text-[var(--ink-soft)] mb-1.5">
                 {t.selectDistrictStage.replace(
                   '{city}',
                   lang === 'zh' ? activeCity.nameZh : activeCity.nameEn,
@@ -289,15 +289,15 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
                         !playable
                           ? 'bg-stone-200 border-stone-300 text-stone-400 cursor-not-allowed'
                           : isPicked
-                            ? 'bg-[#ffe524] border-[#140c04] text-[#2b1b08] shadow-[0_2px_0_#140c04] cursor-pointer'
-                            : 'bg-white border-[#784812]/40 hover:bg-amber-50 text-[#2b1b08] cursor-pointer'
+                            ? 'bg-[var(--yellow)] border-[var(--ink)] text-[var(--ink-soft)] shadow-[0_2px_0_#140c04] cursor-pointer'
+                            : 'bg-white border-[var(--ink-soft)]/40 hover:bg-amber-50 text-[var(--ink-soft)] cursor-pointer'
                       }`}
                     >
-                      <div className="flex items-center justify-between text-[11px] font-extrabold">
+                      <div className="flex items-center justify-between text-xs font-extrabold">
                         <span>S{st.stage}</span>
                         <span>{playable ? '★'.repeat(stars) + '☆'.repeat(3 - stars) : <LockIcon />}</span>
                       </div>
-                      <div className="text-[10px] font-bold truncate leading-tight">
+                      <div className="text-xs font-bold truncate leading-tight">
                         {lang === 'zh' ? st.districtZh : st.districtEn}
                       </div>
                     </button>
@@ -307,13 +307,13 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
             </div>
 
             {/* Selected Stage Detail & Play CTA */}
-            <div className="mt-auto bg-[#fff8e7] border-2 border-[#784812] rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs font-bold text-[#4b1c08]">
+            <div className="mt-auto bg-[var(--cream)] border-2 border-[var(--ink-soft)] rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs font-bold text-[var(--ink-soft)]">
                 <div className="font-extrabold text-sm">
                   Stage {activeStageDef.stage} ·{' '}
                   {lang === 'zh' ? activeStageDef.districtZh : activeStageDef.districtEn}
                 </div>
-                <div className="text-[11px] text-slate-600 mt-0.5">
+                <div className="text-xs text-slate-600 mt-0.5">
                   <BoxIcon className="mr-1" />{activeStageDef.stopCount} {lang === 'zh' ? '个站点' : 'Stops'} · <ClockIcon className="mx-1" />{' '}
                   {activeStageDef.timeLimitSec}s · <RulerIcon className="ml-1 mr-1" />{activeStageDef.gridSize}×{activeStageDef.gridSize}
                 </div>

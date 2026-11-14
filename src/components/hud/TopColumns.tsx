@@ -90,7 +90,7 @@ export const TopColumns: React.FC<TopColumnsProps> = (p) => {
                 >
                   <div
                     className={`absolute left-0 top-0 bottom-0 arcade-bar-gold transition-all duration-200 ${
-                      deliveryPct < 100 ? 'border-r-[2.5px] border-[#140c04]' : ''
+                      deliveryPct < 100 ? 'border-r-[2.5px] border-[var(--ink)]' : ''
                     }`}
                     style={{ width: `${Math.max(26, deliveryPct)}%` }}
                   />
@@ -180,14 +180,14 @@ export const TopColumns: React.FC<TopColumnsProps> = (p) => {
                 >
                   <span
                     className={`arcade-stroke text-sm sm:text-lg md:text-2xl leading-none ${
-                      isCriticalHealth ? 'text-[#ffe524]' : 'text-white'
+                      isCriticalHealth ? 'text-[var(--yellow)]' : 'text-white'
                     }`}
                   >
                     {hud.health}/{hud.maxHealth}
                   </span>
                   {hud.hasBumperShield && (
                     <span
-                      className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full bg-[#38bdf8] border-2 border-[#140c04] shrink-0"
+                      className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full bg-[var(--blue)] border-2 border-[var(--ink)] shrink-0"
                       title="Bumper Shield Active"
                     />
                   )}
@@ -290,7 +290,7 @@ export const TopColumns: React.FC<TopColumnsProps> = (p) => {
                   />
                   <circle cx="28" cy="29" r="2.6" fill="#ff2430" />
                 </svg>
-                <span className="-mt-1.5 arcade-stroke-sm text-white text-[11px] sm:text-sm md:text-base uppercase leading-none whitespace-nowrap">
+                <span className="-mt-1.5 arcade-stroke-sm text-white text-xs sm:text-sm md:text-base uppercase leading-none whitespace-nowrap">
                   {hud.isBoosting ? (lang === 'zh' ? '加速中' : 'ACTIVE') : (lang === 'zh' ? '涡轮' : 'TURBO')}
                 </span>
               </button>
@@ -354,7 +354,7 @@ export const TopColumns: React.FC<TopColumnsProps> = (p) => {
                   <circle cx="21" cy="38" r="1.5" fill="#475569" />
                   <circle cx="33" cy="38" r="1.5" fill="#475569" />
                 </svg>
-                <span className="-mt-1 md:-mt-1.5 arcade-stroke-sm text-white text-[10px] sm:text-[11px] md:text-base uppercase leading-none whitespace-nowrap">
+                <span className="-mt-1 md:-mt-1.5 arcade-stroke-sm text-white text-xs sm:text-xs md:text-base uppercase leading-none whitespace-nowrap">
                   {t.retry}
                 </span>
               </button>
@@ -432,7 +432,7 @@ export const TopColumns: React.FC<TopColumnsProps> = (p) => {
                     fill="none"
                   />
                 </svg>
-                <span className="-mt-1 md:-mt-1.5 arcade-stroke-sm text-white text-[10px] sm:text-[11px] md:text-base uppercase leading-none whitespace-nowrap">
+                <span className="-mt-1 md:-mt-1.5 arcade-stroke-sm text-white text-xs sm:text-xs md:text-base uppercase leading-none whitespace-nowrap">
                   {t.quests}
                 </span>
               </button>

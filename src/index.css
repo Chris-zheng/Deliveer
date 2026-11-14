@@ -2,6 +2,17 @@
 
 @layer base {
   :root {
+    /* ---- palette tokens: the only colours the UI is allowed to use ---- */
+    --ink: #140c04;
+    --ink-soft: #2b1b08;
+    --muted: #8a6a44;
+    --cream: #f3e3c6;
+    --paper: #fffdf5;
+    --yellow: #ffe524;
+    --orange: #f97316;
+    --green: #16a34a;
+    --blue: #165dff;
+    --red: #e11d48;
     --font-display: 'Lilita One', system-ui, -apple-system, sans-serif;
     --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
@@ -14,7 +25,7 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-color: #69ccf7;
+    background-color: var(--blue);
     font-family: var(--font-sans);
     user-select: none;
     -webkit-user-select: none;
@@ -43,12 +54,10 @@
 }
 
 .arcade-stroke-sm {
-  font-family: var(--font-display);
-  font-variant-numeric: tabular-nums;
-  paint-order: stroke fill;
-  -webkit-text-stroke: 1.9px #140c04;
-  text-shadow: 0 1.2px 0 #140c04;
-  letter-spacing: 0.025em;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 0 rgba(20, 12, 4, 0.45);
 }
 
 .arcade-stroke-lg {
@@ -62,7 +71,7 @@
 
 /* Reference 1: Deep espresso-brown counter track with bold dark outline */
 .arcade-pill-brown {
-  background-color: #4b1c08;
+  background-color: var(--ink-soft);
   border: 3px solid #140c04;
   box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.32), 0 3px 0 rgba(20, 12, 4, 0.38);
 }
@@ -92,7 +101,7 @@
 /* Reference 3: Two-tone cel-shaded golden-orange primary arcade button */
 .arcade-btn-gold {
   background: linear-gradient(180deg, #ffe524 0%, #ffe524 52%, #f59b14 52%, #f59b14 100%);
-  color: #ffffff;
+  color: var(--ink);
   border: 3px solid #140c04;
   box-shadow: inset 0 -5px 0 #c76705, 0 4px 0 rgba(20, 12, 4, 0.38);
   transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1), filter 120ms ease;
@@ -111,7 +120,7 @@
 /* Two-tone emerald variant for active curbside delivery ready state */
 .arcade-btn-green {
   background: linear-gradient(180deg, #6bf25c 0%, #6bf25c 52%, #26c42f 52%, #26c42f 100%);
-  color: #ffffff;
+  color: var(--paper);
   border: 3px solid #140c04;
   box-shadow: inset 0 -5px 0 #14801b, 0 4px 0 rgba(20, 12, 4, 0.38);
   transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1), filter 120ms ease;
@@ -130,7 +139,7 @@
 /* Two-tone sky-blue tactile secondary arcade button for high contrast */
 .arcade-btn-cream {
   background: linear-gradient(180deg, #5cd6ff 0%, #5cd6ff 52%, #1ca3ec 52%, #1ca3ec 100%);
-  color: #ffffff;
+  color: var(--paper);
   border: 3px solid #140c04;
   box-shadow: inset 0 -4px 0 #0d6fa8, 0 3px 0 rgba(20, 12, 4, 0.34);
   transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1), filter 120ms ease;
@@ -200,7 +209,7 @@
 
 /* Warm arcade board for Welcome & Status Modals */
 .arcade-panel {
-  background-color: #fff6dc;
+  background-color: var(--cream);
   border: 3.5px solid #140c04;
   box-shadow: inset 0 -6px 0 #e3c686, 0 8px 0 rgba(29, 18, 5, 0.38);
 }

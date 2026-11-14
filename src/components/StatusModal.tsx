@@ -85,7 +85,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
         {isPaused ? (
           <>
             <div className="arcade-pill-brown rounded-2xl px-4 py-3 text-center">
-              <div className="text-xs font-extrabold text-[#ffee1f] tracking-wide">
+              <div className="text-xs font-extrabold text-[var(--yellow)] tracking-wide">
                 {isCustomCity
                   ? snapshot?.customCity?.districtName || t.customDistrictBadge
                   : t.stageLabel.replace('{level}', String(currentLevel))} · {lang === 'zh' ? '暂停中' : 'Paused'}
@@ -98,9 +98,9 @@ export const StatusModal: React.FC<StatusModalProps> = ({
               </h2>
             </div>
 
-            <div className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3.5 text-xs font-semibold text-slate-800 flex flex-col gap-2">
+            <div className="bg-[var(--paper)] border-2 border-[var(--ink)] rounded-2xl p-3.5 text-xs font-semibold text-slate-800 flex flex-col gap-2">
               <div>
-                <strong className="font-display text-sm text-[#2b1b08]">
+                <strong className="font-display text-sm text-[var(--ink-soft)]">
                   {lang === 'zh' ? '1. 驾驶与喇叭 [Q]：' : '1. Controls & Horn [Q]:'}
                 </strong>{' '}
                 {lang === 'zh'
@@ -108,7 +108,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                   : 'W/↑ Drive · S/↓ Brake (No Reverse) · A/D Turn · Q Horn calms scooters!'}
               </div>
               <div>
-                <strong className="font-display text-sm text-[#784812]">
+                <strong className="font-display text-sm text-[var(--ink-soft)]">
                   {lang === 'zh' ? '2. 右侧通行与维修站：' : '2. Right Lane & Pit-Stops:'}
                 </strong>{' '}
                 {lang === 'zh'
@@ -116,7 +116,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                   : 'Keep Right, hit Jump Ramps over canal gates, and visit Espresso/Wrench bays!'}
               </div>
               <div>
-                <strong className="font-display text-sm text-[#146c1c]">
+                <strong className="font-display text-sm text-[var(--ink-soft)]">
                   {lang === 'zh' ? '3. 投掷与包裹 [空格]：' : '3. Bullseye & Parcels [Space]:'}
                 </strong>{' '}
                 {lang === 'zh'
@@ -197,7 +197,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
         ) : (
           <>
             <div className="arcade-pill-brown rounded-2xl px-4 py-3 text-center">
-              <div className="text-xs font-extrabold text-[#ffee1f] tracking-wide">
+              <div className="text-xs font-extrabold text-[var(--yellow)] tracking-wide">
                 {isCustomCity
                   ? snapshot?.customCity?.districtName || t.customDistrictBadge
                   : `${t.stageLabel.replace('{level}', String(snapshot?.level ?? currentLevel))} · ${snapshot?.districtName ?? 'Island Quarter'}`}
@@ -227,7 +227,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                   >
                     <path
                       d="M18 3l4.6 8.9 9.8 1.6-7 7.1 1.6 9.8L18 25.9 9 30.4l1.6-9.8-7-7.1 9.8-1.6L18 3z"
-                      fill={st <= starsEarned ? '#ffe524' : '#2b1b08'}
+                      fill={st <= starsEarned ? 'var(--yellow)' : 'var(--ink-soft)'}
                       stroke="#140c04"
                       strokeWidth="2.6"
                       strokeLinejoin="round"
@@ -240,7 +240,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
             {/* Stat Tiles */}
             <div className="grid grid-cols-3 gap-2.5 text-center">
               <div className="arcade-pill-brown rounded-2xl p-2.5">
-                <div className="text-[11px] font-extrabold text-[#ffee1f]">
+                <div className="text-xs font-extrabold text-[var(--yellow)]">
                   {isVictory ? t.timeRemaining : t.delivered}
                 </div>
                 <div className="arcade-stroke-sm text-white text-xl mt-0.5">
@@ -251,31 +251,31 @@ export const StatusModal: React.FC<StatusModalProps> = ({
               </div>
 
               <div className="arcade-pill-brown rounded-2xl p-2.5">
-                <div className="text-[11px] font-extrabold text-[#ffee1f]">
+                <div className="text-xs font-extrabold text-[var(--yellow)]">
                   {t.finalScore}
                 </div>
-                <div className="arcade-stroke-sm text-[#ffe524] text-xl mt-0.5">
+                <div className="arcade-stroke-sm text-[var(--yellow)] text-xl mt-0.5">
                   {(snapshot?.score ?? 0).toLocaleString()}
                 </div>
               </div>
 
               <div className="arcade-pill-brown rounded-2xl p-2.5">
-                <div className="text-[11px] font-extrabold text-[#6bf25c]">
+                <div className="text-xs font-extrabold text-[var(--green)]">
                   {t.coinsEarned}
                 </div>
-                <div className="arcade-stroke-sm text-[#ffe524] text-xl mt-0.5">
+                <div className="arcade-stroke-sm text-[var(--yellow)] text-xl mt-0.5">
                   +{snapshot?.coinsEarned ?? 0}
                 </div>
               </div>
             </div>
 
             {snapshot?.riderReceipt && (
-              <div className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3 text-xs text-slate-800 flex flex-col gap-1.5">
-                <div className="flex items-center justify-between border-b border-[#140c04]/15 pb-1.5">
-                  <span className="font-display text-sm text-[#2b1b08]">
+              <div className="bg-[var(--paper)] border-2 border-[var(--ink)] rounded-2xl p-3 text-xs text-slate-800 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between border-b border-[var(--ink)]/15 pb-1.5">
+                  <span className="font-display text-sm text-[var(--ink-soft)]">
                     <TruckIcon className="mr-1" />{lang === 'zh' ? '骑手本趟收入账单' : 'Rider Shift Receipt'}
                   </span>
-                  <span className="font-extrabold text-[#d97706]">
+                  <span className="font-extrabold text-[var(--orange)]">
                     {lang === 'zh'
                       ? `好评率 ${snapshot.riderReceipt.praiseRate}%`
                       : `Rating ${snapshot.riderReceipt.praiseRate}%`}
@@ -297,7 +297,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                       ? '准时/保温/精准/抢单奖励'
                       : 'On-Time, Thermal & Rush Bonuses'}
                   </span>
-                  <span className="text-[#16a34a] tabular-nums">
+                  <span className="text-[var(--green)] tabular-nums">
                     +¥
                     {(
                       snapshot.riderReceipt.onTimeBonus +
@@ -311,12 +311,12 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                   snapshot.riderReceipt.trafficFines > 0 ||
                   snapshot.riderReceipt.lateDeduction > 0) && (
                   <div className="flex items-center justify-between font-bold">
-                    <span className="text-[#e11d48]">
+                    <span className="text-[var(--red)]">
                       {lang === 'zh'
                         ? '违章罚款 / 餐损 / 超时扣款'
                         : 'Fines, Spill & Late Deductions'}
                     </span>
-                    <span className="text-[#e11d48] tabular-nums">
+                    <span className="text-[var(--red)] tabular-nums">
                       -¥
                       {(
                         snapshot.riderReceipt.spillDeduction +
@@ -326,8 +326,8 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                     </span>
                   </div>
                 )}
-                <div className="flex items-center justify-between border-t border-[#140c04]/15 pt-1.5 font-extrabold text-sm">
-                  <span className="text-[#2b1b08]">
+                <div className="flex items-center justify-between border-t border-[var(--ink)]/15 pt-1.5 font-extrabold text-sm">
+                  <span className="text-[var(--ink-soft)]">
                     {lang === 'zh'
                       ? (<>本趟实得净收入 (当前 ¥1={exchangeRate} <CoinIcon />)</>)
                       : `Net Pay (Rank Rate ¥1=${exchangeRate} Coins)`}
@@ -335,8 +335,8 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                   <span
                     className={`tabular-nums ${
                       snapshot.riderReceipt.netEarningsYuan >= 0
-                        ? 'text-[#16a34a]'
-                        : 'text-[#e11d48]'
+                        ? 'text-[var(--green)]'
+                        : 'text-[var(--red)]'
                     }`}
                   >
                     ¥{snapshot.riderReceipt.netEarningsYuan.toFixed(1)} (≈{shiftCoinValue}<CoinIcon />)
@@ -344,8 +344,8 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                 </div>
 
                 {careerRankInfo && (
-                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-dashed border-[#140c04]/15">
-                    <div className="text-[11px] font-bold text-[#92400e]">
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-dashed border-[var(--ink)]/15">
+                    <div className="text-xs font-bold text-[var(--orange)]">
                       {careerRankInfo.badge}{' '}
                       {lang === 'zh' ? careerRankInfo.nameZh : careerRankInfo.nameEn}
                       {careerRankInfo.xpGained > 0 && ` (+${careerRankInfo.xpGained} XP)`}
@@ -359,14 +359,14 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                         }}
                         className="arcade-btn-green px-2.5 py-1 rounded-lg cursor-pointer shrink-0"
                       >
-                        <span className="arcade-stroke-sm text-white text-[11px]">
+                        <span className="arcade-stroke-sm text-white text-xs">
                           {lang === 'zh'
                             ? (<>立即兑换 ¥{pendingYuan.toFixed(1)} → +{pendingExchangeCoins}<CoinIcon /></>)
                             : `Convert +${pendingExchangeCoins} Coins`}
                         </span>
                       </button>
                     ) : (
-                      <span className="text-[11px] font-extrabold text-[#16a34a]">
+                      <span className="text-xs font-extrabold text-[var(--green)]">
                         {lang === 'zh' ? '✓ 已全部兑换为金币' : '✓ Converted'}
                       </span>
                     )}
@@ -377,7 +377,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
 
             {dailyMedalResult && (
               <div className="arcade-pill-brown rounded-2xl px-3.5 py-2 flex items-center justify-between gap-2">
-                <div className="text-xs font-extrabold text-[#ffee1f]">
+                <div className="text-xs font-extrabold text-[var(--yellow)]">
                   {dailyMedalResult.medalEarned === 'gold'
                     ? (<><MedalIcon tier="gold" className="mr-1" />{lang === 'zh' ? '每日挑战 · 夺得金牌！' : 'Daily Challenge: GOLD!'}</>)
                     : dailyMedalResult.medalEarned === 'silver'
@@ -388,7 +388,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                           ? (<><CalendarIcon className="mr-1" />每日挑战完成（再冲高分夺牌！）</>)
                           : (<><CalendarIcon className="mr-1" />Daily Run Complete</>)}
                 </div>
-                <div className="text-xs font-extrabold text-[#6bf25c] tabular-nums">
+                <div className="text-xs font-extrabold text-[var(--green)] tabular-nums">
                   {dailyMedalResult.rewardCoins > 0 && (<>+{dailyMedalResult.rewardCoins}<CoinIcon /> </>)}
                   {dailyMedalResult.streakBonusCoins > 0 && (
                     <>
@@ -401,21 +401,21 @@ export const StatusModal: React.FC<StatusModalProps> = ({
               </div>
             )}
 
-            <div className="text-center text-xs font-extrabold text-[#382307] -mt-0.5">
+            <div className="text-center text-xs font-extrabold text-[var(--ink-soft)] -mt-0.5">
               {lang === 'zh' ? '违章记录：' : 'Traffic Record: '}
               {(snapshot?.ticketsCount ?? 0) === 0 ? (
-                <span className="text-[#146c1c]">
+                <span className="text-[var(--ink-soft)]">
                   {lang === 'zh' ? '规范文明驾驶 · 0 罚单奖励' : 'Clean Driving · 0 Tickets'}
                 </span>
               ) : (
-                <span className="text-[#d90429]">
+                <span className="text-[var(--red)]">
                   {lang === 'zh'
                     ? `收到 ${snapshot?.ticketsCount} 张交通罚单`
                     : `${snapshot?.ticketsCount} Tickets Issued`}
                 </span>
               )}
               {snapshot?.earnedSpinToken ? (
-                <span className="text-[#7c3aed]">
+                <span className="text-[var(--blue)]">
                   {lang === 'zh' ? ' · +1 抽奖券！' : ' · +1 Spin Token!'}
                 </span>
               ) : null}

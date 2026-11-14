@@ -25,13 +25,13 @@ export const Radar: React.FC<RadarProps> = (p) => {
             height={106}
             data-testid="hud-minimap"
             aria-label="Courier GPS route minimap"
-            className="block w-[72px] h-[72px] md:w-[106px] md:h-[106px] rounded-lg md:rounded-xl border-2 border-[#140c04]"
+            className="block w-[72px] h-[72px] md:w-[106px] md:h-[106px] rounded-lg md:rounded-xl border-2 border-[var(--ink)]"
           />
           <div className="w-full flex items-center justify-between px-1 md:px-1.5 pt-0.5 md:pt-1">
-            <span className="arcade-stroke-sm text-[#ffee1f] text-[9px] md:text-xs leading-none">
+            <span className="arcade-stroke-sm text-[var(--yellow)] text-xs md:text-xs leading-none">
               GPS
             </span>
-            <span className="arcade-stroke-sm text-white text-[9px] md:text-xs leading-none">
+            <span className="arcade-stroke-sm text-white text-xs md:text-xs leading-none">
               {hud.speedKmh} KM/H
             </span>
           </div>

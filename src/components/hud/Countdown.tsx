@@ -29,15 +29,15 @@ export const Countdown: React.FC<CountdownProps> = (p) => {
             <div
               className={`${
                 hud.countdownStage === 0
-                  ? 'bg-[#2ea836] px-6 py-1.5 sm:px-10 sm:py-3.5 min-w-[140px] sm:min-w-[220px]'
+                  ? 'bg-[var(--green)] px-6 py-1.5 sm:px-10 sm:py-3.5 min-w-[140px] sm:min-w-[220px]'
                   : `${
                       hud.rocketStartStatus === 'primed'
-                        ? 'bg-[#f59e0b]'
-                        : 'bg-[#4b1c08]'
+                        ? 'bg-[var(--orange)]'
+                        : 'bg-[var(--ink-soft)]'
                     } px-7 py-2.5 sm:px-10 sm:py-3.5 min-w-[168px] sm:min-w-[220px]`
-              } border-[3.5px] border-[#140c04] rounded-[1.65rem] flex flex-col items-center`}
+              } border-[3.5px] border-[var(--ink)] rounded-[1.65rem] flex flex-col items-center`}
             >
-              <span className="arcade-stroke-sm text-[#ffee1f] text-[10px] sm:text-xs uppercase tracking-wider leading-none mb-1">
+              <span className="arcade-stroke-sm text-[var(--yellow)] text-xs sm:text-xs uppercase tracking-wider leading-none mb-1">
                 {hud.countdownStage === 0
                   ? hud.rocketStartStatus === 'launched'
                     ? t.turboRocket
@@ -51,8 +51,8 @@ export const Countdown: React.FC<CountdownProps> = (p) => {
                   hud.countdownStage === 0
                     ? 'text-white text-4xl sm:text-7xl'
                     : hud.countdownStage === 1
-                      ? 'text-[#6bf25c] text-6xl sm:text-7xl'
-                      : 'text-[#ffee1f] text-6xl sm:text-7xl'
+                      ? 'text-[var(--green)] text-6xl sm:text-7xl'
+                      : 'text-[var(--yellow)] text-6xl sm:text-7xl'
                 }`}
               >
                 {hud.countdownStage === 0 ? t.go : hud.countdownStage}
@@ -61,15 +61,15 @@ export const Countdown: React.FC<CountdownProps> = (p) => {
           </div>
 
           {hud.countdownStage > 0 && (
-            <div className="mt-2.5 arcade-pill-brown rounded-full px-4 py-1 border-2 border-[#140c04]">
+            <div className="mt-2.5 arcade-pill-brown rounded-full px-4 py-1 border-2 border-[var(--ink)]">
               <span
                 className={`arcade-stroke-sm text-xs sm:text-sm ${
                   hud.rocketStartStatus === 'primed'
-                    ? 'text-[#6bf25c]'
+                    ? 'text-[var(--green)]'
                     : hud.rocketStartStatus === 'sputter'
-                      ? 'text-[#ff6b78]'
+                      ? 'text-[var(--red)]'
                       : hud.countdownStage === 1
-                        ? 'text-[#ffee1f]'
+                        ? 'text-[var(--yellow)]'
                         : 'text-white'
                 }`}
               >

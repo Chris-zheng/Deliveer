@@ -56,7 +56,7 @@ export const DesktopPedals: React.FC<DesktopPedalsProps> = (p) => {
               touchControls.demoTogglePulse = true;
             }}
             className={`arcade-circle-btn w-15 h-15 rounded-full flex items-center justify-center shrink-0 cursor-pointer relative ${
-              hud.demoActive ? 'ring-3 ring-[#6bf25c]' : ''
+              hud.demoActive ? 'ring-3 ring-[var(--green)]' : ''
             }`}
           >
             <svg
@@ -83,7 +83,7 @@ export const DesktopPedals: React.FC<DesktopPedalsProps> = (p) => {
                 cx="18"
                 cy="20"
                 r="12"
-                fill={hud.demoActive ? '#2ea836' : '#ffe524'}
+                fill={hud.demoActive ? 'var(--green)' : 'var(--yellow)'}
                 stroke="#140c04"
                 strokeWidth="2.8"
               />
@@ -91,7 +91,7 @@ export const DesktopPedals: React.FC<DesktopPedalsProps> = (p) => {
                 cx="18"
                 cy="20"
                 r="9.2"
-                fill={hud.demoActive ? '#1f7a26' : '#4b1c08'}
+                fill={hud.demoActive ? 'var(--ink-soft)' : 'var(--ink-soft)'}
               />
             </svg>
             <span className="absolute inset-0 pt-2 flex items-center justify-center arcade-stroke-sm text-white text-xs leading-none tabular-nums">
@@ -220,12 +220,12 @@ export const DesktopPedals: React.FC<DesktopPedalsProps> = (p) => {
                   d="M28 11L13 18.5v16L28 42l15-7.5v-16L28 11z"
                   fill={
                     hud.nextParcelKind === ParcelKind.HotExpress
-                      ? '#ef233c'
+                      ? 'var(--red)'
                       : hud.nextParcelKind === ParcelKind.Large
-                        ? '#ff9f1c'
+                        ? 'var(--orange)'
                         : hud.nextParcelKind === ParcelKind.Fragile
-                          ? '#ff75a0'
-                          : '#fff3b0'
+                          ? 'var(--red)'
+                          : 'var(--yellow)'
                   }
                   stroke="#140c04"
                   strokeWidth="3.2"
@@ -250,7 +250,7 @@ export const DesktopPedals: React.FC<DesktopPedalsProps> = (p) => {
               <div className="flex items-center gap-2 min-w-0">
                 <CustomerPortraitSvg appearance={hud.nextStopAppearance} />
                 <div className="text-left min-w-0">
-                  <div className="font-display text-base text-[#2b1b08] leading-none truncate">
+                  <div className="font-display text-base text-[var(--ink-soft)] leading-none truncate">
                     #{hud.nextStopIndex} {hud.nextCustomerName}
                     {hud.nextVipRole !== 'none' ? ' ★' : ''}
                     {hud.nextArchetype !== 'chill'
@@ -260,7 +260,7 @@ export const DesktopPedals: React.FC<DesktopPedalsProps> = (p) => {
                       ? ' · 加急 ' + hud.rushPromiseSec.toFixed(1) + 's'
                       : ''}
                   </div>
-                  <div className="text-[11px] font-extrabold text-[#5c3809] truncate mt-0.5 max-w-[195px]">
+                  <div className="text-xs font-extrabold text-[var(--ink-soft)] truncate mt-0.5 max-w-[195px]">
                     {hud.targetStreetName ? (
                       <>
                         <MapPinIcon className="mr-0.5" />
@@ -275,7 +275,7 @@ export const DesktopPedals: React.FC<DesktopPedalsProps> = (p) => {
               </div>
 
               {hud.deliveredCount < hud.totalStops && (
-                <div className="flex items-center gap-1.5 bg-[#4b1c08] border-[2.5px] border-[#140c04] rounded-xl px-2.5 py-1 shrink-0">
+                <div className="flex items-center gap-1.5 bg-[var(--ink-soft)] border-2 border-[var(--ink)] rounded-xl px-2.5 py-1 shrink-0">
                   <svg
                     viewBox="0 0 24 24"
                     className="w-4 h-4 transition-transform duration-100"

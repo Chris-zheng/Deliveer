@@ -44,7 +44,7 @@ export const QuestsRulesModal: React.FC<QuestsRulesModalProps> = ({
         {/* Header */}
         <div className="arcade-pill-brown rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-extrabold text-[#ffee1f] tracking-wide">
+            <div className="text-xs font-extrabold text-[var(--yellow)] tracking-wide">
               {lang === 'zh' ? '每日派送赏金 · 特工考核' : 'Clipboard Bounties & Handbook'}
             </div>
             <h2
@@ -55,9 +55,9 @@ export const QuestsRulesModal: React.FC<QuestsRulesModalProps> = ({
             </h2>
           </div>
 
-          <div className="bg-[#2b1b08] border-2 border-[#140c04] rounded-full px-3 py-1 flex items-center gap-1.5">
-            <span className="inline-block w-3.5 h-3.5 rounded-full bg-[#ffe524] border border-[#140c04]" />
-            <span className="arcade-stroke-sm text-[#ffe524] text-base leading-none">
+          <div className="bg-[var(--ink-soft)] border-2 border-[var(--ink)] rounded-full px-3 py-1 flex items-center gap-1.5">
+            <span className="inline-block w-3.5 h-3.5 rounded-full bg-[var(--yellow)] border border-[var(--ink)]" />
+            <span className="arcade-stroke-sm text-[var(--yellow)] text-base leading-none">
               {progression.coins.toLocaleString()}
             </span>
           </div>
@@ -79,12 +79,12 @@ export const QuestsRulesModal: React.FC<QuestsRulesModalProps> = ({
                   <div className="arcade-stroke-sm text-white text-sm sm:text-base truncate">
                     {title}
                   </div>
-                  <div className="mt-1.5 h-4 bg-[#2b1b08] border-2 border-[#140c04] rounded-full overflow-hidden relative">
+                  <div className="mt-1.5 h-4 bg-[var(--ink-soft)] border-2 border-[var(--ink)] rounded-full overflow-hidden relative">
                     <div
                       className="h-full arcade-bar-gold transition-all duration-200"
                       style={{ width: `${pct}%` }}
                     />
-                    <span className="absolute inset-0 flex items-center justify-center text-[10px] font-extrabold text-white drop-shadow">
+                    <span className="absolute inset-0 flex items-center justify-center text-xs font-extrabold text-white drop-shadow">
                       {q.progress}/{q.target}
                     </span>
                   </div>
@@ -104,8 +104,8 @@ export const QuestsRulesModal: React.FC<QuestsRulesModalProps> = ({
                     </span>
                   </button>
                 ) : (
-                  <div className="bg-[#2b1b08] border-2 border-[#140c04] rounded-xl px-3 py-1.5 shrink-0 text-center">
-                    <span className="arcade-stroke-sm text-[#ffe524] text-xs sm:text-sm">
+                  <div className="bg-[var(--ink-soft)] border-2 border-[var(--ink)] rounded-xl px-3 py-1.5 shrink-0 text-center">
+                    <span className="arcade-stroke-sm text-[var(--yellow)] text-xs sm:text-sm">
                       +{q.rewardCoins}
                     </span>
                   </div>
@@ -116,9 +116,9 @@ export const QuestsRulesModal: React.FC<QuestsRulesModalProps> = ({
         </div>
 
         {/* Compact Field Handbook */}
-        <div className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3 text-xs font-semibold text-slate-800 flex flex-col gap-1.5">
+        <div className="bg-[var(--paper)] border-2 border-[var(--ink)] rounded-2xl p-3 text-xs font-semibold text-slate-800 flex flex-col gap-1.5">
           <div>
-            <strong className="font-display text-[#2b1b08]">
+            <strong className="font-display text-[var(--ink-soft)]">
               {lang === 'zh' ? '驾驶与喇叭 [Q]：' : 'Driving & Horn [Q]: '}
             </strong>
             {lang === 'zh'
@@ -126,7 +126,7 @@ export const QuestsRulesModal: React.FC<QuestsRulesModalProps> = ({
               : 'Keep in the Right Lane, obey signals (or grab Green-Wave Orbs), and honk [Q] to calm scooters!'}
           </div>
           <div>
-            <strong className="font-display text-[#784812]">
+            <strong className="font-display text-[var(--ink-soft)]">
               {lang === 'zh' ? '包裹与靶心投掷：' : 'Parcels & Bullseyes: '}
             </strong>
             {lang === 'zh'

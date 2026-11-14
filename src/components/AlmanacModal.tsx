@@ -79,12 +79,12 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
             >
               <BookIcon className="mr-1" />{t.almanacTitle}
             </h2>
-            <p className="text-[11px] sm:text-xs font-bold text-amber-100/90 mt-0.5">
+            <p className="text-xs sm:text-xs font-bold text-amber-100/90 mt-0.5">
               {t.almanacSubtitle}
             </p>
           </div>
           <div className="flex items-center gap-2.5">
-            <div className="bg-[#2b1b08] border-2 border-[#6bf25c] rounded-full px-3 py-1 text-xs font-extrabold text-[#6bf25c] tabular-nums">
+            <div className="bg-[var(--ink-soft)] border-2 border-[var(--green)] rounded-full px-3 py-1 text-xs font-extrabold text-[var(--green)] tabular-nums">
               {t.almanacCollected
                 .replace('{count}', String(discoveredWorldCount))
                 .replace('{total}', String(totalEntries))}
@@ -121,8 +121,8 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
                 }}
                 className={`px-2.5 py-1 rounded-xl border-2 text-xs font-extrabold cursor-pointer transition ${
                   isSel
-                    ? 'bg-[#ffe524] border-[#140c04] text-[#2b1b08]'
-                    : 'bg-[#fffdf5] border-[#784812]/40 text-[#5c3809] hover:bg-amber-50'
+                    ? 'bg-[var(--yellow)] border-[var(--ink)] text-[var(--ink-soft)]'
+                    : 'bg-[var(--paper)] border-[var(--ink-soft)]/40 text-[var(--ink-soft)] hover:bg-amber-50'
                 }`}
               >
                 {lang === 'zh' ? city.nameZh : city.nameEn} ({count}/{total})
@@ -135,7 +135,7 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 overflow-y-auto flex-1 min-h-0">
           <div className="md:col-span-7 flex flex-col gap-3 overflow-y-auto pr-1">
             <div>
-              <div className="text-xs font-extrabold text-[#4b1c08] mb-1.5">
+              <div className="text-xs font-extrabold text-[var(--ink-soft)] mb-1.5">
                 <LandmarkIcon className="mr-1" />{t.cityLandmarks}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -151,9 +151,9 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
                       }}
                       className={`text-left rounded-2xl border-2 p-2.5 flex items-center gap-2.5 cursor-pointer transition ${
                         selectedLoreId === lm.loreId
-                          ? 'bg-[#fff3c4] border-[#140c04]'
+                          ? 'bg-[var(--cream)] border-[var(--ink)]'
                           : unlocked
-                            ? 'bg-[#fffdf5] border-[#784812]/50 hover:bg-amber-50'
+                            ? 'bg-[var(--paper)] border-[var(--ink-soft)]/50 hover:bg-amber-50'
                             : 'bg-stone-200/80 border-stone-400 text-stone-500'
                       }`}
                     >
@@ -164,7 +164,7 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
                         <div className="font-display text-xs sm:text-sm truncate">
                           {unlocked ? (lang === 'zh' ? lm.nameZh : lm.nameEn) : '???'}
                         </div>
-                        <div className="text-[10px] font-bold truncate">
+                        <div className="text-xs font-bold truncate">
                           {unlocked ? (lang === 'zh' ? lm.eraZh : lm.eraEn) : t.locked}
                         </div>
                       </div>
@@ -175,7 +175,7 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
             </div>
 
             <div>
-              <div className="text-xs font-extrabold text-[#4b1c08] mb-1.5">
+              <div className="text-xs font-extrabold text-[var(--ink-soft)] mb-1.5">
                 <FoodIcon className="mr-1" />{t.signatureDishes}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -191,9 +191,9 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
                       }}
                       className={`text-left rounded-2xl border-2 p-2.5 flex items-center gap-2.5 cursor-pointer transition ${
                         selectedLoreId === dish.loreId
-                          ? 'bg-[#fff3c4] border-[#140c04]'
+                          ? 'bg-[var(--cream)] border-[var(--ink)]'
                           : unlocked
-                            ? 'bg-[#fffdf5] border-[#784812]/50 hover:bg-amber-50'
+                            ? 'bg-[var(--paper)] border-[var(--ink-soft)]/50 hover:bg-amber-50'
                             : 'bg-stone-200/80 border-stone-400 text-stone-500'
                       }`}
                     >
@@ -204,7 +204,7 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
                         <div className="font-display text-xs sm:text-sm truncate">
                           {unlocked ? (lang === 'zh' ? dish.nameZh : dish.nameEn) : '???'}
                         </div>
-                        <div className="text-[10px] font-bold truncate">
+                        <div className="text-xs font-bold truncate">
                           {unlocked ? (lang === 'zh' ? dish.categoryZh : dish.categoryEn) : t.locked}
                         </div>
                       </div>
@@ -216,17 +216,17 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
           </div>
 
           {/* Selected Entry Reader */}
-          <div className="md:col-span-5 bg-[#fffdf5] border-[3px] border-[#140c04] rounded-2xl p-4 flex flex-col justify-center gap-2.5">
+          <div className="md:col-span-5 bg-[var(--paper)] border-2 border-[var(--ink)] rounded-2xl p-4 flex flex-col justify-center gap-2.5">
             {activeEntry ? (
               discoveredSet.has(activeEntry.loreId) ? (
                 <>
                   <div className="flex items-center gap-3">
                     <span className="text-4xl">{activeEntry.icon}</span>
                     <div>
-                      <div className="font-display text-lg text-[#2b1b08]">
+                      <div className="font-display text-lg text-[var(--ink-soft)]">
                         {lang === 'zh' ? activeEntry.nameZh : activeEntry.nameEn}
                       </div>
-                      <div className="text-xs font-extrabold text-[#9a3412]">
+                      <div className="text-xs font-extrabold text-[var(--orange)]">
                         {'categoryZh' in activeEntry
                           ? lang === 'zh'
                             ? activeEntry.categoryZh
@@ -237,7 +237,7 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs sm:text-sm font-semibold text-[#2b1b08] leading-relaxed bg-[#fff8e7] border border-amber-300 rounded-xl p-3">
+                  <p className="text-xs sm:text-sm font-semibold text-[var(--ink-soft)] leading-relaxed bg-[var(--cream)] border border-amber-300 rounded-xl p-3">
                     {lang === 'zh' ? activeEntry.factZh : activeEntry.factEn}
                   </p>
                   {'tipZh' in activeEntry && (
@@ -248,8 +248,8 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
                 </>
               ) : (
                 <div className="text-center py-6 flex flex-col items-center gap-2">
-                  <LockIcon className="w-9 h-9 text-[#8a6a44] opacity-60" />
-                  <div className="font-display text-base text-[#5c3809]">
+                  <LockIcon className="w-9 h-9 text-[var(--orange)] opacity-60" />
+                  <div className="font-display text-base text-[var(--ink-soft)]">
                     {t.locked}
                   </div>
                   <p className="text-xs font-bold text-slate-500">

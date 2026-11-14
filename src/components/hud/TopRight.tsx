@@ -31,7 +31,7 @@ export const TopRight: React.FC<TopRightProps> = (p) => {
               className="hidden md:block pointer-events-auto arcade-boost-rim rounded-full p-1 cursor-pointer"
             >
               <div
-                className="bg-[#4b1c08] border-[2.5px] border-[#140c04] rounded-full px-5 py-1 relative overflow-hidden flex items-center gap-2"
+                className="bg-[var(--ink-soft)] border-2 border-[var(--ink)] rounded-full px-5 py-1 relative overflow-hidden flex items-center gap-2"
                 role="progressbar"
                 aria-label="Turbo boost charge"
                 aria-valuenow={boostPct}
@@ -50,11 +50,11 @@ export const TopRight: React.FC<TopRightProps> = (p) => {
                 <span
                   className={`relative z-10 arcade-stroke text-2xl leading-none ${
                     hud.isFever
-                      ? 'text-[#ff70a6]'
+                      ? 'text-[var(--red)]'
                       : hud.isBoosting
-                        ? 'text-[#6bf25c]'
+                        ? 'text-[var(--green)]'
                         : hud.boostReady
-                          ? 'text-[#ffee1f]'
+                          ? 'text-[var(--yellow)]'
                           : 'text-amber-200/80'
                   }`}
                 >
@@ -89,7 +89,7 @@ export const TopRight: React.FC<TopRightProps> = (p) => {
               </svg>
               <span
                 className={`arcade-stroke text-base sm:text-xl md:text-2xl leading-none ${
-                  isLowTime ? 'text-[#ff5964]' : 'text-white'
+                  isLowTime ? 'text-[var(--red)]' : 'text-white'
                 }`}
                 aria-label={`${hud.timeRemainingSec} seconds left`}
               >
@@ -98,16 +98,16 @@ export const TopRight: React.FC<TopRightProps> = (p) => {
             </div>
 
             <div className="mt-0.5 md:mt-1 arcade-pill-brown rounded-full px-2.5 md:px-3 py-0.5 flex items-center gap-1.5 md:gap-2">
-              <span className="arcade-stroke-sm text-[#ffee1f] text-[10px] md:text-xs leading-none">
+              <span className="arcade-stroke-sm text-[var(--yellow)] text-xs md:text-xs leading-none">
                 {hud.score.toLocaleString()} PTS
               </span>
               {hud.greenWaveTimer > 0 && (
-                <span className="arcade-stroke-sm text-[#6bf25c] text-[10px] md:text-xs leading-none">
+                <span className="arcade-stroke-sm text-[var(--green)] text-xs md:text-xs leading-none">
                   · WAVE
                 </span>
               )}
               {hud.ticketsCount > 0 && (
-                <span className="arcade-stroke-sm text-[#ff6b78] text-[10px] md:text-xs leading-none">
+                <span className="arcade-stroke-sm text-[var(--red)] text-xs md:text-xs leading-none">
                   · {hud.ticketsCount} TKT
                 </span>
               )}
