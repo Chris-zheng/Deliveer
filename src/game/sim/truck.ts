@@ -259,21 +259,22 @@ export function stepTruckPhysics(
     const turnDir = -steerIn;
     const driftTurnBonus = truck.isDrifting ? 1.14 : 1.0;
     const trailBrakeMult = trailBraking ? 0.62 : 1.0;
-    // Speed-sensitive yaw: nimble in tight lots, calm at full tilt.
-    const speedRatio = Math.min(1, Math.abs(truck.speed) / Math.max(0.01, TRUCK_MAX_SPEED));
-    const turnFalloff = 1 + (handling.highSpeedTurnMult - 1) * speedRatio;
-    // Crawl authority: near a standstill the yaw rate fades to nothing, so a
-    // single tap can no longer pirouette the van in place.
+    // Radius-first yaw: the van traces a turn circle of R = minTurnRadius +
+    // turnRadiusPerSpeed * v, so a city corner is always makeable and the
+    // steering feels identical at every speed instead of snapping at a crawl.
+    const speedAbs = Math.abs(truck.speed);
+    const turnRadius = handling.minTurnRadius + handling.turnRadiusPerSpeed * speedAbs;
+    const radiusYaw = speedAbs / Math.max(0.001, turnRadius);
+    // Crawl authority: below the ramp speed the yaw fades with the radius model,
+    // so a single tap can no longer pirouette the van in place.
     const lowSpeedRamp =
       handling.steerRampSpeed > 0
-        ? Math.min(1, Math.abs(truck.speed) / handling.steerRampSpeed)
+        ? Math.min(1, speedAbs / handling.steerRampSpeed)
         : 1;
     const turnSpeedRad =
-      handling.turnSpeedRad *
-      spec.turnSpeedMult *
+      Math.min(radiusYaw, handling.turnSpeedRad * spec.turnSpeedMult) *
       driftTurnBonus *
       trailBrakeMult *
-      turnFalloff *
       lowSpeedRamp;
     let nextYaw = wrapAngleRad(truck.yaw + turnDir * turnSpeedRad * clampedDt);
 

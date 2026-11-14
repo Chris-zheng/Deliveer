@@ -58,19 +58,25 @@ export interface HandlingProfile {
    * Below it the van only creeps round, so a tap at a standstill cannot spin it.
    */
   steerRampSpeed: number;
+  /** Tightest turn circle radius in world units at a crawl (arcade radius-first steering). */
+  minTurnRadius: number;
+  /** Extra turn radius granted per unit/second of speed. */
+  turnRadiusPerSpeed: number;
 }
 
 export const HANDLING_PROFILES: Record<HandlingPreset, HandlingProfile> = {
-  // Soft launch, speed-sensitive steering, long coast: readable for new players.
+  // Forgiving: radius-first steering that can always make a city corner.
   balanced: {
-    turnSpeedRad: 2.9,
-    highSpeedTurnMult: 0.5,
-    accelExp: 8.5,
+    turnSpeedRad: 3.3,
+    highSpeedTurnMult: 0.62,
+    accelExp: 10.5,
     boostAccelExp: 9.5,
     coastDrag: 6.5,
-    steerSmoothSec: 0.16,
+    steerSmoothSec: 0.1,
     steerAssistThrottle: 0,
-    steerRampSpeed: 2.2,
+    steerRampSpeed: 1.8,
+    minTurnRadius: 1.55,
+    turnRadiusPerSpeed: 0.17,
   },
   // The pre-tuning arcade feel, kept for players who liked the sharp response.
   arcade: {
@@ -82,6 +88,8 @@ export const HANDLING_PROFILES: Record<HandlingPreset, HandlingProfile> = {
     steerSmoothSec: 0,
     steerAssistThrottle: 0.68,
     steerRampSpeed: 0,
+    minTurnRadius: 1.15,
+    turnRadiusPerSpeed: 0.11,
   },
 };
 
