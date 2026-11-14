@@ -126,7 +126,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
             </div>
             <span className="text-[11px] font-extrabold text-[#6bf25c]">
               {lang === 'zh'
-                ? `当前汇率 ¥1 = ${rankInfo.current.exchangeRate} 🪙`
+                ? (<>当前汇率 ¥1 = {rankInfo.current.exchangeRate} <CoinIcon /></>)
                 : `Rate: ¥1 = ${rankInfo.current.exchangeRate} Coins`}
             </span>
           </div>
@@ -145,7 +145,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
             className={`${tab === 'career' ? 'arcade-btn-gold' : 'arcade-pill-brown'} py-2.5 px-3 rounded-xl cursor-pointer text-center`}
           >
             <span className="arcade-stroke-sm text-white text-sm">
-              {lang === 'zh' ? '📒 段位 · 兑换 · 涂装解锁' : '📒 Rank, ¥ Exchange & Perks'}
+              <BookIcon className="mr-1" />{lang === 'zh' ? '段位 · 兑换 · 涂装解锁' : 'Rank, ¥ Exchange & Perks'}
             </span>
           </button>
 
@@ -160,7 +160,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
             className={`${tab === 'daily' ? 'arcade-btn-gold' : 'arcade-pill-brown'} py-2.5 px-3 rounded-xl cursor-pointer text-center relative`}
           >
             <span className="arcade-stroke-sm text-white text-sm">
-              {lang === 'zh' ? '🏅 每日三档奖牌 · 连胜签到' : '🏅 Daily Medals & Streak'}
+              <TrophyIcon className="mr-1" />{lang === 'zh' ? '每日三档奖牌 · 连胜签到' : 'Daily Medals & Streak'}
             </span>
             {checkInAvailable && (
               <span
@@ -284,11 +284,11 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                   {lang === 'zh'
                     ? `待结算账本余额：¥${unconverted.toFixed(1)} × ${rankInfo.current.exchangeRate} = `
                     : `Pending Pay: ¥${unconverted.toFixed(1)} × ${rankInfo.current.exchangeRate} = `}
-                  <span className="text-[#ffe524] font-extrabold">{previewCoins} 🪙</span>
+                  <span className="text-[#ffe524] font-extrabold">{previewCoins} <CoinIcon /></span>
                 </div>
                 <div className="text-[11px] text-[#ffe8a3]/85 mt-0.5">
                   {lang === 'zh'
-                    ? `历史已累计兑换 ${career.totalExchangedCoins.toLocaleString()} 金币 · 提升段位最高享 ¥1 = 10 🪙`
+                    ? (<>历史已累计兑换 {career.totalExchangedCoins.toLocaleString()} 金币 · 提升段位最高享 ¥1 = 10 <CoinIcon /></>)
                     : `Total converted: ${career.totalExchangedCoins.toLocaleString()} Coins (max ¥1 = 10)`}
                 </div>
               </div>
@@ -354,7 +354,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                       <div className="text-[11px] font-bold text-slate-600 mt-0.5">
                         {lang === 'zh' ? ms.descZh : ms.descEn} ·{' '}
                         <span className="text-[#b45309]">
-                          {rewardName} + {ms.rewardCoins} 🪙
+                          {rewardName} + {ms.rewardCoins} <CoinIcon />
                         </span>
                       </div>
                       <div className="mt-1.5 flex items-center gap-2">
@@ -378,7 +378,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                         onClaimMilestone(ms.id);
                         setLastFlashMsg(
                           lang === 'zh'
-                            ? `已领取并自动装备：${rewardName} (+${ms.rewardCoins} 🪙)！`
+                            ? `已领取并自动装备： (+ 金币)！`
                             : `Unlocked & Equipped: ${rewardName} (+${ms.rewardCoins} Coins)!`,
                         );
                       }}
@@ -428,11 +428,13 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                       : `Today's Best: ${todayBestScore.toLocaleString()} pts`}
                     {todayBestMedal !== 'none' && (
                       <span className="ml-2 text-sm">
-                        {todayBestMedal === 'gold'
-                          ? '🥇'
-                          : todayBestMedal === 'silver'
-                            ? '🥈'
-                            : '🥉'}
+                        {todayBestMedal === 'gold' ? (
+                          <MedalIcon tier="gold" />
+                        ) : todayBestMedal === 'silver' ? (
+                          <MedalIcon tier="silver" />
+                        ) : (
+                          <MedalIcon tier="bronze" />
+                        )}
                       </span>
                     )}
                   </div>
@@ -615,3 +617,4 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
     </div>
   );
 };
+import { BookIcon, CoinIcon, MedalIcon, TrophyIcon } from './hud/icons';

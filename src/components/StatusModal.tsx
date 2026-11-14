@@ -175,7 +175,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                   className="arcade-btn-cream w-full py-2.5 px-4 rounded-2xl cursor-pointer whitespace-nowrap"
                 >
                   <span className="arcade-stroke-sm text-white text-base">
-                    🗺️ {t.customMapBtn}
+                    <MapIcon className="mr-1" />{t.customMapBtn}
                   </span>
                 </button>
               )}
@@ -273,7 +273,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
               <div className="bg-[#fffdf5] border-[2.5px] border-[#1d1205] rounded-2xl p-3 text-xs text-slate-800 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between border-b border-[#1d1205]/15 pb-1.5">
                   <span className="font-display text-sm text-[#2b1b08]">
-                    {lang === 'zh' ? '🛵 骑手本趟收入账单' : '🛵 Rider Shift Receipt'}
+                    <TruckIcon className="mr-1" />{lang === 'zh' ? '骑手本趟收入账单' : 'Rider Shift Receipt'}
                   </span>
                   <span className="font-extrabold text-[#d97706]">
                     {lang === 'zh'
@@ -329,7 +329,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                 <div className="flex items-center justify-between border-t border-[#1d1205]/15 pt-1.5 font-extrabold text-sm">
                   <span className="text-[#2b1b08]">
                     {lang === 'zh'
-                      ? `本趟实得净收入 (当前 ¥1=${exchangeRate} 🪙)`
+                      ? (<>本趟实得净收入 (当前 ¥1={exchangeRate} <CoinIcon />)</>)
                       : `Net Pay (Rank Rate ¥1=${exchangeRate} Coins)`}
                   </span>
                   <span
@@ -339,7 +339,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                         : 'text-[#e11d48]'
                     }`}
                   >
-                    ¥{snapshot.riderReceipt.netEarningsYuan.toFixed(1)} (≈{shiftCoinValue}🪙)
+                    ¥{snapshot.riderReceipt.netEarningsYuan.toFixed(1)} (≈{shiftCoinValue}<CoinIcon />)
                   </span>
                 </div>
 
@@ -361,8 +361,8 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                       >
                         <span className="arcade-stroke-sm text-white text-[11px]">
                           {lang === 'zh'
-                            ? `立即兑换 ¥${pendingYuan.toFixed(1)} → +${pendingExchangeCoins}🪙`
-                            : `Convert +${pendingExchangeCoins}🪙`}
+                            ? (<>立即兑换 ¥{pendingYuan.toFixed(1)} → +{pendingExchangeCoins}<CoinIcon /></>)
+                            : `Convert +${pendingExchangeCoins} Coins`}
                         </span>
                       </button>
                     ) : (
@@ -379,19 +379,23 @@ export const StatusModal: React.FC<StatusModalProps> = ({
               <div className="arcade-pill-brown rounded-2xl px-3.5 py-2 flex items-center justify-between gap-2">
                 <div className="text-xs font-extrabold text-[#ffee1f]">
                   {dailyMedalResult.medalEarned === 'gold'
-                    ? '🥇 ' + (lang === 'zh' ? '每日挑战 · 夺得金牌！' : 'Daily Challenge: GOLD!')
+                    ? (<><MedalIcon tier="gold" className="mr-1" />{lang === 'zh' ? '每日挑战 · 夺得金牌！' : 'Daily Challenge: GOLD!'}</>)
                     : dailyMedalResult.medalEarned === 'silver'
-                      ? '🥈 ' + (lang === 'zh' ? '每日挑战 · 夺得银牌！' : 'Daily Challenge: SILVER!')
+                      ? (<><MedalIcon tier="silver" className="mr-1" />{lang === 'zh' ? '每日挑战 · 夺得银牌！' : 'Daily Challenge: SILVER!'}</>)
                       : dailyMedalResult.medalEarned === 'bronze'
-                        ? '🥉 ' + (lang === 'zh' ? '每日挑战 · 夺得铜牌！' : 'Daily Challenge: BRONZE!')
+                        ? (<><MedalIcon tier="bronze" className="mr-1" />{lang === 'zh' ? '每日挑战 · 夺得铜牌！' : 'Daily Challenge: BRONZE!'}</>)
                         : lang === 'zh'
-                          ? '📅 每日挑战完成（再冲高分夺牌！）'
-                          : '📅 Daily Run Complete'}
+                          ? (<><CalendarIcon className="mr-1" />每日挑战完成（再冲高分夺牌！）</>)
+                          : (<><CalendarIcon className="mr-1" />Daily Run Complete</>)}
                 </div>
                 <div className="text-xs font-extrabold text-[#6bf25c] tabular-nums">
-                  {dailyMedalResult.rewardCoins > 0 && `+${dailyMedalResult.rewardCoins}🪙 `}
-                  {dailyMedalResult.streakBonusCoins > 0 &&
-                    `+${dailyMedalResult.streakBonusCoins}🔥 `}
+                  {dailyMedalResult.rewardCoins > 0 && (<>+{dailyMedalResult.rewardCoins}<CoinIcon /> </>)}
+                  {dailyMedalResult.streakBonusCoins > 0 && (
+                    <>
+                      +{dailyMedalResult.streakBonusCoins}
+                      <FlameIcon />{' '}
+                    </>
+                  )}
                   {dailyMedalResult.spinTokensAwarded > 0 && `+${dailyMedalResult.spinTokensAwarded}券`}
                 </div>
               </div>
@@ -546,7 +550,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                   className="arcade-btn-cream w-full py-2.5 px-4 rounded-2xl cursor-pointer whitespace-nowrap"
                 >
                   <span className="arcade-stroke-sm text-white text-base">
-                    🗺️ {t.customMapBtn}
+                    <MapIcon className="mr-1" />{t.customMapBtn}
                   </span>
                 </button>
               )}
@@ -557,3 +561,4 @@ export const StatusModal: React.FC<StatusModalProps> = ({
     </div>
   );
 };
+import { CalendarIcon, CoinIcon, FlameIcon, MapIcon, MedalIcon, TruckIcon } from './hud/icons';

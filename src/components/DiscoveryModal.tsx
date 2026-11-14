@@ -65,19 +65,19 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
   const parcelTag =
     item.parcelKind === ParcelKind.HotExpress
       ? lang === 'zh'
-        ? '🔥 热食极速'
-        : '🔥 HOT EXPRESS'
+        ? <><FlameIcon className="mr-1" />热食极速</>
+        : <><FlameIcon className="mr-1" />HOT EXPRESS</>
       : item.parcelKind === ParcelKind.Fragile
         ? lang === 'zh'
-          ? '🏺 易碎轻放'
-          : '🏺 FRAGILE'
+          ? <><BoxIcon className="mr-1" />易碎轻放</>
+          : <><BoxIcon className="mr-1" />FRAGILE</>
         : item.parcelKind === ParcelKind.Large
           ? lang === 'zh'
-            ? '📦 大件稳停'
-            : '📦 HEAVY CRATE'
+            ? <><BoxIcon className="mr-1" />大件稳停</>
+            : <><BoxIcon className="mr-1" />HEAVY CRATE</>
           : lang === 'zh'
-            ? '⚡ 轻巧飞掷'
-            : '⚡ EXPRESS TOSS';
+            ? <><BoltIcon className="mr-1" />轻巧飞掷</>
+            : <><BoltIcon className="mr-1" />EXPRESS TOSS</>;
 
   return (
     <div
@@ -91,7 +91,7 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
         <div className="arcade-pill-brown rounded-2xl px-4 py-2.5 flex items-center justify-between gap-2">
           <div className="flex flex-col min-w-0">
             <span className="text-[11px] font-extrabold text-[#ffee1f] truncate">
-              📍 {cityName} · {district}
+              <MapPinIcon className="mr-1" />{cityName} · {district}
             </span>
             <span className="text-[11px] font-bold text-amber-100/90 truncate">
               {isLandmark ? t.discoveryCategoryLandmark : t.discoveryCategoryDish}
@@ -104,7 +104,7 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
                 : 'bg-[#38bdf8] text-[#082f49]'
             }`}
           >
-            {item.isFirstDiscovery ? `✨ ${t.discoveryNewBadge}` : t.discoveryAlreadyKnown}
+            {item.isFirstDiscovery ? (<><SparkIcon className="mr-1" />{t.discoveryNewBadge}</>) : t.discoveryAlreadyKnown}
           </span>
         </div>
 
@@ -138,7 +138,7 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
               <div className="text-[11px] font-bold text-slate-600 truncate">
                 {item.merchantName ? `${t.discoveryMerchantLabel}: ${item.merchantName}` : ''}
                 {item.merchantName && street ? ' · ' : ''}
-                {street ? `🚩 ${street}` : ''}
+                {street ? (<><FlagIcon className="mr-1" />{street}</>) : ''}
               </div>
             )}
           </div>
@@ -147,7 +147,7 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
         {/* Cultural Lore Fact Box */}
         <div className="bg-[#fff8e7] border-[2.5px] border-[#784812] rounded-2xl p-3.5 flex flex-col gap-1.5">
           <div className="text-xs font-extrabold text-[#9a3412] flex items-center gap-1.5">
-            <span>📜</span>
+            <span><BookIcon /></span>
             <span>{lang === 'zh' ? '城市风物文化档案' : 'Cultural & City Lore'}</span>
           </div>
           <p className="text-xs sm:text-sm font-semibold text-[#2b1b08] leading-relaxed">
@@ -158,7 +158,7 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
         {/* Rider Delivery Tip */}
         {tip && (
           <div className="bg-emerald-50 border-[2.5px] border-emerald-700 rounded-2xl p-3 flex items-start gap-2">
-            <span className="text-base leading-none mt-0.5">🛵</span>
+            <span className="text-base leading-none mt-0.5"><TruckIcon /></span>
             <div className="text-xs font-bold text-emerald-950 leading-snug">
               <span className="font-extrabold">{t.discoveryTipLabel}: </span>
               {tip}
@@ -203,3 +203,4 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
     </div>
   );
 };
+import { BoltIcon, BookIcon, BoxIcon, FlagIcon, FlameIcon, MapPinIcon, SparkIcon, TruckIcon } from './hud/icons';

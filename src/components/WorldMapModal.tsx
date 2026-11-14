@@ -129,7 +129,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
                 : 'bg-[#fffdf5] border-[#784812]/40 text-[#5c3809] hover:bg-amber-50'
             }`}
           >
-            🌐 {t.allContinents} ({WORLD_CITIES.length})
+            <MapIcon className="mr-1" />{t.allContinents} ({WORLD_CITIES.length})
           </button>
           {CONTINENTS.map((cont) => (
             <button
@@ -204,7 +204,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
                       </div>
                     ) : (
                       <div className="text-[11px] font-extrabold text-rose-700 bg-rose-100 border border-rose-300 rounded-lg px-2 py-0.5">
-                        🔒 {t.unlockNeedStars.replace('{stars}', String(city.unlockStarsRequired))}
+                        <LockIcon className="mr-1" />{t.unlockNeedStars.replace('{stars}', String(city.unlockStarsRequired))}
                       </div>
                     )}
                   </div>
@@ -231,7 +231,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
               </div>
               {!cityUnlocked && (
                 <div className="px-3 py-1 rounded-xl bg-rose-100 border-2 border-rose-400 text-rose-800 text-xs font-extrabold">
-                  🔒 {t.unlockNeedStars.replace('{stars}', String(activeCity.unlockStarsRequired))} ({totalStars}/{activeCity.unlockStarsRequired})
+                  <span className="inline-flex items-center"><LockIcon className="mr-1" />{t.unlockNeedStars.replace('{stars}', String(activeCity.unlockStarsRequired))} ({totalStars}/{activeCity.unlockStarsRequired})</span>
                 </div>
               )}
             </div>
@@ -239,7 +239,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
             {/* Landmarks & Signature Dishes Preview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div className="bg-amber-50 border border-amber-300 rounded-xl p-2">
-                <div className="font-extrabold text-[#784812] mb-1">🏛️ {t.cityLandmarks}</div>
+                <div className="font-extrabold text-[#784812] mb-1"><LandmarkIcon className="mr-1" />{t.cityLandmarks}</div>
                 <div className="flex flex-col gap-0.5 font-bold text-[#2b1b08]">
                   {activeCity.landmarks.map((lm) => (
                     <span key={lm.loreId} className="truncate">
@@ -249,7 +249,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
                 </div>
               </div>
               <div className="bg-sky-50 border border-sky-300 rounded-xl p-2">
-                <div className="font-extrabold text-sky-900 mb-1">🍜 {t.signatureDishes}</div>
+                <div className="font-extrabold text-sky-900 mb-1"><FoodIcon className="mr-1" />{t.signatureDishes}</div>
                 <div className="flex flex-wrap gap-1">
                   {activeCity.dishes.slice(0, 4).map((d) => (
                     <span
@@ -295,7 +295,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
                     >
                       <div className="flex items-center justify-between text-[11px] font-extrabold">
                         <span>S{st.stage}</span>
-                        <span>{playable ? '⭐'.repeat(stars) + '☆'.repeat(3 - stars) : '🔒'}</span>
+                        <span>{playable ? '★'.repeat(stars) + '☆'.repeat(3 - stars) : <LockIcon />}</span>
                       </div>
                       <div className="text-[10px] font-bold truncate leading-tight">
                         {lang === 'zh' ? st.districtZh : st.districtEn}
@@ -314,8 +314,8 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
                   {lang === 'zh' ? activeStageDef.districtZh : activeStageDef.districtEn}
                 </div>
                 <div className="text-[11px] text-slate-600 mt-0.5">
-                  📦 {activeStageDef.stopCount} {lang === 'zh' ? '个站点' : 'Stops'} · ⏱{' '}
-                  {activeStageDef.timeLimitSec}s · 📐 {activeStageDef.gridSize}×{activeStageDef.gridSize}
+                  <BoxIcon className="mr-1" />{activeStageDef.stopCount} {lang === 'zh' ? '个站点' : 'Stops'} · <ClockIcon className="mx-1" />{' '}
+                  {activeStageDef.timeLimitSec}s · <RulerIcon className="ml-1 mr-1" />{activeStageDef.gridSize}×{activeStageDef.gridSize}
                 </div>
               </div>
               <button
@@ -341,3 +341,4 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
     </div>
   );
 };
+import { BoxIcon, ClockIcon, FoodIcon, LandmarkIcon, LockIcon, MapIcon, RulerIcon } from './hud/icons';

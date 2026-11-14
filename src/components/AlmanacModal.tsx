@@ -77,7 +77,7 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
               id="almanac-heading"
               className="arcade-stroke text-white text-xl sm:text-2xl leading-tight"
             >
-              📖 {t.almanacTitle}
+              <BookIcon className="mr-1" />{t.almanacTitle}
             </h2>
             <p className="text-[11px] sm:text-xs font-bold text-amber-100/90 mt-0.5">
               {t.almanacSubtitle}
@@ -136,7 +136,7 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
           <div className="md:col-span-7 flex flex-col gap-3 overflow-y-auto pr-1">
             <div>
               <div className="text-xs font-extrabold text-[#4b1c08] mb-1.5">
-                🏛️ {t.cityLandmarks}
+                <LandmarkIcon className="mr-1" />{t.cityLandmarks}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {activeCity.landmarks.map((lm) => {
@@ -176,7 +176,7 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
 
             <div>
               <div className="text-xs font-extrabold text-[#4b1c08] mb-1.5">
-                🍜 {t.signatureDishes}
+                <FoodIcon className="mr-1" />{t.signatureDishes}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {activeCity.dishes.map((dish) => {
@@ -242,13 +242,13 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
                   </p>
                   {'tipZh' in activeEntry && (
                     <div className="text-xs font-bold text-emerald-900 bg-emerald-50 border border-emerald-300 rounded-xl p-2.5">
-                      🛵 {lang === 'zh' ? activeEntry.tipZh : activeEntry.tipEn}
+                      <TruckIcon className="mr-1" />{lang === 'zh' ? activeEntry.tipZh : activeEntry.tipEn}
                     </div>
                   )}
                 </>
               ) : (
                 <div className="text-center py-6 flex flex-col items-center gap-2">
-                  <span className="text-4xl grayscale opacity-50">🔒</span>
+                  <LockIcon className="w-9 h-9 text-[#8a6a44] opacity-60" />
                   <div className="font-display text-base text-[#5c3809]">
                     {t.locked}
                   </div>
@@ -270,3 +270,4 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
     </div>
   );
 };
+import { BookIcon, FoodIcon, LandmarkIcon, LockIcon, TruckIcon } from './hud/icons';
