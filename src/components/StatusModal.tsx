@@ -104,8 +104,8 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                   {lang === 'zh' ? '1. 驾驶与喇叭 [Q]：' : '1. Controls & Horn [Q]:'}
                 </strong>{' '}
                 {lang === 'zh'
-                  ? 'W/↑ 前进 · S/↓ 刹车（无倒挡） · A/D 转向 · Q 按喇叭疏散快件！'
-                  : 'W/↑ Drive · S/↓ Brake (No Reverse) · A/D Turn · Q Horn calms scooters!'}
+        ? 'W/↑ 前进 · S/↓ 刹车，停住后继续按即倒车 · A/D 转向 · Q 按喇叭疏散快件！'
+        : 'W/↑ Drive · S/↓ Brake, hold again to reverse · A/D Turn · Q Horn calms scooters!'}
               </div>
               <div>
                 <strong className="font-display text-sm text-[var(--ink-soft)]">
