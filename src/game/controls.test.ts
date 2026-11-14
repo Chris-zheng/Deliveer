@@ -20,11 +20,12 @@ test('new players start in the wide framing and balanced handling', () => {
   assert.equal(getHandling(), HANDLING_PROFILES.balanced);
 });
 
-test('cycling the view walks chase -> far -> top -> cockpit -> chase', () => {
-  assert.deepEqual(VIEW_MODES, ['chase', 'far', 'top', 'cockpit']);
+test('cycling the view walks chase -> far -> top -> hood -> cockpit -> chase', () => {
+  assert.deepEqual(VIEW_MODES, ['chase', 'far', 'top', 'hood', 'cockpit']);
   setViewMode('chase');
   assert.equal(cycleViewMode(), 'far');
   assert.equal(cycleViewMode(), 'top');
+  assert.equal(cycleViewMode(), 'hood');
   assert.equal(cycleViewMode(), 'cockpit');
   assert.equal(cycleViewMode(), 'chase');
 });

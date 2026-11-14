@@ -388,7 +388,7 @@ export const CustomCityModal: React.FC<CustomCityModalProps> = ({
                     onClick={() => handleSelectPreset(p)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-[var(--orange)] text-white shadow-[0_2px_0_#802206] -translate-y-0.5'
+                        ? 'bg-[var(--orange)] text-[var(--ink)] shadow-[0_2px_0_#802206] -translate-y-0.5'
                         : 'bg-[var(--cream)] text-[var(--ink-soft)] hover:bg-[var(--cream)] border border-[var(--orange)]'
                     }`}
                   >
@@ -463,7 +463,7 @@ export const CustomCityModal: React.FC<CustomCityModalProps> = ({
                     }}
                     className={`py-1 rounded-lg text-center cursor-pointer text-xs font-extrabold ${
                       gridSize === sz
-                        ? 'bg-[var(--green)] text-white shadow-[0_2px_0_#145a1a]'
+                        ? 'bg-[var(--green)] text-[var(--ink)] shadow-[0_2px_0_#145a1a]'
                         : 'bg-[var(--cream)] text-[var(--ink-soft)] border border-[var(--orange)]'
                     }`}
                   >
@@ -491,7 +491,7 @@ export const CustomCityModal: React.FC<CustomCityModalProps> = ({
                     }}
                     className={`py-1 rounded-lg text-center cursor-pointer text-[10.5px] font-extrabold ${
                       atmosphere === atm.id
-                        ? 'bg-[var(--green)] text-white shadow-[0_2px_0_#145a1a]'
+                        ? 'bg-[var(--green)] text-[var(--ink)] shadow-[0_2px_0_#145a1a]'
                         : 'bg-[var(--cream)] text-[var(--ink-soft)] border border-[var(--orange)]'
                     }`}
                   >
@@ -538,7 +538,7 @@ export const CustomCityModal: React.FC<CustomCityModalProps> = ({
                     }}
                     className={`py-1 rounded-lg text-center cursor-pointer text-xs font-extrabold ${
                       trafficDensity === dens.id
-                        ? 'bg-[var(--green)] text-white shadow-[0_2px_0_#145a1a]'
+                        ? 'bg-[var(--green)] text-[var(--ink)] shadow-[0_2px_0_#145a1a]'
                         : 'bg-[var(--cream)] text-[var(--ink-soft)] border border-[var(--orange)]'
                     }`}
                   >

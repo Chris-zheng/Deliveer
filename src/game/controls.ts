@@ -7,16 +7,17 @@
  * being threaded through every canvas signature.
  */
 
-export type ViewMode = 'chase' | 'far' | 'top' | 'cockpit';
+export type ViewMode = 'chase' | 'far' | 'top' | 'hood' | 'cockpit';
 export type HandlingPreset = 'balanced' | 'arcade';
 
-export const VIEW_MODES: ViewMode[] = ['chase', 'far', 'top', 'cockpit'];
+export const VIEW_MODES: ViewMode[] = ['chase', 'far', 'top', 'hood', 'cockpit'];
 export const HANDLING_PRESETS: HandlingPreset[] = ['balanced', 'arcade'];
 
 export const VIEW_MODE_LABELS: Record<ViewMode, { zh: string; en: string }> = {
   chase: { zh: '贴近', en: 'Chase' },
   far: { zh: '远景', en: 'Far' },
   top: { zh: '俯视', en: 'Top' },
+  hood: { zh: '车头', en: 'Bumper' },
   cockpit: { zh: '驾驶舱', en: 'Cockpit' },
 };
 
@@ -36,7 +37,8 @@ export const VIEW_FRAMING: Record<
   chase: { back: 1.0, up: 1.0, lookAhead: 1.0, fov: 1.0 },
   far: { back: 1.34, up: 1.46, lookAhead: 1.12, fov: 0.92 },
   top: { back: 0.6, up: 3.05, lookAhead: 1.5, fov: 0.86 },
-  // Cockpit overrides the chase rig directly in cameraFrame; multipliers stay neutral.
+  // Hood and cockpit override the chase rig directly in cameraFrame.
+  hood: { back: 1.0, up: 1.0, lookAhead: 1.0, fov: 1.0 },
   cockpit: { back: 1.0, up: 1.0, lookAhead: 1.0, fov: 1.0 },
 };
 
@@ -113,6 +115,7 @@ function isViewMode(value: unknown): value is ViewMode {
     value === 'chase' ||
     value === 'far' ||
     value === 'top' ||
+    value === 'hood' ||
     value === 'cockpit'
   );
 }

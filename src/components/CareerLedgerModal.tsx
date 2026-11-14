@@ -173,7 +173,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
         </div>
 
         {lastFlashMsg && (
-          <div className="rounded-xl bg-[var(--green)] border-2 border-[var(--ink-soft)] px-3 py-2 text-center text-xs font-extrabold text-white">
+          <div className="rounded-xl bg-[var(--green)] border-2 border-[var(--ink-soft)] px-3 py-2 text-center text-xs font-extrabold text-[var(--ink)]">
             {lastFlashMsg}
           </div>
         )}

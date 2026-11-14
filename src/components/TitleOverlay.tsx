@@ -497,7 +497,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
 
           {/* If custom city active, show custom badge */}
           {customCityConfig?.customCity && (
-            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--green)] border-2 border-[var(--ink-soft)] shadow-sm text-white text-xs font-bold animate-pulse">
+            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--green)] border-2 border-[var(--ink-soft)] shadow-sm text-[var(--ink)] text-xs font-bold animate-pulse">
               <span>📍</span>
               <span>
                 {lang === 'zh' ? '当前定制街区：' : 'Active Custom City: '}
@@ -611,16 +611,16 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
               pokoAudio.playUiClick();
               onStart();
             }}
-            className="group relative h-[62px] rounded-[22px] bg-gradient-to-b from-[var(--orange)] via-[var(--orange)] to-[var(--red)] border-[3.5px] border-[var(--ink-soft)] shadow-[inset_0_3px_0_rgba(255,198,150,0.62),inset_0_-5px_0_#A33210,0_5px_0_rgba(88,28,8,0.38)] flex items-center justify-center cursor-pointer whitespace-nowrap transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:brightness-105 active:translate-y-1"
+            className="group relative h-[62px] rounded-[22px] bg-gradient-to-b from-[#d4560d] via-[#c2410c] to-[#a8290c] border-[3.5px] border-[var(--ink-soft)] shadow-[inset_0_3px_0_rgba(255,198,150,0.62),inset_0_-5px_0_#A33210,0_5px_0_rgba(88,28,8,0.38)] flex items-center justify-center cursor-pointer whitespace-nowrap transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:brightness-105 active:translate-y-1"
           >
             <span className="relative z-10 flex flex-col items-center justify-center leading-none">
               <span
                 style={{ fontFamily: 'var(--font-display)' }}
-                className="text-[var(--cream)] text-xl sm:text-2xl font-bold tracking-[0.06em] drop-shadow-[0_2px_0_#8B290D] group-hover:scale-[1.02] transition-transform"
+                className="text-[var(--paper)] text-xl sm:text-2xl font-bold tracking-[0.06em] drop-shadow-[0_2px_0_#5c1606] group-hover:scale-[1.02] transition-transform"
               >
                 {lang === 'zh' ? '随机挑战' : 'RANDOM RUN'}
               </span>
-              <span className="mt-1 text-xs font-extrabold text-[var(--cream)]">
+              <span className="mt-1 text-xs font-extrabold text-[var(--paper)]">
                 {lang === 'zh' ? '随机街区 · 随机天气' : 'random district · random weather'}
               </span>
             </span>
