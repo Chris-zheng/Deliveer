@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { GameCanvas } from './components/GameCanvas';
 import { GameHud, MinimapSnapshot } from './components/GameHud';
 import { GarageShopModal } from './components/GarageShopModal';
@@ -49,10 +49,18 @@ import {
 } from './game/career';
 import { getRunMode, setRunMode } from './game/runMode';
 import { CustomCityModal } from './components/CustomCityModal';
-import { WorldMapModal } from './components/WorldMapModal';
-import { AlmanacModal } from './components/AlmanacModal';
-import { CareerLedgerModal, type CareerLedgerTab } from './components/CareerLedgerModal';
-import { DiscoveryModal, type ActiveDiscoveryModalState } from './components/DiscoveryModal';
+import type { CareerLedgerTab } from './components/CareerLedgerModal';
+import type { ActiveDiscoveryModalState } from './components/DiscoveryModal';
+
+const WorldMapModal = lazy(() => import('./components/WorldMapModal').then((m) => ({ default: m.WorldMapModal })));
+const AlmanacModal = lazy(() => import('./components/AlmanacModal').then((m) => ({ default: m.AlmanacModal })));
+const CareerLedgerModal = lazy(() =>
+  import('./components/CareerLedgerModal').then((m) => ({ default: m.CareerLedgerModal })),
+);
+const DiscoveryModal = lazy(() =>
+  import('./components/DiscoveryModal').then((m) => ({ default: m.DiscoveryModal })),
+);
+// Low-frequency panels load on first open so the title screen stays light.
 import { buildWorldCityLevelConfig, getWorldCityById } from './game/worldCities';
 import { recordLoreDiscovery, recordWorldStageStars } from './game/progression';
 import { SupportedLanguage, getInitialLanguage, saveLanguagePreference } from './game/i18n';
@@ -726,6 +734,8 @@ export default function App() {
         onClose={() => setShopOpen(false)}
       />
 
+      {careerLedgerOpen && (
+        <Suspense fallback={null}>
       <CareerLedgerModal
         open={careerLedgerOpen}
         initialTab={careerLedgerTab}
@@ -740,6 +750,8 @@ export default function App() {
         onStartDaily={handleStartDaily}
         onClose={() => setCareerLedgerOpen(false)}
       />
+        </Suspense>
+      )}
 
       <QuestsRulesModal
         open={questsOpen}
@@ -756,6 +768,8 @@ export default function App() {
         onSelectCustomCity={handleSelectCustomCity}
       />
 
+      {worldTourOpen && (
+        <Suspense fallback={null}>
       <WorldMapModal
         open={worldTourOpen}
         lang={lang}
@@ -763,14 +777,22 @@ export default function App() {
         onSelectWorldStage={handleSelectCustomCity}
         onClose={() => setWorldTourOpen(false)}
       />
+        </Suspense>
+      )}
 
+      {almanacOpen && (
+        <Suspense fallback={null}>
       <AlmanacModal
         open={almanacOpen}
         lang={lang}
         progression={progression}
         onClose={() => setAlmanacOpen(false)}
       />
+        </Suspense>
+      )}
 
+      {activeDiscovery && (
+        <Suspense fallback={null}>
       <DiscoveryModal
         item={activeDiscovery}
         lang={lang}
@@ -783,6 +805,8 @@ export default function App() {
         }
         onConfirmDeliver={() => setActiveDiscovery(null)}
       />
+        </Suspense>
+      )}
     </main>
   );
 }
