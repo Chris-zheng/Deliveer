@@ -542,6 +542,7 @@ export interface TruckState {
   rollAngle: number;
   pitchAngle: number;
   steerAngle: number;
+  isReversing: boolean;
   isWrongWay: boolean;
   wrongWayTimer: number;
   ticketCooldown: number;

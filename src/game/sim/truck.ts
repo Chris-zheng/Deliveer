@@ -25,6 +25,8 @@ import {
   RIGHT_LANE_OFFSET,
   TILE_SIZE,
   TRUCK_BOOST_SPEED,
+  TRUCK_REVERSE_SPEED,
+  TRUCK_REVERSE_ENTER_SEC,
   TRUCK_MAX_SPEED,
   TRUCK_RADIUS,
   WRONG_WAY_LIMIT_SEC,
@@ -98,6 +100,7 @@ export function createInitialTruckState(
     rollAngle: 0,
     pitchAngle: 0,
     steerAngle: 0,
+    isReversing: false,
     isWrongWay: false,
     wrongWayTimer: 0,
     ticketCooldown: 0,
@@ -255,10 +258,12 @@ export function stepTruckPhysics(
   //    While moving (>0.35), braking allows trail-braking turn-in at 0.62x rate.
   const halfPi = Math.PI * 0.5;
   const trailBraking = isBraking && truck.speed > 0.35;
-  if (Math.abs(steerIn) > 0.01 && (!isBraking || trailBraking)) {
-    const turnDir = -steerIn;
+  if (Math.abs(steerIn) > 0.01 && (!isBraking || trailBraking || truck.isReversing)) {
+    // Reversing swings the nose the other way, and keeps a pivot floor so a
+    // dead-end three-point turn stays possible at walking pace.
+    const turnDir = truck.isReversing ? steerIn : -steerIn;
     const driftTurnBonus = truck.isDrifting ? 1.14 : 1.0;
-    const trailBrakeMult = trailBraking ? 0.62 : 1.0;
+    const trailBrakeMult = trailBraking && !truck.isReversing ? 0.62 : 1.0;
     // Radius-first yaw: the van traces a turn circle of R = minTurnRadius +
     // turnRadiusPerSpeed * v, so a city corner is always makeable and the
     // steering feels identical at every speed instead of snapping at a crawl.
@@ -271,13 +276,18 @@ export function stepTruckPhysics(
       handling.steerRampSpeed > 0
         ? Math.min(1, speedAbs / handling.steerRampSpeed)
         : 1;
+    // Reversing keeps a pivot floor so a dead-end three-point turn works.
+    const reverseFloor = truck.isReversing ? 1.6 : 0;
     const turnSpeedRad =
-      Math.min(radiusYaw, handling.turnSpeedRad * spec.turnSpeedMult) *
+      Math.max(
+        Math.min(radiusYaw, handling.turnSpeedRad * spec.turnSpeedMult),
+        reverseFloor * lowSpeedRamp,
+      ) *
       driftTurnBonus *
       trailBrakeMult *
       lowSpeedRamp;
-    let nextYaw = wrapAngleRad(truck.yaw + turnDir * turnSpeedRad * clampedDt);
 
+    let nextYaw = wrapAngleRad(truck.yaw + turnDir * turnSpeedRad * clampedDt);
     const cardinalYaw = Math.round(truck.yaw / halfPi) * halfPi;
     const cardFwdX = Math.sin(cardinalYaw);
     const cardFwdZ = Math.cos(cardinalYaw);
@@ -306,7 +316,7 @@ export function stepTruckPhysics(
       city.tiles[gcNow.row + aheadRowStep]?.[gcNow.col + aheadColStep],
     );
 
-    if (!sideOpen && aheadOpen) {
+    if (!truck.isReversing && !sideOpen && aheadOpen) {
       const maxLean = 0.42;
       const rel = wrapAngleRad(nextYaw - cardinalYaw);
       const clampedRel = Math.max(-maxLean, Math.min(maxLean, rel));
@@ -338,7 +348,18 @@ export function stepTruckPhysics(
 
   const wetGripMult = (city.config.hasSunshower ? 0.86 : 1.0) * getWeatherGripMult();
 
-  if (isBraking) {
+  // Brake pedal: shed speed fast, then keep holding S to back up slowly.
+  const wantsReverse = throttleIn < -0.05 && Math.abs(truck.speed) < 0.25;
+  truck.isReversing = wantsReverse || (truck.isReversing && throttleIn < -0.05);
+
+  if (truck.isReversing) {
+    truck.boostTimer = 0;
+    const targetVx = -fwdX * TRUCK_REVERSE_SPEED;
+    const targetVz = -fwdZ * TRUCK_REVERSE_SPEED;
+    const reverseRate = 1 - Math.exp(-6.5 * clampedDt);
+    truck.vx += (targetVx - truck.vx) * reverseRate;
+    truck.vz += (targetVz - truck.vz) * reverseRate;
+  } else if (isBraking) {
     truck.boostTimer = 0;
     const brakeDecay = Math.exp(-16.0 * wetGripMult * clampedDt);
     truck.vx *= brakeDecay;
@@ -347,13 +368,13 @@ export function stepTruckPhysics(
       truck.vx = 0;
       truck.vz = 0;
     }
-  } else if (truck.boostTimer > 0) {
+  } else if (truck.boostTimer > 0) { truck.isReversing = false;
     const targetVx = fwdX * topFwdSpeed;
     const targetVz = fwdZ * topFwdSpeed;
     const accelRate = 1 - Math.exp(-handling.boostAccelExp * spec.accelMult * clampedDt);
     truck.vx += (targetVx - truck.vx) * accelRate;
     truck.vz += (targetVz - truck.vz) * accelRate;
-  } else if (effThrottle > 0.01) {
+  } else if (effThrottle > 0.01) { truck.isReversing = false;
     const targetSpd = effThrottle * topFwdSpeed;
     const targetVx = fwdX * targetSpd;
     const targetVz = fwdZ * targetSpd;
@@ -372,7 +393,7 @@ export function stepTruckPhysics(
 
   if (truck.invulnTimer <= 0 && (truck.wallCrashCooldown ?? 0) <= 0) {
     const fwdProj = truck.vx * fwdX + truck.vz * fwdZ;
-    if (fwdProj < 0) {
+    if (!truck.isReversing && fwdProj < 0) {
       truck.vx -= fwdX * fwdProj;
       truck.vz -= fwdZ * fwdProj;
     }

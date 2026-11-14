@@ -21,6 +21,8 @@ export const RIGHT_LANE_OFFSET = 0.44;
 /** Vehicle motion & collision. */
 export const TRUCK_MAX_SPEED = 8.6;
 export const TRUCK_BOOST_SPEED = 13.4;
+export const TRUCK_REVERSE_SPEED = 3.4;
+export const TRUCK_REVERSE_ENTER_SEC = 0.22;
 export const TRUCK_RADIUS = 0.46;
 
 /** Parcel pickup / unload radii. */

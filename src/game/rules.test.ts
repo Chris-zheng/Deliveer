@@ -197,24 +197,31 @@ test('forward-only driving physics prohibits reverse (brakes to 0) and supports 
   assert.ok(truck.x > startX + 1.5, 'Straight throttle should accelerate forward along van heading');
   assert.ok(Math.abs(truck.yaw - startYaw) < 0.08, 'Straight throttle should maintain street heading');
 
-  // 2. Brake Only — S / ArrowDown (throttle: -1) decelerates to 0 and NEVER reverses backward!
+  // 2. Brake Only — S / ArrowDown (throttle: -1) decelerates first, then reverses.
   const brakeTruck = createInitialTruckState(city);
   for (let i = 0; i < 12; i++) {
     stepTruckPhysics(brakeTruck, { throttle: 1, steer: 0, wantsBoost: false }, city, 0.04);
   }
-  assert.ok(brakeTruck.speed > 4.0, 'Van should be moving forward before braking');
-
-  let minXDuringBrake = brakeTruck.x;
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 5; i++) {
     const prevX = brakeTruck.x;
     stepTruckPhysics(brakeTruck, { throttle: -1, steer: 0, wantsBoost: false }, city, 0.04);
     assert.equal(brakeTruck.isBraking, true, 'Holding S/Down should activate brake taillights');
-    assert.ok(brakeTruck.x >= prevX - 1e-6, 'Braking must NEVER move the van backward');
-    minXDuringBrake = Math.min(minXDuringBrake, brakeTruck.x);
+    assert.equal(brakeTruck.isReversing, false, 'Reverse must not engage while still rolling');
+    assert.ok(brakeTruck.x >= prevX - 1e-6, 'Braking while rolling must NEVER move the van backward');
   }
-  assert.equal(brakeTruck.speed, 0, 'Holding brake should bring van cleanly to 0 speed');
-  assert.equal(brakeTruck.vx, 0, 'Stopped van should have zero X velocity');
 
+  // 2b. Holding S at a standstill backs the van up (dead-end escape hatch).
+  const revTruck = createInitialTruckState(city);
+  for (let i = 0; i < 40; i++) {
+    stepTruckPhysics(revTruck, { throttle: -1, steer: 0, wantsBoost: false }, city, 0.04);
+  }
+  assert.equal(revTruck.isReversing, true, 'Holding S from a standstill should engage reverse');
+  const alongFwd = revTruck.vx * Math.sin(revTruck.yaw) + revTruck.vz * Math.cos(revTruck.yaw);
+  assert.ok(alongFwd < -0.3, 'Reversing should push velocity against the heading');
+  for (let i = 0; i < 10; i++) {
+    stepTruckPhysics(revTruck, { throttle: 1, steer: 0, wantsBoost: false }, city, 0.04);
+  }
+  assert.equal(revTruck.isReversing, false, 'Throttle must leave reverse immediately');
   // 3. Forward-only pathfinding never routes backward 180 deg when forward streets exist
   const spawnNext = { col: city.spawnCoord.col + 1, row: city.spawnCoord.row };
   const forwardRoute = findForwardRoadPath(city.tiles, spawnNext, Math.PI / 2, city.spawnCoord);
