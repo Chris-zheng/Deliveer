@@ -110,6 +110,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
   // Comfort settings are persisted in game/controls and pushed straight into the sim.
   const [viewMode, setViewModeState] = React.useState<ViewMode>(() => getViewMode());
   const [handling, setHandlingState] = React.useState<HandlingPreset>(() => getHandlingPreset());
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
   const pickView = (next: ViewMode) => {
     setViewMode(next);
     setViewModeState(next);
@@ -123,7 +124,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-20 flex items-center justify-center p-3 sm:p-4 bg-[#241309]/55 overflow-y-auto"
+      className="fixed inset-0 z-20 flex items-start sm:items-center justify-center p-3 sm:p-4 bg-[#241309]/55 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby="welcome-heading"
@@ -506,175 +507,75 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
           )}
         </div>
 
-        {/* Row 2: Three Objective Cards */}
-        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 items-stretch gap-2.5 sm:gap-3 text-center pt-0.5">
-          {/* Card 1 */}
-          <div className="relative rounded-[20px] bg-gradient-to-b from-[#DF682E] via-[#C84A1B] to-[#AE3911] border-[3px] border-[#7D240B] shadow-[inset_0_2px_0_rgba(255,190,145,0.5),inset_0_-4px_0_#8F2B0E,0_4px_0_rgba(72,22,6,0.3)] px-3 py-2.5 flex flex-col items-center justify-start gap-1">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-b from-[#7BE0FF] to-[#2B89BA] border-[2px] border-[#5C230C] flex items-center justify-center shrink-0">
-              <span className="text-base">📦</span>
-            </div>
-            <div
-              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
-              className="text-[#FFF8E3] text-sm sm:text-[15px] leading-tight font-bold drop-shadow-[0_2px_0_#6B1E08]"
-            >
-              {t.card1Title}
-            </div>
-            <p className="text-[#FFF6DE] text-[11px] leading-snug font-bold text-balance drop-shadow-[0_1.5px_0_rgba(74,20,5,0.85)]">
-              {t.card1Desc}
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div className="relative rounded-[20px] bg-gradient-to-b from-[#DF682E] via-[#C84A1B] to-[#AE3911] border-[3px] border-[#7D240B] shadow-[inset_0_2px_0_rgba(255,190,145,0.5),inset_0_-4px_0_#8F2B0E,0_4px_0_rgba(72,22,6,0.3)] px-3 py-2.5 flex flex-col items-center justify-start gap-1">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-b from-[#7BE0FF] to-[#2B89BA] border-[2px] border-[#5C230C] flex items-center justify-center shrink-0">
-              <span className="text-base">🎯</span>
-            </div>
-            <div
-              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
-              className="text-[#FFF8E3] text-sm sm:text-[15px] leading-tight font-bold drop-shadow-[0_2px_0_#6B1E08]"
-            >
-              {t.card2Title}
-            </div>
-            <p className="text-[#FFF6DE] text-[11px] leading-snug font-bold text-balance drop-shadow-[0_1.5px_0_rgba(74,20,5,0.85)]">
-              {t.card2Desc}
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="relative rounded-[20px] bg-gradient-to-b from-[#DF682E] via-[#C84A1B] to-[#AE3911] border-[3px] border-[#7D240B] shadow-[inset_0_2px_0_rgba(255,190,145,0.5),inset_0_-4px_0_#8F2B0E,0_4px_0_rgba(72,22,6,0.3)] px-3 py-2.5 flex flex-col items-center justify-start gap-1">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-b from-[#7BE0FF] to-[#2B89BA] border-[2px] border-[#5C230C] flex items-center justify-center shrink-0">
-              <span className="text-base">⭐</span>
-            </div>
-            <div
-              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
-              className="text-[#FFF8E3] text-sm sm:text-[15px] leading-tight font-bold drop-shadow-[0_2px_0_#6B1E08]"
-            >
-              {t.card3Title}
-            </div>
-            <p className="text-[#FFF6DE] text-[11px] leading-snug font-bold text-balance drop-shadow-[0_1.5px_0_rgba(74,20,5,0.85)]">
-              {t.card3Desc}
-            </p>
-          </div>
+        {/* Row 2: compact how-to strip (replaces the three banner cards) */}
+        <div className="relative z-10 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-[16px] border-[3px] border-[#8B290D]/30 bg-[#FFF3D6]/85 px-3 py-1.5 text-[11px] font-extrabold text-[#4B1C08]">
+          <span>{lang === 'zh' ? '跟箭头跑' : 'Follow arrows'}</span>
+          <span className="text-[#8B4C20]">·</span>
+          <span>{lang === 'zh' ? '限时送达' : 'Beat the clock'}</span>
+          <span className="text-[#8B4C20]">·</span>
+          <span>{lang === 'zh' ? '命中圆环 ×2' : 'Bullseye ×2'}</span>
         </div>
 
-        {/* Row 3: Controls row */}
-        <div className="relative z-10 flex sm:hidden items-center justify-center text-center text-[11px] font-extrabold text-[#4B1C08]">
-          <span>{t.controlsTouch}</span>
-        </div>
-        <div className="relative z-10 hidden sm:flex flex-wrap items-center justify-center gap-x-2 text-center text-xs font-extrabold text-[#4B1C08]">
-          <span>
-            <span className="text-[#9E2B0A]">W/↑</span> {t.controlsDesktopDrive}
-          </span>
-          <span className="text-[#8B4C20]">·</span>
-          <span>
-            <span className="text-[#9E2B0A]">S/↓</span> {t.controlsDesktopBrake}
-          </span>
-          <span className="text-[#8B4C20]">·</span>
-          <span>
-            <span className="text-[#9E2B0A]">A/D</span> {t.controlsDesktopTurn}
-          </span>
-          <span className="text-[#8B4C20]">·</span>
-          <span>
-            <span className="text-[#9E2B0A]">C</span> {lang === 'zh' ? '漂移喷射' : 'Drift'}
-          </span>
-          <span className="text-[#8B4C20]">·</span>
-          <span>
-            <span className="text-[#9E2B0A]">F</span> {lang === 'zh' ? '加急' : 'Rush'}
-          </span>
-          <span className="text-[#8B4C20]">·</span>
-          <span>
-            <span className="text-[#9E2B0A]">Space</span> {t.controlsDesktopDrop}
-          </span>
-          <span className="text-[#8B4C20]">·</span>
-          <span>
-            <span className="text-[#9E2B0A]">Shift</span> {t.controlsDesktopBoost}
-          </span>
-          <span className="text-[#8B4C20]">·</span>
-          <span>
-            <span className="text-[#9E2B0A]">Q</span> {t.controlsDesktopHorn}
-          </span>
-        </div>
-
-
-        {/* Row 4: Comfort settings — camera framing + handling feel */}
-        <div className="relative z-10 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-[18px] border-[3px] border-[#8B290D]/35 bg-[#FFF3D6]/85 px-3 py-2">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-extrabold text-[#8B4C20]">
-              {lang === 'zh' ? '视角' : 'View'}
+        {/* Row 3: the four menu entries — world tour, daily, random run, settings */}
+        <div className="relative z-10 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              pokoAudio.playUiClick();
+              onOpenWorldTour();
+            }}
+            className="arcade-btn-gold h-[52px] rounded-[18px] flex items-center justify-between gap-2 px-4 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
+          >
+            <span
+              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+              className="arcade-stroke-sm text-white text-base font-bold tracking-wide whitespace-nowrap"
+            >
+              {lang === 'zh' ? '环球挑战' : 'WORLD TOUR'}
             </span>
-            {VIEW_MODES.map((mode) => {
-              const active = viewMode === mode;
-              return (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => pickView(mode)}
-                  className={`rounded-[10px] border-[2px] px-2 py-0.5 text-[11px] font-extrabold transition ${
-                    active
-                      ? 'border-[#8B290D] bg-[#FFB800] text-[#4B1C08] shadow-[0_2px_0_#8B290D]'
-                      : 'border-[#8B290D]/35 bg-[#FFFCF5] text-[#8B4C20] hover:bg-[#FFF0C2]'
-                  }`}
-                  aria-pressed={active}
-                >
-                  {lang === 'zh' ? VIEW_MODE_LABELS[mode].zh : VIEW_MODE_LABELS[mode].en}
-                </button>
-              );
-            })}
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-extrabold text-[#8B4C20]">
-              {lang === 'zh' ? '手感' : 'Handling'}
+            <span className="text-[10px] font-extrabold text-[#4B1C08] whitespace-nowrap">
+              {lang === 'zh' ? '20 城 · 6 大洲' : '20 cities · 6 continents'}
             </span>
-            {HANDLING_PRESETS.map((preset) => {
-              const active = handling === preset;
-              return (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => pickHandling(preset)}
-                  className={`rounded-[10px] border-[2px] px-2 py-0.5 text-[11px] font-extrabold transition ${
-                    active
-                      ? 'border-[#8B290D] bg-[#FFB800] text-[#4B1C08] shadow-[0_2px_0_#8B290D]'
-                      : 'border-[#8B290D]/35 bg-[#FFFCF5] text-[#8B4C20] hover:bg-[#FFF0C2]'
-                  }`}
-                  aria-pressed={active}
-                >
-                  {lang === 'zh' ? HANDLING_LABELS[preset].zh : HANDLING_LABELS[preset].en}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+          </button>
 
-        {/* Row 4: Daily challenge with Bronze / Silver / Gold medals & Check-In streak */}
-        {daily ? (
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-[18px] border-[3px] border-[#8B290D]/50 bg-[#FFF3D6]/90 px-3 py-2">
-            <div className="flex flex-col leading-tight gap-0.5">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[11px] font-extrabold text-[#9E2B0A]">
-                  {(lang === 'zh' ? '每日挑战' : 'Daily Challenge') + ' · ' + daily.dateKey}
-                </span>
-                <span className="text-[11px] font-extrabold text-[#b45309]">
-                  <span className={daily.claimedMedals?.bronze ? '' : 'opacity-35 grayscale'}>🥉</span>
-                  <span className={daily.claimedMedals?.silver ? '' : 'opacity-35 grayscale'}>🥈</span>
-                  <span className={daily.claimedMedals?.gold ? '' : 'opacity-35 grayscale'}>🥇</span>
-                </span>
-                {(daily.checkInStreakDays ?? 0) > 0 && (
-                  <span className="text-[10px] font-extrabold text-[#d97706]">
-                    🔥 {daily.checkInStreakDays}{lang === 'zh' ? '天连签' : 'd streak'}
-                  </span>
-                )}
-              </div>
-              <span className="text-[11px] font-extrabold text-[#4B1C08]">
-                {(lang === 'zh'
+          <button
+            type="button"
+            onClick={() => {
+              pokoAudio.playUiClick();
+              onStartDaily?.();
+            }}
+            disabled={!onStartDaily}
+            className="arcade-btn-green h-[52px] rounded-[18px] flex items-center justify-between gap-2 px-4 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5 disabled:cursor-default"
+          >
+            <span
+              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+              className="text-[#FFF8E3] text-base font-bold tracking-wide whitespace-nowrap"
+            >
+              {lang === 'zh' ? '每日挑战' : 'DAILY CHALLENGE'}
+            </span>
+            <span className="text-[10px] font-extrabold text-[#F3FFE4] whitespace-nowrap">
+              {daily
+                ? lang === 'zh'
+                  ? `今日奖励 ${daily.rewardCoins} 币`
+                  : `${daily.rewardCoins} coins today`
+                : ''}
+            </span>
+          </button>
+
+          {daily ? (
+            <div className="flex items-center justify-between gap-2 -mt-0.5 px-1">
+              <span className="text-[10px] font-extrabold text-[#4B1C08] leading-tight">
+                {lang === 'zh'
                   ? `铜 ${daily.targetScore} / 银 ${daily.silverScore ?? daily.targetScore} / 金 ${daily.goldScore ?? daily.targetScore} 分`
-                  : `🥉${daily.targetScore} · 🥈${daily.silverScore ?? daily.targetScore} · 🥇${daily.goldScore ?? daily.targetScore}`) +
-                  (daily.bestScore > 0
-                    ? (lang === 'zh' ? ' · 最佳 ' : ' · Best ') + daily.bestScore
-                    : '')}
+                  : `B ${daily.targetScore} / S ${daily.silverScore ?? daily.targetScore} / G ${daily.goldScore ?? daily.targetScore}`}
+                {daily.bestScore > 0
+                  ? (lang === 'zh' ? ` · 最佳 ${daily.bestScore}` : ` · Best ${daily.bestScore}`)
+                  : ''}
+                {(daily.checkInStreakDays ?? 0) > 0
+                  ? lang === 'zh'
+                    ? ` · 连签 ${daily.checkInStreakDays} 天`
+                    : ` · ${daily.checkInStreakDays}d streak`
+                  : ''}
               </span>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
               {onOpenCareerLedger && (
                 <button
                   type="button"
@@ -682,127 +583,26 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                     pokoAudio.playUiClick();
                     onOpenCareerLedger('daily');
                   }}
-                  className="arcade-btn-gold relative h-[40px] px-3 rounded-[14px] flex items-center justify-center cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
+                  className="relative shrink-0 text-[10px] font-extrabold text-[#9E2B0A] underline decoration-[#9E2B0A]/50 underline-offset-2 cursor-pointer"
                 >
-                  <span className="arcade-stroke-sm text-white text-xs font-bold">
-                    {daily.canCheckInToday
-                      ? lang === 'zh'
-                        ? '🎁 签到领奖'
-                        : '🎁 Check-In'
-                      : lang === 'zh'
-                        ? '奖牌与连胜'
-                        : 'Medals'}
-                  </span>
+                  {daily.canCheckInToday
+                    ? lang === 'zh'
+                      ? '签到领奖'
+                      : 'Check in'
+                    : lang === 'zh'
+                      ? '奖牌'
+                      : 'Medals'}
                   {daily.canCheckInToday && (
                     <span
-                      className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#ff3b30] border border-[#140c04] animate-pulse"
+                      className="absolute -top-1.5 -right-2 w-2 h-2 rounded-full bg-[#ff3b30] animate-pulse"
                       aria-hidden="true"
                     />
                   )}
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => {
-                  pokoAudio.playUiClick();
-                  onStartDaily?.();
-                }}
-                className="arcade-btn-green h-[40px] px-4 rounded-[14px] flex items-center justify-center cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
-              >
-                <span
-                  style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
-                  className="text-[#FFF8E3] text-sm font-bold tracking-wide"
-                >
-                  {lang === 'zh' ? '挑战' : 'Play'}
-                </span>
-              </button>
             </div>
-          </div>
-        ) : null}
+          ) : null}
 
-        {/* Row 4: World Tour, Almanac & Career Ledger Quick Access */}
-        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              pokoAudio.playUiClick();
-              onOpenWorldTour();
-            }}
-            className="arcade-btn-gold h-[48px] rounded-[18px] flex items-center justify-center gap-1.5 px-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
-          >
-            <span
-              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
-              className="arcade-stroke-sm text-white text-xs sm:text-sm font-bold tracking-wide"
-            >
-              {t.worldTourBtn}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              pokoAudio.playUiClick();
-              onOpenAlmanac();
-            }}
-            className="arcade-btn-green h-[48px] rounded-[18px] flex items-center justify-center gap-1.5 px-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
-          >
-            <span
-              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
-              className="arcade-stroke-sm text-white text-xs sm:text-sm font-bold tracking-wide"
-            >
-              {t.almanacBtn}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              pokoAudio.playUiClick();
-              onOpenCareerLedger?.('career');
-            }}
-            className="arcade-btn-cream relative h-[48px] rounded-[18px] flex flex-col items-center justify-center px-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
-          >
-            <span
-              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
-              className="arcade-stroke-sm text-white text-xs sm:text-sm font-bold tracking-wide leading-tight"
-            >
-              {t.careerLedgerBtn}
-            </span>
-            {careerSummary && (
-              <span className="text-[10px] font-extrabold text-[#fef08a] leading-none mt-0.5">
-                {careerSummary.rankBadge} {careerSummary.rankName} · ¥1={careerSummary.exchangeRate}
-              </span>
-            )}
-            {careerSummary?.hasLedgerNotice && (
-              <span
-                className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#ff3b30] border-2 border-[#140c04] animate-pulse"
-                aria-hidden="true"
-              />
-            )}
-          </button>
-        </div>
-
-        {/* Row 5: Action Buttons (Custom Map Generator & Start Game) */}
-        <div className="relative z-10 flex flex-col sm:flex-row gap-2.5 mt-0.5">
-          {/* Custom City Generator Modal Trigger Button */}
-          <button
-            type="button"
-            onClick={() => {
-              pokoAudio.playUiClick();
-              onOpenCustomCity();
-            }}
-            className="arcade-btn-cream sm:w-1/2 h-[54px] sm:h-[60px] rounded-[22px] flex items-center justify-center gap-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-1"
-          >
-            <span className="text-xl">🗺️</span>
-            <span
-              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
-              className="arcade-stroke-sm text-white text-base sm:text-lg font-bold tracking-wide"
-            >
-              {t.customMapBtn}
-            </span>
-          </button>
-
-          {/* Primary Big Start Button */}
           <button
             type="button"
             data-start="true"
@@ -811,19 +611,169 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
               pokoAudio.playUiClick();
               onStart();
             }}
-            className="group relative sm:w-1/2 h-[54px] sm:h-[60px] rounded-[22px] bg-gradient-to-b from-[#F8843E] via-[#E85D25] to-[#CE4316] border-[3.5px] border-[#8B290D] shadow-[inset_0_3px_0_rgba(255,198,150,0.62),inset_0_-5px_0_#A33210,0_5px_0_rgba(88,28,8,0.38)] flex items-center justify-center cursor-pointer whitespace-nowrap transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:brightness-105 active:translate-y-1"
+            className="group relative h-[62px] rounded-[22px] bg-gradient-to-b from-[#F8843E] via-[#E85D25] to-[#CE4316] border-[3.5px] border-[#8B290D] shadow-[inset_0_3px_0_rgba(255,198,150,0.62),inset_0_-5px_0_#A33210,0_5px_0_rgba(88,28,8,0.38)] flex items-center justify-center cursor-pointer whitespace-nowrap transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:brightness-105 active:translate-y-1"
           >
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              <span className="text-xl">🚗</span>
+            <span className="relative z-10 flex flex-col items-center justify-center leading-none">
               <span
                 style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
                 className="text-[#FFF8E3] text-xl sm:text-2xl font-bold tracking-[0.06em] drop-shadow-[0_3px_0_#8B290D] group-hover:scale-[1.02] transition-transform"
               >
-                {t.startGame}
+                {lang === 'zh' ? '随机挑战' : 'RANDOM RUN'}
+              </span>
+              <span className="mt-1 text-[10px] font-extrabold text-[#FFE3C7]">
+                {lang === 'zh' ? '随机街区 · 随机天气' : 'random district · random weather'}
               </span>
             </span>
           </button>
         </div>
+
+        {/* Row 4: settings drawer (view, handling, keys, side entries) */}
+        <button
+          type="button"
+          onClick={() => {
+            pokoAudio.playUiClick();
+            setSettingsOpen((v) => !v);
+          }}
+          aria-expanded={settingsOpen}
+          className="relative z-10 h-[44px] rounded-[16px] border-[3px] border-[#8B290D]/40 bg-[#FFF3D6]/90 flex items-center justify-center gap-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
+        >
+          <span
+            style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+            className="text-[#4B1C08] text-sm font-bold tracking-wide"
+          >
+            {lang === 'zh' ? '设置' : 'SETTINGS'}
+          </span>
+          <span className="text-[10px] font-extrabold text-[#8B4C20]">
+            {settingsOpen ? '▾' : '▸'}
+          </span>
+          {careerSummary?.hasLedgerNotice && !settingsOpen && (
+            <span
+              className="absolute top-1 right-2 w-2 h-2 rounded-full bg-[#ff3b30] animate-pulse"
+              aria-hidden="true"
+            />
+          )}
+        </button>
+
+        {settingsOpen ? (
+          <div className="relative z-10 flex flex-col gap-2 rounded-[18px] border-[3px] border-[#8B290D]/35 bg-[#FFF3D6]/92 px-3 py-2">
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-extrabold text-[#8B4C20]">
+                  {lang === 'zh' ? '视角' : 'View'}
+                </span>
+                {VIEW_MODES.map((mode) => {
+                  const active = viewMode === mode;
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => pickView(mode)}
+                      className={`rounded-[10px] border-[2px] px-2 py-0.5 text-[11px] font-extrabold transition ${
+                        active
+                          ? 'border-[#8B290D] bg-[#FFB800] text-[#4B1C08] shadow-[0_2px_0_#8B290D]'
+                          : 'border-[#8B290D]/35 bg-[#FFFCF5] text-[#8B4C20] hover:bg-[#FFF0C2]'
+                      }`}
+                      aria-pressed={active}
+                    >
+                      {lang === 'zh' ? VIEW_MODE_LABELS[mode].zh : VIEW_MODE_LABELS[mode].en}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-extrabold text-[#8B4C20]">
+                  {lang === 'zh' ? '手感' : 'Handling'}
+                </span>
+                {HANDLING_PRESETS.map((preset) => {
+                  const active = handling === preset;
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => pickHandling(preset)}
+                      className={`rounded-[10px] border-[2px] px-2 py-0.5 text-[11px] font-extrabold transition ${
+                        active
+                          ? 'border-[#8B290D] bg-[#FFB800] text-[#4B1C08] shadow-[0_2px_0_#8B290D]'
+                          : 'border-[#8B290D]/35 bg-[#FFFCF5] text-[#8B4C20] hover:bg-[#FFF0C2]'
+                      }`}
+                      aria-pressed={active}
+                    >
+                      {lang === 'zh' ? HANDLING_LABELS[preset].zh : HANDLING_LABELS[preset].en}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="text-center text-[10px] font-extrabold text-[#4B1C08] leading-relaxed">
+              <span className="sm:hidden">{t.controlsTouch}</span>
+              <span className="hidden sm:inline">
+                <span className="text-[#9E2B0A]">W/↑</span> {t.controlsDesktopDrive} ·{' '}
+                <span className="text-[#9E2B0A]">S/↓</span> {t.controlsDesktopBrake} ·{' '}
+                <span className="text-[#9E2B0A]">A/D</span> {t.controlsDesktopTurn} ·{' '}
+                <span className="text-[#9E2B0A]">C</span> {lang === 'zh' ? '漂移喷射' : 'Drift'} ·{' '}
+                <span className="text-[#9E2B0A]">F</span> {lang === 'zh' ? '加急' : 'Rush'} ·{' '}
+                <span className="text-[#9E2B0A]">Space</span> {t.controlsDesktopDrop} ·{' '}
+                <span className="text-[#9E2B0A]">Shift</span> {t.controlsDesktopBoost} ·{' '}
+                <span className="text-[#9E2B0A]">V</span> {lang === 'zh' ? '视角' : 'View'} ·{' '}
+                <span className="text-[#9E2B0A]">Q</span> {t.controlsDesktopHorn}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  pokoAudio.playUiClick();
+                  onOpenCustomCity();
+                }}
+                className="arcade-btn-cream h-[46px] rounded-[16px] flex items-center justify-center px-1 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
+              >
+                <span
+                  style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+                  className="arcade-stroke-sm text-white text-[11px] sm:text-xs font-bold tracking-wide leading-tight text-center"
+                >
+                  {t.customMapBtn}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  pokoAudio.playUiClick();
+                  onOpenAlmanac();
+                }}
+                className="arcade-btn-green h-[46px] rounded-[16px] flex items-center justify-center px-1 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
+              >
+                <span
+                  style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+                  className="arcade-stroke-sm text-white text-[11px] sm:text-xs font-bold tracking-wide leading-tight text-center"
+                >
+                  {t.almanacBtn}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  pokoAudio.playUiClick();
+                  onOpenCareerLedger?.('career');
+                }}
+                className="arcade-btn-cream relative h-[46px] rounded-[16px] flex flex-col items-center justify-center px-1 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
+              >
+                <span
+                  style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+                  className="arcade-stroke-sm text-white text-[11px] sm:text-xs font-bold tracking-wide leading-tight text-center"
+                >
+                  {t.careerLedgerBtn}
+                </span>
+                {careerSummary && (
+                  <span className="text-[9px] font-extrabold text-[#fef08a] leading-none mt-0.5">
+                    {careerSummary.rankBadge} {careerSummary.rankName}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
