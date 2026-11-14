@@ -502,7 +502,7 @@ export const GarageShopModal: React.FC<GarageShopModalProps> = ({
                 style={{
                   transform: `rotate(${wheelDeg}deg)`,
                   background:
-                    'conic-gradient(#ff3b3b 0deg 60deg, #2ee54d 60deg 120deg, #ffdf24 120deg 180deg, #38bdf8 180deg 240deg, #f97316 240deg 300deg, #a855f7 300deg 360deg)',
+                    'conic-gradient(#ff3b3b 0deg 60deg, #2ee54d 60deg 120deg, #ffe524 120deg 180deg, #38bdf8 180deg 240deg, #f97316 240deg 300deg, #a855f7 300deg 360deg)',
                 }}
               >
                 {SPIN_WHEEL_SLICES.map((slice) => {

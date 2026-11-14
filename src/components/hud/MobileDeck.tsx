@@ -99,11 +99,11 @@ export const MobileDeck: React.FC<MobileDeckProps> = (p) => {
           {(hud.isWrongWay || (showMobileBanner && hud.bannerEvent)) && (
             <div className="pointer-events-none self-center max-w-[92%]">
               {hud.isWrongWay ? (
-                <div className="arcade-pill-brown border-[#1d1205] rounded-full px-2.5 py-0.5 flex items-center gap-1.5 whitespace-nowrap">
+                <div className="arcade-pill-brown border-[#140c04] rounded-full px-2.5 py-0.5 flex items-center gap-1.5 whitespace-nowrap">
                   <span className="arcade-stroke-sm text-[#ff4d5a] text-[11px] leading-none">
                     {t.wrongWayWarning}
                   </span>
-                  <span className="w-10 h-2 bg-black/50 rounded-full overflow-hidden border border-[#1d1205]">
+                  <span className="w-10 h-2 bg-black/50 rounded-full overflow-hidden border border-[#140c04]">
                     <span
                       className="block h-full arcade-bar-gold transition-all duration-75"
                       style={{
@@ -115,7 +115,7 @@ export const MobileDeck: React.FC<MobileDeckProps> = (p) => {
               ) : hud.bannerEvent ? (
                 <div
                   key={hud.bannerEvent.id}
-                  className="bg-[#493214]/95 border-2 border-[#1d1205] rounded-full px-2.5 py-0.5 flex items-center gap-1.5 truncate shadow-sm"
+                  className="bg-[#4b1c08]/95 border-2 border-[#140c04] rounded-full px-2.5 py-0.5 flex items-center gap-1.5 truncate shadow-sm"
                 >
                   <span
                     className={`arcade-stroke-sm text-[11px] leading-none shrink-0 ${
@@ -270,7 +270,7 @@ export const MobileDeck: React.FC<MobileDeckProps> = (p) => {
               </div>
 
               {hud.deliveredCount < hud.totalStops && (
-                <div className="flex items-center gap-0.5 sm:gap-1 bg-[#493214] border-2 border-[#140c04] rounded-xl px-1.5 sm:px-2 py-0.5 sm:py-1 shrink-0">
+                <div className="flex items-center gap-0.5 sm:gap-1 bg-[#4b1c08] border-2 border-[#140c04] rounded-xl px-1.5 sm:px-2 py-0.5 sm:py-1 shrink-0">
                   <svg
                     viewBox="0 0 24 24"
                     className="w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform duration-100"
@@ -432,12 +432,12 @@ export const MobileDeck: React.FC<MobileDeckProps> = (p) => {
                 onPointerLeave={() => {
                   touchControls.drift = false;
                 }}
-                className={`rounded-xl border-2 border-[#1d1205] h-[22px] flex items-center justify-center cursor-pointer transition ${
+                className={`rounded-xl border-2 border-[#140c04] h-[22px] flex items-center justify-center cursor-pointer transition ${
                   hud.driftTier === 2
                     ? 'bg-[#facc15] text-[#140c04]'
                     : hud.driftTier === 1
                       ? 'bg-[#38bdf8] text-[#082f49]'
-                      : 'bg-[#493214] text-amber-100'
+                      : 'bg-[#4b1c08] text-amber-100'
                 }`}
               >
                 <span className="text-[9px] font-extrabold leading-none">
@@ -454,7 +454,7 @@ export const MobileDeck: React.FC<MobileDeckProps> = (p) => {
                 }}
                 className="arcade-boost-rim rounded-xl p-0.5 h-[30px] flex items-stretch cursor-pointer"
               >
-                <div className="bg-[#493214] border-2 border-[#1d1205] rounded-lg px-2 w-full relative overflow-hidden flex items-center justify-center gap-1">
+                <div className="bg-[#4b1c08] border-2 border-[#140c04] rounded-lg px-2 w-full relative overflow-hidden flex items-center justify-center gap-1">
                   {!hud.boostReady && !hud.isBoosting && (
                     <div
                       className="absolute left-0 top-0 bottom-0 bg-amber-400/30 transition-all duration-100"
@@ -514,7 +514,7 @@ export const MobileDeck: React.FC<MobileDeckProps> = (p) => {
                 <span className="arcade-stroke-sm text-[#ff5964] text-[10px] sm:text-xs leading-none whitespace-nowrap">
                   BRAKE
                 </span>
-                <span className="text-[9px] sm:text-[10px] font-extrabold text-[#493214] leading-tight mt-0.5 whitespace-nowrap">
+                <span className="text-[9px] sm:text-[10px] font-extrabold text-[#4b1c08] leading-tight mt-0.5 whitespace-nowrap">
                   STOP
                 </span>
               </button>

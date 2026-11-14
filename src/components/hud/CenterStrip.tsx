@@ -54,11 +54,11 @@ export const CenterStrip: React.FC<CenterStripProps> = (p) => {
             </div>
 
             {hud.isWrongWay && (
-              <div className="arcade-pill-brown border-[#1d1205] rounded-full px-4 py-1.5 flex items-center gap-2.5 whitespace-nowrap">
+              <div className="arcade-pill-brown border-[#140c04] rounded-full px-4 py-1.5 flex items-center gap-2.5 whitespace-nowrap">
                 <span className="arcade-stroke-sm text-[#ff4d5a] text-sm sm:text-base">
                   {t.wrongWayWarning}
                 </span>
-                <span className="w-16 h-3 bg-black/50 rounded-full overflow-hidden border-2 border-[#1d1205]">
+                <span className="w-16 h-3 bg-black/50 rounded-full overflow-hidden border-2 border-[#140c04]">
                   <span
                     className="block h-full arcade-bar-gold transition-all duration-75"
                     style={{
@@ -71,7 +71,7 @@ export const CenterStrip: React.FC<CenterStripProps> = (p) => {
 
             {(hud.driftTier ?? 0) > 0 && (
               <div
-                className={`border-2 border-[#1d1205] rounded-full px-4 py-1 flex items-center gap-2 shadow-sm ${
+                className={`border-2 border-[#140c04] rounded-full px-4 py-1 flex items-center gap-2 shadow-sm ${
                   hud.driftTier === 2 ? 'bg-[#facc15]' : 'bg-[#38bdf8]'
                 }`}
               >
@@ -96,7 +96,7 @@ export const CenterStrip: React.FC<CenterStripProps> = (p) => {
                 key={hud.bannerEvent.id}
                 className="arcade-boost-rim rounded-full p-1 whitespace-nowrap"
               >
-                <div className="bg-[#493214] border-2 border-[#1d1205] rounded-full px-4 py-1 flex items-center gap-2">
+                <div className="bg-[#4b1c08] border-2 border-[#140c04] rounded-full px-4 py-1 flex items-center gap-2">
                   <span
                     className={`arcade-stroke-sm text-sm sm:text-base ${
                       hud.bannerEvent.tone === 'emerald'

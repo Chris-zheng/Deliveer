@@ -91,7 +91,7 @@ export const DesktopPedals: React.FC<DesktopPedalsProps> = (p) => {
                 cx="18"
                 cy="20"
                 r="9.2"
-                fill={hud.demoActive ? '#1f7a26' : '#493214'}
+                fill={hud.demoActive ? '#1f7a26' : '#4b1c08'}
               />
             </svg>
             <span className="absolute inset-0 pt-2 flex items-center justify-center arcade-stroke-sm text-white text-xs leading-none tabular-nums">
@@ -275,7 +275,7 @@ export const DesktopPedals: React.FC<DesktopPedalsProps> = (p) => {
               </div>
 
               {hud.deliveredCount < hud.totalStops && (
-                <div className="flex items-center gap-1.5 bg-[#493214] border-[2.5px] border-[#140c04] rounded-xl px-2.5 py-1 shrink-0">
+                <div className="flex items-center gap-1.5 bg-[#4b1c08] border-[2.5px] border-[#140c04] rounded-xl px-2.5 py-1 shrink-0">
                   <svg
                     viewBox="0 0 24 24"
                     className="w-4 h-4 transition-transform duration-100"

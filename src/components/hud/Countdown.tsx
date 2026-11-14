@@ -33,7 +33,7 @@ export const Countdown: React.FC<CountdownProps> = (p) => {
                   : `${
                       hud.rocketStartStatus === 'primed'
                         ? 'bg-[#f59e0b]'
-                        : 'bg-[#493214]'
+                        : 'bg-[#4b1c08]'
                     } px-7 py-2.5 sm:px-10 sm:py-3.5 min-w-[168px] sm:min-w-[220px]`
               } border-[3.5px] border-[#140c04] rounded-[1.65rem] flex flex-col items-center`}
             >

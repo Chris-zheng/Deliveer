@@ -12,7 +12,7 @@ const RedAlertBadge: React.FC = () => (
       cy="14"
       r="11.5"
       fill="#ff1f2d"
-      stroke="#1d1205"
+      stroke="#140c04"
       strokeWidth="2.8"
     />
     <path

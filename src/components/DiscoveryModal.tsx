@@ -109,7 +109,7 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
         </div>
 
         {/* Hero Item Header */}
-        <div className="bg-[#fffdf5] border-[3px] border-[#1d1205] rounded-2xl p-4 flex items-center gap-3.5 shadow-inner">
+        <div className="bg-[#fffdf5] border-[3px] border-[#140c04] rounded-2xl p-4 flex items-center gap-3.5 shadow-inner">
           <div
             className={`w-16 h-16 sm:w-18 sm:h-18 rounded-2xl border-[3px] border-[#140c04] flex items-center justify-center text-4xl shrink-0 shadow-sm ${
               isLandmark ? 'bg-amber-200' : 'bg-sky-100'

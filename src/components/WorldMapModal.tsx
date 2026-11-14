@@ -93,7 +93,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
             </p>
           </div>
           <div className="flex items-center gap-2.5">
-            <div className="bg-[#2b1b08] border-2 border-[#ffdf24] rounded-full px-3 py-1 flex items-center gap-1.5">
+            <div className="bg-[#2b1b08] border-2 border-[#ffe524] rounded-full px-3 py-1 flex items-center gap-1.5">
               <span className="text-sm">⭐</span>
               <span className="arcade-stroke-sm text-[#ffe524] text-sm tabular-nums">
                 {totalStars}
@@ -125,7 +125,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
             }}
             className={`px-3 py-1.5 rounded-xl border-2 text-xs font-extrabold cursor-pointer transition ${
               continentFilter === 'all'
-                ? 'bg-[#ffdf24] border-[#5a270f] text-[#2b1b08]'
+                ? 'bg-[#ffe524] border-[#5a270f] text-[#2b1b08]'
                 : 'bg-[#fffdf5] border-[#784812]/40 text-[#5c3809] hover:bg-amber-50'
             }`}
           >
@@ -146,7 +146,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
               }}
               className={`px-3 py-1.5 rounded-xl border-2 text-xs font-extrabold cursor-pointer transition ${
                 continentFilter === cont.id
-                  ? 'bg-[#ffdf24] border-[#5a270f] text-[#2b1b08]'
+                  ? 'bg-[#ffe524] border-[#5a270f] text-[#2b1b08]'
                   : 'bg-[#fffdf5] border-[#784812]/40 text-[#5c3809] hover:bg-amber-50'
               }`}
             >
@@ -174,7 +174,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
                   }}
                   className={`text-left rounded-2xl border-[2.5px] p-2.5 transition flex items-center justify-between gap-2 cursor-pointer ${
                     isSelected
-                      ? 'bg-[#fff3c4] border-[#1d1205] shadow-[0_3px_0_#1d1205]'
+                      ? 'bg-[#fff3c4] border-[#140c04] shadow-[0_3px_0_#140c04]'
                       : unlocked
                         ? 'bg-[#fffdf5] border-[#784812]/50 hover:bg-amber-50'
                         : 'bg-stone-200/85 border-stone-400 text-stone-600'
@@ -214,8 +214,8 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
           </div>
 
           {/* Selected City Detail + Stage 1-10 Grid (Right 7 cols) */}
-          <div className="md:col-span-7 bg-[#fffdf5] border-[3px] border-[#1d1205] rounded-2xl p-3.5 sm:p-4 flex flex-col gap-3">
-            <div className="flex flex-wrap items-start justify-between gap-2 border-b border-[#1d1205]/15 pb-2.5">
+          <div className="md:col-span-7 bg-[#fffdf5] border-[3px] border-[#140c04] rounded-2xl p-3.5 sm:p-4 flex flex-col gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-2 border-b border-[#140c04]/15 pb-2.5">
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-display text-xl text-[#2b1b08]">
@@ -289,7 +289,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
                         !playable
                           ? 'bg-stone-200 border-stone-300 text-stone-400 cursor-not-allowed'
                           : isPicked
-                            ? 'bg-[#ffe524] border-[#1d1205] text-[#2b1b08] shadow-[0_2px_0_#1d1205] cursor-pointer'
+                            ? 'bg-[#ffe524] border-[#140c04] text-[#2b1b08] shadow-[0_2px_0_#140c04] cursor-pointer'
                             : 'bg-white border-[#784812]/40 hover:bg-amber-50 text-[#2b1b08] cursor-pointer'
                       }`}
                     >

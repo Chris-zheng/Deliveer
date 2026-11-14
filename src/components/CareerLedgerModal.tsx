@@ -180,11 +180,11 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
         {tab === 'career' ? (
           <div className="flex flex-col gap-3">
             {/* Rank Progression Card */}
-            <div className="bg-[#fffdf5] border-[2.5px] border-[#1d1205] rounded-2xl p-3.5 flex flex-col gap-2">
+            <div className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3.5 flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span
-                    className="w-10 h-10 rounded-xl border-2 border-[#1d1205] flex items-center justify-center text-xl shadow-xs"
+                    className="w-10 h-10 rounded-xl border-2 border-[#140c04] flex items-center justify-center text-xl shadow-xs"
                     style={{ backgroundColor: rankInfo.current.accentHex }}
                   >
                     {rankInfo.current.badge}
@@ -216,7 +216,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                 </div>
               </div>
 
-              <div className="w-full h-3 rounded-full bg-[#e9dcc5] border border-[#1d1205]/40 overflow-hidden">
+              <div className="w-full h-3 rounded-full bg-[#e9dcc5] border border-[#140c04]/40 overflow-hidden">
                 <div
                   className="h-full transition-all duration-300"
                   style={{
@@ -227,7 +227,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
               </div>
 
               <div className="grid grid-cols-3 gap-2 pt-1 text-center text-[11px]">
-                <div className="rounded-xl bg-[#fff3d6] border border-[#1d1205]/20 py-1.5 px-2">
+                <div className="rounded-xl bg-[#fff3d6] border border-[#140c04]/20 py-1.5 px-2">
                   <div className="text-slate-600 font-bold">
                     {lang === 'zh' ? '累计送达' : 'Deliveries'}
                   </div>
@@ -235,7 +235,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                     {career.totalDeliveries}
                   </div>
                 </div>
-                <div className="rounded-xl bg-[#fff3d6] border border-[#1d1205]/20 py-1.5 px-2">
+                <div className="rounded-xl bg-[#fff3d6] border border-[#140c04]/20 py-1.5 px-2">
                   <div className="text-slate-600 font-bold">
                     {lang === 'zh' ? '累计外卖收入' : 'Lifetime ¥'}
                   </div>
@@ -243,7 +243,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                     ¥{career.totalEarningsYuan.toFixed(1)}
                   </div>
                 </div>
-                <div className="rounded-xl bg-[#fff3d6] border border-[#1d1205]/20 py-1.5 px-2">
+                <div className="rounded-xl bg-[#fff3d6] border border-[#140c04]/20 py-1.5 px-2">
                   <div className="text-slate-600 font-bold">
                     {lang === 'zh' ? '零罚单安全班次' : 'Clean Shifts'}
                   </div>
@@ -342,7 +342,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                 return (
                   <div
                     key={ms.id}
-                    className="bg-[#fffdf5] border-[2.5px] border-[#1d1205] rounded-2xl p-3 flex items-center justify-between gap-3"
+                    className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3 flex items-center justify-between gap-3"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
@@ -414,7 +414,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
         ) : (
           <div className="flex flex-col gap-3">
             {/* Daily Challenge Bronze / Silver / Gold Medal Card */}
-            <div className="bg-[#fffdf5] border-[2.5px] border-[#1d1205] rounded-2xl p-3.5 flex flex-col gap-2.5">
+            <div className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3.5 flex flex-col gap-2.5">
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <div className="text-[11px] font-extrabold text-[#d97706]">
@@ -488,7 +488,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
                     className={`rounded-xl border-2 p-2.5 text-center flex flex-col gap-0.5 ${
                       tier.claimed
                         ? 'bg-[#dcfce7] border-[#16a34a]'
-                        : 'bg-[#fff3d6] border-[#1d1205]/25'
+                        : 'bg-[#fff3d6] border-[#140c04]/25'
                     }`}
                   >
                     <div className="text-2xl">{tier.icon}</div>
@@ -520,7 +520,7 @@ export const CareerLedgerModal: React.FC<CareerLedgerModalProps> = ({
             </div>
 
             {/* 7-Day Check-In & Challenge Streak Card */}
-            <div className="bg-[#fffdf5] border-[2.5px] border-[#1d1205] rounded-2xl p-3.5 flex flex-col gap-2.5">
+            <div className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3.5 flex flex-col gap-2.5">
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <div className="font-display text-base text-[#2b1b08]">

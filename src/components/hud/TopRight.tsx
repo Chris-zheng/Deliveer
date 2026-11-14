@@ -31,7 +31,7 @@ export const TopRight: React.FC<TopRightProps> = (p) => {
               className="hidden md:block pointer-events-auto arcade-boost-rim rounded-full p-1 cursor-pointer"
             >
               <div
-                className="bg-[#493214] border-[2.5px] border-[#1d1205] rounded-full px-5 py-1 relative overflow-hidden flex items-center gap-2"
+                className="bg-[#4b1c08] border-[2.5px] border-[#140c04] rounded-full px-5 py-1 relative overflow-hidden flex items-center gap-2"
                 role="progressbar"
                 aria-label="Turbo boost charge"
                 aria-valuenow={boostPct}
@@ -75,12 +75,12 @@ export const TopRight: React.FC<TopRightProps> = (p) => {
                   cy="14"
                   r="11"
                   fill="#ffffff"
-                  stroke="#1d1205"
+                  stroke="#140c04"
                   strokeWidth="3.2"
                 />
                 <path
                   d="M14 8v6.2l4 3"
-                  stroke="#1d1205"
+                  stroke="#140c04"
                   strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"

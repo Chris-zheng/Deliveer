@@ -180,7 +180,7 @@ export const TopColumns: React.FC<TopColumnsProps> = (p) => {
                 >
                   <span
                     className={`arcade-stroke text-sm sm:text-lg md:text-2xl leading-none ${
-                      isCriticalHealth ? 'text-[#ffdf24]' : 'text-white'
+                      isCriticalHealth ? 'text-[#ffe524]' : 'text-white'
                     }`}
                   >
                     {hud.health}/{hud.maxHealth}
@@ -261,9 +261,9 @@ export const TopColumns: React.FC<TopColumnsProps> = (p) => {
                   />
                   <path d="M28 29L28 10A19 19 0 0144.5 19.5Z" fill="#ff3b3b" />
                   <path d="M28 29L44.5 19.5A19 19 0 0144.5 38.5Z" fill="#2ee54d" />
-                  <path d="M28 29L44.5 38.5A19 19 0 0128 48Z" fill="#ffdf24" />
+                  <path d="M28 29L44.5 38.5A19 19 0 0128 48Z" fill="#ffe524" />
                   <path d="M28 29L28 48A19 19 0 0111.5 38.5Z" fill="#ff3b3b" />
-                  <path d="M28 29L11.5 38.5A19 19 0 0111.5 19.5Z" fill="#ffdf24" />
+                  <path d="M28 29L11.5 38.5A19 19 0 0111.5 19.5Z" fill="#ffe524" />
                   <path d="M28 29L11.5 19.5A19 19 0 0128 10Z" fill="#2ee54d" />
                   <circle
                     cx="28"
@@ -275,7 +275,7 @@ export const TopColumns: React.FC<TopColumnsProps> = (p) => {
                   />
                   <polygon
                     points="18,7 38,7 28,27"
-                    fill="#ffdf24"
+                    fill="#ffe524"
                     stroke="#140c04"
                     strokeWidth="3"
                     strokeLinejoin="round"
@@ -284,7 +284,7 @@ export const TopColumns: React.FC<TopColumnsProps> = (p) => {
                     cx="28"
                     cy="29"
                     r="6"
-                    fill="#ffdf24"
+                    fill="#ffe524"
                     stroke="#140c04"
                     strokeWidth="2.8"
                   />
@@ -314,7 +314,7 @@ export const TopColumns: React.FC<TopColumnsProps> = (p) => {
                 >
                   <polygon
                     points="31,5 43,10 39,16 28,11"
-                    fill="#ffdf24"
+                    fill="#ffe524"
                     stroke="#140c04"
                     strokeWidth="3"
                     strokeLinejoin="round"

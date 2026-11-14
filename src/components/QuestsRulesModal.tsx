@@ -116,7 +116,7 @@ export const QuestsRulesModal: React.FC<QuestsRulesModalProps> = ({
         </div>
 
         {/* Compact Field Handbook */}
-        <div className="bg-[#fffdf5] border-[2.5px] border-[#1d1205] rounded-2xl p-3 text-xs font-semibold text-slate-800 flex flex-col gap-1.5">
+        <div className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3 text-xs font-semibold text-slate-800 flex flex-col gap-1.5">
           <div>
             <strong className="font-display text-[#2b1b08]">
               {lang === 'zh' ? '驾驶与喇叭 [Q]：' : 'Driving & Horn [Q]: '}

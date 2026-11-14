@@ -138,7 +138,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
             pokoAudio.playUiClick();
             onToggleLang();
           }}
-          className="group pointer-events-auto relative px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-gradient-to-b from-[#ffdf24] to-[#f59b14] border-[3px] border-[#5a270f] shadow-[inset_0_2px_0_rgba(255,255,255,0.6),0_3px_0_rgba(50,20,5,0.4)] flex items-center justify-center gap-1.5 cursor-pointer transition-transform hover:-translate-y-0.5 active:translate-y-0.5"
+          className="group pointer-events-auto relative px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-gradient-to-b from-[#ffe524] to-[#f59b14] border-[3px] border-[#5a270f] shadow-[inset_0_2px_0_rgba(255,255,255,0.6),0_3px_0_rgba(50,20,5,0.4)] flex items-center justify-center gap-1.5 cursor-pointer transition-transform hover:-translate-y-0.5 active:translate-y-0.5"
           aria-label={lang === 'zh' ? 'Switch to English' : '切换为简体中文'}
         >
           <span className="text-sm">🌐</span>
@@ -331,7 +331,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
         {/* Row 1: Logo Lockup */}
         <div className="relative z-10 flex flex-col items-center text-center pt-0.5">
           <div
-            style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+            style={{ fontFamily: 'var(--font-display)' }}
             className="text-xs sm:text-sm font-bold tracking-wider text-[#FFF9E6] drop-shadow-[0_2px_0_#6B2D12]"
           >
             {t.gameSubtitle}
@@ -344,7 +344,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
           {/* Bilingual Logo SVG Lockup */}
           {lang === 'zh' ? (
             <div className="my-1 flex flex-col items-center">
-              <div className="arcade-stroke-lg text-4xl sm:text-6xl text-[#ffdf24] tracking-wider drop-shadow-md">
+              <div className="arcade-stroke-lg text-4xl sm:text-6xl text-[#ffe524] tracking-wider drop-shadow-md">
                 极速派送
               </div>
               <div className="arcade-stroke text-2xl sm:text-4xl text-[#9ef01a] -mt-1 sm:-mt-2 tracking-widest">
@@ -407,7 +407,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
               {/* Top Word: COURIER */}
               <g
                 style={{
-                  fontFamily: "'Skranji', 'Lilita One', sans-serif",
+                  fontFamily: 'var(--font-display)',
                   fontWeight: 700,
                   fontSize: '74px',
                 }}
@@ -449,7 +449,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
               {/* Bottom Word: FIELD */}
               <g
                 style={{
-                  fontFamily: "'Skranji', 'Lilita One', sans-serif",
+                  fontFamily: 'var(--font-display)',
                   fontWeight: 700,
                   fontSize: '72px',
                 }}
@@ -527,7 +527,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
             className="arcade-btn-gold h-[52px] rounded-[18px] flex items-center justify-between gap-2 px-4 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
           >
             <span
-              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+              style={{ fontFamily: 'var(--font-display)' }}
               className="arcade-stroke-sm text-white text-base font-bold tracking-wide whitespace-nowrap"
             >
               {lang === 'zh' ? '环球挑战' : 'WORLD TOUR'}
@@ -547,7 +547,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
             className="arcade-btn-green h-[52px] rounded-[18px] flex items-center justify-between gap-2 px-4 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5 disabled:cursor-default"
           >
             <span
-              style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+              style={{ fontFamily: 'var(--font-display)' }}
               className="text-[#FFF8E3] text-base font-bold tracking-wide whitespace-nowrap"
             >
               {lang === 'zh' ? '每日挑战' : 'DAILY CHALLENGE'}
@@ -583,7 +583,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                     pokoAudio.playUiClick();
                     onOpenCareerLedger('daily');
                   }}
-                  className="relative shrink-0 text-[10px] font-extrabold text-[#9E2B0A] underline decoration-[#9E2B0A]/50 underline-offset-2 cursor-pointer"
+                  className="relative shrink-0 text-[10px] font-extrabold text-[#8b290d] underline decoration-[#8b290d]/50 underline-offset-2 cursor-pointer"
                 >
                   {daily.canCheckInToday
                     ? lang === 'zh'
@@ -615,7 +615,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
           >
             <span className="relative z-10 flex flex-col items-center justify-center leading-none">
               <span
-                style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+                style={{ fontFamily: 'var(--font-display)' }}
                 className="text-[#FFF8E3] text-xl sm:text-2xl font-bold tracking-[0.06em] drop-shadow-[0_3px_0_#8B290D] group-hover:scale-[1.02] transition-transform"
               >
                 {lang === 'zh' ? '随机挑战' : 'RANDOM RUN'}
@@ -638,7 +638,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
           className="relative z-10 h-[44px] rounded-[16px] border-[3px] border-[#8B290D]/40 bg-[#FFF3D6]/90 flex items-center justify-center gap-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
         >
           <span
-            style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+            style={{ fontFamily: 'var(--font-display)' }}
             className="text-[#4B1C08] text-sm font-bold tracking-wide"
           >
             {lang === 'zh' ? '设置' : 'SETTINGS'}
@@ -708,15 +708,15 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
             <div className="text-center text-[10px] font-extrabold text-[#4B1C08] leading-relaxed">
               <span className="sm:hidden">{t.controlsTouch}</span>
               <span className="hidden sm:inline">
-                <span className="text-[#9E2B0A]">W/↑</span> {t.controlsDesktopDrive} ·{' '}
-                <span className="text-[#9E2B0A]">S/↓</span> {t.controlsDesktopBrake} ·{' '}
-                <span className="text-[#9E2B0A]">A/D</span> {t.controlsDesktopTurn} ·{' '}
-                <span className="text-[#9E2B0A]">C</span> {lang === 'zh' ? '漂移喷射' : 'Drift'} ·{' '}
-                <span className="text-[#9E2B0A]">F</span> {lang === 'zh' ? '加急' : 'Rush'} ·{' '}
-                <span className="text-[#9E2B0A]">Space</span> {t.controlsDesktopDrop} ·{' '}
-                <span className="text-[#9E2B0A]">Shift</span> {t.controlsDesktopBoost} ·{' '}
-                <span className="text-[#9E2B0A]">V</span> {lang === 'zh' ? '视角' : 'View'} ·{' '}
-                <span className="text-[#9E2B0A]">Q</span> {t.controlsDesktopHorn}
+                <span className="text-[#8b290d]">W/↑</span> {t.controlsDesktopDrive} ·{' '}
+                <span className="text-[#8b290d]">S/↓</span> {t.controlsDesktopBrake} ·{' '}
+                <span className="text-[#8b290d]">A/D</span> {t.controlsDesktopTurn} ·{' '}
+                <span className="text-[#8b290d]">C</span> {lang === 'zh' ? '漂移喷射' : 'Drift'} ·{' '}
+                <span className="text-[#8b290d]">F</span> {lang === 'zh' ? '加急' : 'Rush'} ·{' '}
+                <span className="text-[#8b290d]">Space</span> {t.controlsDesktopDrop} ·{' '}
+                <span className="text-[#8b290d]">Shift</span> {t.controlsDesktopBoost} ·{' '}
+                <span className="text-[#8b290d]">V</span> {lang === 'zh' ? '视角' : 'View'} ·{' '}
+                <span className="text-[#8b290d]">Q</span> {t.controlsDesktopHorn}
               </span>
             </div>
 
@@ -730,7 +730,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                 className="arcade-btn-cream h-[46px] rounded-[16px] flex items-center justify-center px-1 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
               >
                 <span
-                  style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+                  style={{ fontFamily: 'var(--font-display)' }}
                   className="arcade-stroke-sm text-white text-[11px] sm:text-xs font-bold tracking-wide leading-tight text-center"
                 >
                   {t.customMapBtn}
@@ -745,7 +745,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                 className="arcade-btn-green h-[46px] rounded-[16px] flex items-center justify-center px-1 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
               >
                 <span
-                  style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+                  style={{ fontFamily: 'var(--font-display)' }}
                   className="arcade-stroke-sm text-white text-[11px] sm:text-xs font-bold tracking-wide leading-tight text-center"
                 >
                   {t.almanacBtn}
@@ -760,7 +760,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                 className="arcade-btn-cream relative h-[46px] rounded-[16px] flex flex-col items-center justify-center px-1 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
               >
                 <span
-                  style={{ fontFamily: "'Skranji', 'Lilita One', cursive" }}
+                  style={{ fontFamily: 'var(--font-display)' }}
                   className="arcade-stroke-sm text-white text-[11px] sm:text-xs font-bold tracking-wide leading-tight text-center"
                 >
                   {t.careerLedgerBtn}

@@ -121,7 +121,7 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
                 }}
                 className={`px-2.5 py-1 rounded-xl border-2 text-xs font-extrabold cursor-pointer transition ${
                   isSel
-                    ? 'bg-[#ffdf24] border-[#1d1205] text-[#2b1b08]'
+                    ? 'bg-[#ffe524] border-[#140c04] text-[#2b1b08]'
                     : 'bg-[#fffdf5] border-[#784812]/40 text-[#5c3809] hover:bg-amber-50'
                 }`}
               >
@@ -151,7 +151,7 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
                       }}
                       className={`text-left rounded-2xl border-2 p-2.5 flex items-center gap-2.5 cursor-pointer transition ${
                         selectedLoreId === lm.loreId
-                          ? 'bg-[#fff3c4] border-[#1d1205]'
+                          ? 'bg-[#fff3c4] border-[#140c04]'
                           : unlocked
                             ? 'bg-[#fffdf5] border-[#784812]/50 hover:bg-amber-50'
                             : 'bg-stone-200/80 border-stone-400 text-stone-500'
@@ -191,7 +191,7 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
                       }}
                       className={`text-left rounded-2xl border-2 p-2.5 flex items-center gap-2.5 cursor-pointer transition ${
                         selectedLoreId === dish.loreId
-                          ? 'bg-[#fff3c4] border-[#1d1205]'
+                          ? 'bg-[#fff3c4] border-[#140c04]'
                           : unlocked
                             ? 'bg-[#fffdf5] border-[#784812]/50 hover:bg-amber-50'
                             : 'bg-stone-200/80 border-stone-400 text-stone-500'
@@ -216,7 +216,7 @@ export const AlmanacModal: React.FC<AlmanacModalProps> = ({
           </div>
 
           {/* Selected Entry Reader */}
-          <div className="md:col-span-5 bg-[#fffdf5] border-[3px] border-[#1d1205] rounded-2xl p-4 flex flex-col justify-center gap-2.5">
+          <div className="md:col-span-5 bg-[#fffdf5] border-[3px] border-[#140c04] rounded-2xl p-4 flex flex-col justify-center gap-2.5">
             {activeEntry ? (
               discoveredSet.has(activeEntry.loreId) ? (
                 <>

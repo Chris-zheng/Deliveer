@@ -98,7 +98,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
               </h2>
             </div>
 
-            <div className="bg-[#fffdf5] border-[2.5px] border-[#1d1205] rounded-2xl p-3.5 text-xs font-semibold text-slate-800 flex flex-col gap-2">
+            <div className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3.5 text-xs font-semibold text-slate-800 flex flex-col gap-2">
               <div>
                 <strong className="font-display text-sm text-[#2b1b08]">
                   {lang === 'zh' ? '1. 驾驶与喇叭 [Q]：' : '1. Controls & Horn [Q]:'}
@@ -270,8 +270,8 @@ export const StatusModal: React.FC<StatusModalProps> = ({
             </div>
 
             {snapshot?.riderReceipt && (
-              <div className="bg-[#fffdf5] border-[2.5px] border-[#1d1205] rounded-2xl p-3 text-xs text-slate-800 flex flex-col gap-1.5">
-                <div className="flex items-center justify-between border-b border-[#1d1205]/15 pb-1.5">
+              <div className="bg-[#fffdf5] border-[2.5px] border-[#140c04] rounded-2xl p-3 text-xs text-slate-800 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between border-b border-[#140c04]/15 pb-1.5">
                   <span className="font-display text-sm text-[#2b1b08]">
                     <TruckIcon className="mr-1" />{lang === 'zh' ? '骑手本趟收入账单' : 'Rider Shift Receipt'}
                   </span>
@@ -326,7 +326,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                     </span>
                   </div>
                 )}
-                <div className="flex items-center justify-between border-t border-[#1d1205]/15 pt-1.5 font-extrabold text-sm">
+                <div className="flex items-center justify-between border-t border-[#140c04]/15 pt-1.5 font-extrabold text-sm">
                   <span className="text-[#2b1b08]">
                     {lang === 'zh'
                       ? (<>本趟实得净收入 (当前 ¥1={exchangeRate} <CoinIcon />)</>)
@@ -344,7 +344,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                 </div>
 
                 {careerRankInfo && (
-                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-dashed border-[#1d1205]/15">
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-dashed border-[#140c04]/15">
                     <div className="text-[11px] font-bold text-[#92400e]">
                       {careerRankInfo.badge}{' '}
                       {lang === 'zh' ? careerRankInfo.nameZh : careerRankInfo.nameEn}
