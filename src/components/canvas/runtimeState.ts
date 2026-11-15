@@ -1,7 +1,11 @@
 import * as THREE from 'three';
 import { DemoDirectorState, createDemoDirectorState } from '../../game/demoDirector';
-import { OutcomeKind } from '../../game/types';
+import { GamePhase, OutcomeKind } from '../../game/types';
 import type { WeatherKind } from '../../game/weather';
+import {
+  createWeatherVisualState,
+  type WeatherVisualState,
+} from '../../game/weatherTransition';
 import type { GhostSample } from '../../game/ghost';
 import { generateProceduralCity } from '../../game/proceduralCity';
 import {
@@ -123,6 +127,10 @@ export function createRuntimeState({
 let rushPromiseSec = -1;
 let weatherElapsedSec = 0;
 let weatherKind: WeatherKind = 'clear';
+let prevVisualPhase: GamePhase | null = null;
+let weatherVisual: WeatherVisualState = createWeatherVisualState(
+  currentCity.config.atmosphere,
+);
 let runElapsedSec = 0;
 let ghostSampleTimer = 0;
 let ghostSamples: GhostSample[] = [];
@@ -199,6 +207,8 @@ let ghostSamples: GhostSample[] = [];
     rushPromiseSec,
     weatherElapsedSec,
     weatherKind: weatherKind as WeatherKind,
+    prevVisualPhase: prevVisualPhase as GamePhase | null,
+    weatherVisual,
 runElapsedSec,
 ghostSampleTimer,
 ghostSamples,

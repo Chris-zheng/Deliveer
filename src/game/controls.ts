@@ -8,10 +8,10 @@
  */
 
 export type ViewMode = 'chase' | 'far' | 'top' | 'hood' | 'cockpit';
-export type HandlingPreset = 'balanced' | 'arcade';
+export type HandlingPreset = 'beginner' | 'balanced' | 'arcade';
 
 export const VIEW_MODES: ViewMode[] = ['chase', 'far', 'top', 'hood', 'cockpit'];
-export const HANDLING_PRESETS: HandlingPreset[] = ['balanced', 'arcade'];
+export const HANDLING_PRESETS: HandlingPreset[] = ['beginner', 'balanced', 'arcade'];
 
 export const VIEW_MODE_LABELS: Record<ViewMode, { zh: string; en: string }> = {
   chase: { zh: '贴近', en: 'Chase' },
@@ -22,8 +22,52 @@ export const VIEW_MODE_LABELS: Record<ViewMode, { zh: string; en: string }> = {
 };
 
 export const HANDLING_LABELS: Record<HandlingPreset, { zh: string; en: string }> = {
-  balanced: { zh: '均衡', en: 'Balanced' },
-  arcade: { zh: '街机', en: 'Arcade' },
+  beginner: { zh: '新手辅助', en: 'Beginner' },
+  balanced: { zh: '普通均衡', en: 'Normal' },
+  arcade: { zh: '高手竞速', en: 'Pro' },
+};
+
+export interface DifficultyIndicatorMeta {
+  labelEn: 'Beginner' | 'Normal' | 'Pro';
+  labelZh: string;
+  icon: string;
+  bars: 1 | 2 | 3;
+}
+
+export const DIFFICULTY_INDICATOR: Record<HandlingPreset, DifficultyIndicatorMeta> = {
+  beginner: {
+    labelEn: 'Beginner',
+    labelZh: '新手 · Beginner',
+    icon: '🛡️',
+    bars: 1,
+  },
+  balanced: {
+    labelEn: 'Normal',
+    labelZh: '普通 · Normal',
+    icon: '⚖️',
+    bars: 2,
+  },
+  arcade: {
+    labelEn: 'Pro',
+    labelZh: '高手 · Pro',
+    icon: '🏁',
+    bars: 3,
+  },
+};
+
+export const HANDLING_DESCRIPTIONS: Record<HandlingPreset, { zh: string; en: string }> = {
+  beginner: {
+    zh: '限速稳控 · 自动回正车道 · 轻微蹭墙不扣分',
+    en: 'Beginner assist · Calmer speed · Strong lane auto-align · Forgiving curb scrapes',
+  },
+  balanced: {
+    zh: '推荐手感 · 循迹过弯 · 真实刹车/漂移反馈',
+    en: 'Normal balanced · Predictable cornering · True trail-brake & drift',
+  },
+  arcade: {
+    zh: '极速响应 · 转向自动补油 · 锐利飘移过弯',
+    en: 'Pro arcade · Instant response · Auto-creep turns · Sharp drift bites',
+  },
 };
 
 /**
@@ -42,7 +86,7 @@ export const VIEW_FRAMING: Record<
   cockpit: { back: 1.0, up: 1.0, lookAhead: 1.0, fov: 1.0 },
 };
 
-/** Handling feel numbers. Every field is consumed by `sim/truck.ts`. */
+/** Handling feel & driving-difficulty assist numbers. Every field is consumed by `sim/truck.ts`. */
 export interface HandlingProfile {
   /** Base yaw rate in rad/s at full grip. */
   turnSpeedRad: number;
@@ -67,34 +111,87 @@ export interface HandlingProfile {
   minTurnRadius: number;
   /** Extra turn radius granted per unit/second of speed. */
   turnRadiusPerSpeed: number;
+  /** Overall top speed multiplier (lets beginner mode pace down gently). */
+  maxSpeedScale: number;
+  /** Max heading error (rad) where throttle auto-straightens toward nearest cardinal lane. */
+  autoAlignRad: number;
+  /** Exponential rate for heading auto-straightening. */
+  autoAlignRate: number;
+  /** Lateral speed (units/s) pulling the van gently back to right-hand lane center. */
+  laneCenterRate: number;
+  /** Axis impact speed threshold before wall/curb grazing triggers bounce & fragile break. */
+  curbBounceSpeed: number;
+  /** Prop impact speed threshold before roadside prop bumps break fragile cargo. */
+  propBounceSpeed: number;
+  /** Multiplier for wrong-way ticket meter accumulation rate. */
+  wrongWayRateScale: number;
+  /** Minimum speed at which steering auto-triggers drift without holding C. */
+  driftEntrySpeed: number;
 }
 
 export const HANDLING_PROFILES: Record<HandlingPreset, HandlingProfile> = {
-  // Forgiving: radius-first steering that can always make a city corner.
-  balanced: {
-    turnSpeedRad: 3.3,
-    highSpeedTurnMult: 0.62,
-    accelExp: 10.5,
-    boostAccelExp: 9.5,
-    coastDrag: 6.5,
-    steerSmoothSec: 0.1,
-    steerAssistThrottle: 0,
-    steerRampSpeed: 1.8,
-    minTurnRadius: 1.55,
-    turnRadiusPerSpeed: 0.17,
+  // Beginner: calmer top speed, smooth steering filter, auto-creep on turns, strong lane straightening, forgiving curb scrapes.
+  beginner: {
+    turnSpeedRad: 3.15,
+    highSpeedTurnMult: 0.86,
+    accelExp: 8.8,
+    boostAccelExp: 8.2,
+    coastDrag: 7.8,
+    steerSmoothSec: 0.095,
+    steerAssistThrottle: 0.52,
+    steerRampSpeed: 1.1,
+    minTurnRadius: 1.18,
+    turnRadiusPerSpeed: 0.095,
+    maxSpeedScale: 0.84,
+    autoAlignRad: 0.62,
+    autoAlignRate: 8.2,
+    laneCenterRate: 2.25,
+    curbBounceSpeed: 3.4,
+    propBounceSpeed: 3.0,
+    wrongWayRateScale: 0.5,
+    driftEntrySpeed: 7.8,
   },
-  // The pre-tuning arcade feel, kept for players who liked the sharp response.
+  // Balanced: forgiving radius-first steering that clears 90-degree city intersections cleanly at speed.
+  balanced: {
+    turnSpeedRad: 3.6,
+    highSpeedTurnMult: 0.78,
+    accelExp: 11.2,
+    boostAccelExp: 10.5,
+    coastDrag: 6.5,
+    steerSmoothSec: 0.065,
+    steerAssistThrottle: 0,
+    steerRampSpeed: 1.4,
+    minTurnRadius: 1.25,
+    turnRadiusPerSpeed: 0.11,
+    maxSpeedScale: 1.0,
+    autoAlignRad: 0.24,
+    autoAlignRate: 4.2,
+    laneCenterRate: 1.15,
+    curbBounceSpeed: 2.1,
+    propBounceSpeed: 1.9,
+    wrongWayRateScale: 1.0,
+    driftEntrySpeed: 6.2,
+  },
+  // Snappy arcade drift feel with sharp low-radius response.
   arcade: {
-    turnSpeedRad: 3.9,
+    turnSpeedRad: 4.1,
     highSpeedTurnMult: 1.0,
-    accelExp: 13.0,
-    boostAccelExp: 12.5,
+    accelExp: 13.5,
+    boostAccelExp: 13.0,
     coastDrag: 9.5,
     steerSmoothSec: 0,
     steerAssistThrottle: 0.68,
     steerRampSpeed: 0,
-    minTurnRadius: 1.15,
-    turnRadiusPerSpeed: 0.11,
+    minTurnRadius: 1.05,
+    turnRadiusPerSpeed: 0.08,
+    maxSpeedScale: 1.0,
+    autoAlignRad: 0.18,
+    autoAlignRate: 3.2,
+    laneCenterRate: 0.75,
+    curbBounceSpeed: 2.1,
+    propBounceSpeed: 1.9,
+    wrongWayRateScale: 1.0,
+    driftEntrySpeed: 5.8,
   },
 };
 
@@ -121,7 +218,7 @@ function isViewMode(value: unknown): value is ViewMode {
 }
 
 function isHandling(value: unknown): value is HandlingPreset {
-  return value === 'balanced' || value === 'arcade';
+  return value === 'beginner' || value === 'balanced' || value === 'arcade';
 }
 
 function ensureLoaded(): void {

@@ -237,7 +237,8 @@ export function computeAutopilotDrive(
   const desiredYaw = Math.hypot(dx, dz) > 0.15 ? Math.atan2(dx, dz) : truck.yaw;
   const yawErr = wrapAngle(desiredYaw - truck.yaw);
 
-  const steer = Math.max(-1, Math.min(1, yawErr * 2.35));
+  // Positive yawErr (+yaw = left) requires negative steer input in stepTruckPhysics.
+  const steer = Math.max(-1, Math.min(1, -yawErr * 2.35));
   const sharpTurn = Math.abs(yawErr) > 0.62;
   const throttle = sharpTurn && truck.speed > 5.8 ? 0.55 : 1.0;
   const wantsDrift = Math.abs(yawErr) > 0.72 && truck.speed > 5.6;
@@ -289,6 +290,9 @@ function placeTruckOnApproachToStop(
       truck.vz = Math.cos(d.yaw) * speed;
       truck.isWrongWay = false;
       truck.wrongWayTimer = 0;
+      truck.steerSmooth = 0;
+      truck.isDrifting = false;
+      truck.driftChargeAccum = 0;
       return;
     }
   }
@@ -339,8 +343,12 @@ function stageScene3CanalRampJump(truck: TruckState, city: GeneratedCity): void 
   truck.vx = fwdX * launchApproachSpd;
   truck.vz = fwdZ * launchApproachSpd;
   truck.boostCooldown = 0;
+  truck.boostTimer = 0;
   truck.isWrongWay = false;
   truck.wrongWayTimer = 0;
+  truck.steerSmooth = 0;
+  truck.isDrifting = false;
+  truck.driftChargeAccum = 0;
 }
 
 function stageScene4ClashAndShield(truck: TruckState, city: GeneratedCity): void {
@@ -374,6 +382,9 @@ function stageScene4ClashAndShield(truck: TruckState, city: GeneratedCity): void
           truck.speed = 6.6;
           truck.vx = 6.6;
           truck.vz = 0;
+          truck.steerSmooth = 0;
+          truck.isDrifting = false;
+          truck.driftChargeAccum = 0;
 
           const cruiser = city.hazards.find((h) => h.kind === HazardKind.Cruiser);
           if (cruiser) {
@@ -556,7 +567,7 @@ export function stepDemoDirector(
       const along = dxR * Math.sin(ramp.yaw) + dzR * Math.cos(ramp.yaw);
       if (along > -0.4) {
         const aimYaw = Math.atan2(dxR, dzR);
-        steer = Math.max(-1, Math.min(1, wrapAngle(aimYaw - truck.yaw) * 3.0));
+        steer = Math.max(-1, Math.min(1, -wrapAngle(aimYaw - truck.yaw) * 3.0));
         throttle = 1.0;
         wantsDrift = false;
       }

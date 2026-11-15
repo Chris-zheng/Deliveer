@@ -101,6 +101,7 @@ export function createInitialTruckState(
     pitchAngle: 0,
     steerAngle: 0,
     isReversing: false,
+    reverseHoldTimer: 0,
     isWrongWay: false,
     wrongWayTimer: 0,
     ticketCooldown: 0,
@@ -223,7 +224,7 @@ export function stepTruckPhysics(
     Math.abs(steerIn) > 0.45 &&
     truck.speed > 4.6 &&
     truck.y <= 0.05;
-  if (canDrift && (input.wantsDrift || truck.speed > 6.2)) {
+  if (canDrift && (input.wantsDrift || truck.speed > handling.driftEntrySpeed)) {
     truck.isDrifting = true;
     truck.driftChargeAccum += clampedDt;
     truck.boostCooldown = Math.max(0, truck.boostCooldown - clampedDt * 1.35);
@@ -252,35 +253,32 @@ export function stepTruckPhysics(
     }
   }
 
-  // 1. Vehicle-Relative Forward Steering + Trail Braking + Intersection Corner-Entry Assist:
+  // 1. Vehicle-Relative Forward Steering + Trail Braking + High-Speed Turn Scaling:
   //    steer < 0 = Turn Left (+yaw), steer > 0 = Turn Right (-yaw).
-  //    Reverse is strictly prohibited — S / ArrowDown only applies wheel brakes!
-  //    While moving (>0.35), braking allows trail-braking turn-in at 0.62x rate.
+  //    Braking while moving (>0.35) shifts weight forward for nimble trail-braking turn-in (1.14x).
   const halfPi = Math.PI * 0.5;
   const trailBraking = isBraking && truck.speed > 0.35;
   if (Math.abs(steerIn) > 0.01 && (!isBraking || trailBraking || truck.isReversing)) {
-    // Reversing swings the nose the other way, and keeps a pivot floor so a
-    // dead-end three-point turn stays possible at walking pace.
     const turnDir = truck.isReversing ? steerIn : -steerIn;
-    const driftTurnBonus = truck.isDrifting ? 1.14 : 1.0;
-    const trailBrakeMult = trailBraking && !truck.isReversing ? 0.62 : 1.0;
-    // Radius-first yaw: the van traces a turn circle of R = minTurnRadius +
-    // turnRadiusPerSpeed * v, so a city corner is always makeable and the
-    // steering feels identical at every speed instead of snapping at a crawl.
+    const driftTurnBonus = truck.isDrifting ? 1.26 : 1.0;
+    const trailBrakeMult = trailBraking && !truck.isReversing ? 1.14 : 1.0;
     const speedAbs = Math.abs(truck.speed);
     const turnRadius = handling.minTurnRadius + handling.turnRadiusPerSpeed * speedAbs;
     const radiusYaw = speedAbs / Math.max(0.001, turnRadius);
-    // Crawl authority: below the ramp speed the yaw fades with the radius model,
-    // so a single tap can no longer pirouette the van in place.
     const lowSpeedRamp =
       handling.steerRampSpeed > 0
         ? Math.min(1, speedAbs / handling.steerRampSpeed)
         : 1;
-    // Reversing keeps a pivot floor so a dead-end three-point turn works.
-    const reverseFloor = truck.isReversing ? 1.6 : 0;
+    // Wire highSpeedTurnMult smoothly between 4.0 m/s and TRUCK_MAX_SPEED.
+    const highSpeedNorm = Math.min(
+      1,
+      Math.max(0, (speedAbs - 4.0) / Math.max(1, TRUCK_MAX_SPEED - 4.0)),
+    );
+    const highSpeedScale = 1 - (1 - handling.highSpeedTurnMult) * highSpeedNorm;
+    const reverseFloor = truck.isReversing ? 1.65 : 0;
     const turnSpeedRad =
       Math.max(
-        Math.min(radiusYaw, handling.turnSpeedRad * spec.turnSpeedMult),
+        Math.min(radiusYaw, handling.turnSpeedRad * spec.turnSpeedMult * highSpeedScale),
         reverseFloor * lowSpeedRamp,
       ) *
       driftTurnBonus *
@@ -316,29 +314,43 @@ export function stepTruckPhysics(
       city.tiles[gcNow.row + aheadRowStep]?.[gcNow.col + aheadColStep],
     );
 
-    if (!truck.isReversing && !sideOpen && aheadOpen) {
-      const maxLean = 0.42;
-      const rel = wrapAngleRad(nextYaw - cardinalYaw);
-      const clampedRel = Math.max(-maxLean, Math.min(maxLean, rel));
-      nextYaw = wrapAngleRad(cardinalYaw + clampedRel);
+    // Gentle alley-glide guard when accelerating straight through a 1-tile corridor (!sideOpen && aheadOpen),
+    // preventing accidental side-wall slams on early turns while leaving braking, reversing, and U-turns free.
+    if (
+      !truck.isReversing &&
+      !isBraking &&
+      !sideOpen &&
+      aheadOpen
+    ) {
+      const prevRel = wrapAngleRad(truck.yaw - cardinalYaw);
+      const maxLean = 0.44;
+      if (Math.abs(prevRel) <= 0.65) {
+        const rel = wrapAngleRad(nextYaw - cardinalYaw);
+        const clampedRel = Math.max(-maxLean, Math.min(maxLean, rel));
+        nextYaw = wrapAngleRad(cardinalYaw + clampedRel);
+      }
     }
 
     truck.yaw = nextYaw;
-  } else if (!isBraking && (throttleIn > 0.05 || truck.boostTimer > 0)) {
+  } else if (!isBraking && !truck.isDrifting && (throttleIn > 0.05 || truck.boostTimer > 0)) {
+    // Subtle/assist cardinal alignment depending on difficulty preset.
     const nearestCardinal = Math.round(truck.yaw / halfPi) * halfPi;
     const cardDiff = wrapAngleRad(nearestCardinal - truck.yaw);
-    if (Math.abs(cardDiff) < 0.72) {
+    if (Math.abs(cardDiff) < handling.autoAlignRad) {
       truck.yaw = wrapAngleRad(
-        truck.yaw + cardDiff * (1 - Math.exp(-8.5 * clampedDt)),
+        truck.yaw + cardDiff * (1 - Math.exp(-handling.autoAlignRate * clampedDt)),
       );
     }
   }
 
-  // 2. Forward-Only Throttle & Crisp Curbside Braking (Reverse Prohibited!)
+  // 2. Throttle, Smooth Brake-to-Reverse Hold Delay & Lateral Drift Grip Separation
   const fwdX = Math.sin(truck.yaw);
   const fwdZ = Math.cos(truck.yaw);
+  const rightDirX = -Math.cos(truck.yaw);
+  const rightDirZ = Math.sin(truck.yaw);
   const topFwdSpeed =
     (truck.boostTimer > 0 ? TRUCK_BOOST_SPEED : TRUCK_MAX_SPEED) *
+    handling.maxSpeedScale *
     spec.maxSpeedMult;
 
   let effThrottle = Math.max(0, throttleIn);
@@ -347,10 +359,25 @@ export function stepTruckPhysics(
   }
 
   const wetGripMult = (city.config.hasSunshower ? 0.86 : 1.0) * getWeatherGripMult();
+  const curFwdProj = truck.vx * fwdX + truck.vz * fwdZ;
 
-  // Brake pedal: shed speed fast, then keep holding S to back up slowly.
-  const wantsReverse = throttleIn < -0.05 && Math.abs(truck.speed) < 0.25;
-  truck.isReversing = wantsReverse || (truck.isReversing && throttleIn < -0.05);
+  // Brake first; once stopped, hold S for TRUCK_REVERSE_ENTER_SEC (0.22s) before backing up.
+  if (throttleIn < -0.05) {
+    if (truck.isReversing) {
+      truck.reverseHoldTimer = TRUCK_REVERSE_ENTER_SEC;
+    } else if (truck.speed < 0.35 && curFwdProj <= 0.35) {
+      truck.reverseHoldTimer = (truck.reverseHoldTimer ?? 0) + clampedDt;
+      if (truck.reverseHoldTimer >= TRUCK_REVERSE_ENTER_SEC) {
+        truck.isReversing = true;
+      }
+    } else {
+      truck.reverseHoldTimer = 0;
+      truck.isReversing = false;
+    }
+  } else {
+    truck.reverseHoldTimer = 0;
+    truck.isReversing = false;
+  }
 
   if (truck.isReversing) {
     truck.boostTimer = 0;
@@ -368,19 +395,24 @@ export function stepTruckPhysics(
       truck.vx = 0;
       truck.vz = 0;
     }
-  } else if (truck.boostTimer > 0) { truck.isReversing = false;
-    const targetVx = fwdX * topFwdSpeed;
-    const targetVz = fwdZ * topFwdSpeed;
-    const accelRate = 1 - Math.exp(-handling.boostAccelExp * spec.accelMult * clampedDt);
-    truck.vx += (targetVx - truck.vx) * accelRate;
-    truck.vz += (targetVz - truck.vz) * accelRate;
-  } else if (effThrottle > 0.01) { truck.isReversing = false;
-    const targetSpd = effThrottle * topFwdSpeed;
-    const targetVx = fwdX * targetSpd;
-    const targetVz = fwdZ * targetSpd;
-    const accelRate = 1 - Math.exp(-handling.accelExp * spec.accelMult * wetGripMult * clampedDt);
-    truck.vx += (targetVx - truck.vx) * accelRate;
-    truck.vz += (targetVz - truck.vz) * accelRate;
+  } else if (truck.boostTimer > 0 || effThrottle > 0.01) {
+    truck.isReversing = false;
+    const targetSpd =
+      truck.boostTimer > 0 ? topFwdSpeed : effThrottle * topFwdSpeed;
+    const baseExp =
+      truck.boostTimer > 0
+        ? handling.boostAccelExp * spec.accelMult
+        : handling.accelExp * spec.accelMult * wetGripMult;
+    const fwdVel = truck.vx * fwdX + truck.vz * fwdZ;
+    const latVel = truck.vx * rightDirX + truck.vz * rightDirZ;
+    const fwdRate = 1 - Math.exp(-baseExp * clampedDt);
+    // During drift, lower lateral grip so the van slides cleanly at a controllable slip angle!
+    const latGripExp = (truck.isDrifting ? 3.8 : 13.5) * wetGripMult;
+    const latRate = 1 - Math.exp(-latGripExp * clampedDt);
+    const nextFwdVel = fwdVel + (targetSpd - fwdVel) * fwdRate;
+    const nextLatVel = latVel * (1 - latRate);
+    truck.vx = fwdX * nextFwdVel + rightDirX * nextLatVel;
+    truck.vz = fwdZ * nextFwdVel + rightDirZ * nextLatVel;
   } else {
     const drag = Math.exp(-handling.coastDrag * clampedDt);
     truck.vx *= drag;
@@ -489,7 +521,7 @@ export function stepTruckPhysics(
     } else {
       const axisSpd = Math.abs(truck.vx);
       const gate = findBlockingBridgeGate(city, nextX, truck.z, TRUCK_RADIUS, truck.y);
-      if (axisSpd > 2.1 || (gate && axisSpd > 1.0)) {
+      if (axisSpd > handling.curbBounceSpeed || (gate && axisSpd > 1.0)) {
         const dirSign = Math.sign(truck.vx) || 1;
         emitWallOrGateCrash(
           truck.x + dirSign * 0.58,
@@ -535,7 +567,7 @@ export function stepTruckPhysics(
     } else {
       const axisSpd = Math.abs(truck.vz);
       const gate = findBlockingBridgeGate(city, truck.x, nextZ, TRUCK_RADIUS, truck.y);
-      if (axisSpd > 2.1 || (gate && axisSpd > 1.0)) {
+      if (axisSpd > handling.curbBounceSpeed || (gate && axisSpd > 1.0)) {
         const dirSign = Math.sign(truck.vz) || 1;
         emitWallOrGateCrash(
           truck.x,
@@ -576,7 +608,7 @@ export function stepTruckPhysics(
           truck.vz += nz * (-vn + bounce);
         }
         const imp = Math.max(prevSpeed, Math.hypot(truck.vx, truck.vz));
-        if ((truck.wallCrashCooldown ?? 0) <= 0 && imp > 1.9) {
+        if ((truck.wallCrashCooldown ?? 0) <= 0 && imp > handling.propBounceSpeed) {
           truck.wallCrashCooldown = 0.45;
           truck.boostTimer = 0;
           handleCurbBump(imp > 5.0);
@@ -614,6 +646,7 @@ export function stepTruckPhysics(
   if (
     Math.abs(steerIn) < 0.02 &&
     !isBraking &&
+    !truck.isDrifting &&
     roadDeg <= 2 &&
     Math.hypot(truck.vx, truck.vz) > 1.2
   ) {
@@ -621,19 +654,21 @@ export function stepTruckPhysics(
       (truck.x - centerAfter.x) * -Math.cos(truck.yaw) +
       (truck.z - centerAfter.z) * Math.sin(truck.yaw);
     if (curLatRight >= -0.14) {
-      if (Math.abs(fwdX) > 0.92) {
+      if (Math.abs(fwdX) > 0.96) {
         const targetZ = centerAfter.z + Math.sign(fwdX) * RIGHT_LANE_OFFSET;
         const dzErr = targetZ - truck.z;
         const pullZ =
-          truck.z + Math.sign(dzErr) * Math.min(Math.abs(dzErr), 2.1 * clampedDt);
+          truck.z +
+          Math.sign(dzErr) * Math.min(Math.abs(dzErr), handling.laneCenterRate * clampedDt);
         if (isPositionDrivable(city, truck.x, pullZ, TRUCK_RADIUS, truck.y)) {
           truck.z = pullZ;
         }
-      } else if (Math.abs(fwdZ) > 0.92) {
+      } else if (Math.abs(fwdZ) > 0.96) {
         const targetX = centerAfter.x - Math.sign(fwdZ) * RIGHT_LANE_OFFSET;
         const dxErr = targetX - truck.x;
         const pullX =
-          truck.x + Math.sign(dxErr) * Math.min(Math.abs(dxErr), 2.1 * clampedDt);
+          truck.x +
+          Math.sign(dxErr) * Math.min(Math.abs(dxErr), handling.laneCenterRate * clampedDt);
         if (isPositionDrivable(city, pullX, truck.z, TRUCK_RADIUS, truck.y)) {
           truck.x = pullX;
         }
@@ -648,14 +683,30 @@ export function stepTruckPhysics(
   truck.distanceTraveled += Math.max(0, signedMove >= 0 ? stepDist : 0);
   truck.speed = stepDist / Math.max(clampedDt, 0.0001);
 
-  // 4. Wrong-Way Lane Enforcement & Ticket Citation!
+  // 4. Wrong-Way Lane Enforcement & Ticket Citation (exempts active turns/drifts, reversing, and passing stopped AI traffic)!
   const latRightNow =
     (truck.x - centerAfter.x) * -Math.cos(truck.yaw) +
     (truck.z - centerAfter.z) * Math.sin(truck.yaw);
-  if (roadDeg <= 2 && truck.speed > 1.75 && latRightNow < -0.16 && truck.y <= 0.2) {
+  const isManeuveringOrOvertaking =
+    truck.isReversing ||
+    truck.isDrifting ||
+    Math.abs(steerIn) > 0.35 ||
+    city.hazards.some((h) => {
+      if (h.currentSpeed > 1.8) return false;
+      const hx = h.x - truck.x;
+      const hz = h.z - truck.z;
+      return hx * hx + hz * hz < 18.0;
+    });
+  if (
+    roadDeg <= 2 &&
+    !isManeuveringOrOvertaking &&
+    truck.speed > 1.75 &&
+    latRightNow < -0.16 &&
+    truck.y <= 0.2
+  ) {
     truck.isWrongWay = true;
     if (truck.ticketCooldown <= 0) {
-      truck.wrongWayTimer += clampedDt;
+      truck.wrongWayTimer += clampedDt * handling.wrongWayRateScale;
       if (truck.wrongWayTimer >= WRONG_WAY_LIMIT_SEC) {
         issuedTicket = 'wrong_way';
         truck.ticketsCount += 1;

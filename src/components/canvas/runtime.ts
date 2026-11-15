@@ -123,6 +123,7 @@ import {
 } from '../../game/types';
 import { MinimapSnapshot } from '../GameHud';
 import { createEffectsSystem } from './effects';
+import { createWeatherParticleSystem } from './weatherParticles';
 import { buildStaticCityGeometry } from './cityGeometry';
 import { buildCityActors, type SpawnedIslandBird } from './actors';
 import { createSceneStage } from './sceneStage';
@@ -254,6 +255,11 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
         S.truckState.squashY = Math.max(0.88, S.truckState.squashY - 0.035);
         fx.spawnParticleBurst(coinX, coinY + 0.1, coinZ, 4, [0xffe524, 0xffffff, 0xff9f1c], 0.6);
       },
+    });
+    const weatherFx = createWeatherParticleSystem({
+      scene,
+      sunLight,
+      hemiLight,
     });
     const { flyingParcels, flyingCoins } = fx;
     const spawnParticleBurst = fx.spawnParticleBurst;
@@ -438,6 +444,8 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
     const titleStepDeps: TitleStepDeps = { camera, camLookTarget, waterPlane };
     const visualDeps: VisualDeps = {
       fx,
+      weatherFx,
+      camLookTarget,
       truckRig,
       windStreakRig,
       refreshForwardRoadPath,
@@ -484,6 +492,13 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
       S.visualClock += dt;
 
       const currentPhase = phaseRef.current;
+      if (currentPhase !== S.prevVisualPhase) {
+        if (currentPhase === GamePhase.Playing) {
+          const fromPause = S.prevVisualPhase === GamePhase.Paused;
+          weatherFx.triggerPlayingTransition(S, fromPause ? 1.55 : 2.4);
+        }
+        S.prevVisualPhase = currentPhase;
+      }
 
       // Hit flash decay
       if (S.hitFlashTimer > 0) {
@@ -606,6 +621,7 @@ export function createCanvasRuntime({ container, refs }: CanvasRuntimeDeps): Can
 
         level.disposeLevelGroup();
         fx.dispose();
+        weatherFx.dispose();
         Object.values(sharedGeos).forEach((g) => g.dispose());
         Object.values(sharedMats).forEach((m) => m.dispose());
         waterGeo.dispose();

@@ -221,6 +221,32 @@ export const MobileDeck: React.FC<MobileDeckProps> = (p) => {
               </svg>
             </button>
 
+            {hud.deliveredCount < hud.totalStops && !hud.demoActive && (
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-label={lang === 'zh' ? '加急承诺' : 'Rush Promise'}
+                disabled={hud.rushPromiseSec >= 0}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  if (hud.rushPromiseSec < 0) {
+                    touchControls.rushPulse = true;
+                  }
+                }}
+                className={`${
+                  hud.rushPromiseSec >= 0 ? 'arcade-btn-cream ring-2 ring-[var(--red)]' : 'arcade-btn-gold'
+                } h-11 px-2 rounded-2xl flex flex-col items-center justify-center shrink-0 cursor-pointer`}
+              >
+                <span className="arcade-stroke-sm text-white text-[11px] leading-none whitespace-nowrap">
+                  {hud.rushPromiseSec >= 0
+                    ? `${hud.rushPromiseSec.toFixed(0)}s`
+                    : lang === 'zh'
+                      ? '⚡加急'
+                      : '⚡RUSH'}
+                </span>
+              </button>
+            )}
+
             <button
               type="button"
               tabIndex={-1}

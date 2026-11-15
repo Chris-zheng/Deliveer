@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { pokoAudio } from '../game/audio';
 import { I18N, SupportedLanguage } from '../game/i18n';
 import {
@@ -17,6 +17,16 @@ import {
   isWorldCityUnlocked,
 } from '../game/worldCities';
 import { LevelConfig, PlayerProgression } from '../game/types';
+
+function getDefaultStageForCity(city: WorldCityDef, prog: PlayerProgression): number {
+  if (!isWorldCityUnlocked(city, prog)) return 1;
+  for (let s = 1; s <= city.stages.length; s++) {
+    const playable = s === 1 || (prog.worldCityStars[`${city.id}:${s - 1}`] ?? 0) > 0;
+    const stars = prog.worldCityStars[`${city.id}:${s}`] ?? 0;
+    if (playable && stars === 0) return s;
+  }
+  return city.stages[city.stages.length - 1]?.stage ?? 1;
+}
 
 interface WorldMapModalProps {
   open: boolean;
@@ -35,7 +45,9 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
 }) => {
   const [continentFilter, setContinentFilter] = useState<'all' | ContinentId>('all');
   const [selectedCityId, setSelectedCityId] = useState<string>('beijing');
-  const [selectedStage, setSelectedStage] = useState<number>(1);
+  const [selectedStage, setSelectedStage] = useState<number>(() =>
+    getDefaultStageForCity(WORLD_CITIES[0], progression),
+  );
 
   const totalStars = useMemo(() => getTotalWorldStars(progression), [progression]);
 
@@ -49,6 +61,11 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
 
   const activeCity: WorldCityDef =
     WORLD_CITIES.find((c) => c.id === selectedCityId) ?? filteredCities[0] ?? WORLD_CITIES[0];
+
+  useEffect(() => {
+    if (!open) return;
+    setSelectedStage(getDefaultStageForCity(activeCity, progression));
+  }, [open, activeCity.id]);
 
   if (!open) return null;
 
@@ -141,7 +158,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
                 const firstInCont = WORLD_CITIES.find((c) => c.continent === cont.id);
                 if (firstInCont) {
                   setSelectedCityId(firstInCont.id);
-                  setSelectedStage(1);
+                  setSelectedStage(getDefaultStageForCity(firstInCont, progression));
                 }
               }}
               className={`px-3 py-1.5 rounded-xl border-2 text-xs font-extrabold cursor-pointer transition ${
@@ -170,7 +187,7 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({
                   onClick={() => {
                     pokoAudio.playUiClick();
                     setSelectedCityId(city.id);
-                    setSelectedStage(1);
+                    setSelectedStage(getDefaultStageForCity(city, progression));
                   }}
                   className={`text-left rounded-2xl border-2 p-2.5 transition flex items-center justify-between gap-2 cursor-pointer ${
                     isSelected

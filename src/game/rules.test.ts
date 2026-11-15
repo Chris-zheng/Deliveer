@@ -54,6 +54,7 @@ import {
   stepTruckPhysics,
   triggerMusicalHorn,
 } from './rules';
+import { setHandlingPreset } from './controls';
 import {
   HazardKind,
   HazardPhase,
@@ -1064,3 +1065,200 @@ test('customer archetypes, rush promise, star tiers and spin economics stay bala
     SPIN_WHEEL_SLICES.length;
   assert.ok(wheelEv < SPIN_COST_COINS, `wheel EV ${wheelEv} must stay below cost ${SPIN_COST_COINS}`);
 });
+
+test('Phase A driving physics: reverse hold delay, trail-braking bite, drift lateral slip, highSpeedTurnMult & overtaking tolerance', () => {
+  const city = generateProceduralCity(1);
+
+  // 1. Reverse delay (TRUCK_REVERSE_ENTER_SEC = 0.22s): short 0.10s brake tap at standstill does not reverse; holding >= 0.25s engages reverse
+  const tapTruck = createInitialTruckState(city);
+  stepTruckPhysics(tapTruck, { throttle: -1, steer: 0, wantsBoost: false }, city, 0.05);
+  stepTruckPhysics(tapTruck, { throttle: -1, steer: 0, wantsBoost: false }, city, 0.05);
+  assert.equal(tapTruck.isReversing, false, 'Short 0.10s S tap at standstill should not jerk into reverse');
+  for (let i = 0; i < 4; i++) {
+    stepTruckPhysics(tapTruck, { throttle: -1, steer: 0, wantsBoost: false }, city, 0.05);
+  }
+  assert.equal(tapTruck.isReversing, true, 'Holding S past TRUCK_REVERSE_ENTER_SEC must engage reverse');
+
+  // 2. Trail braking increases initial corner turn-in rate at corner-entry speed vs neutral coasting
+  const spawnTile = gridToWorld(city.spawnCoord, city.totalGridSize);
+  const trailA = createInitialTruckState(city);
+  trailA.x = spawnTile.x + 2.6;
+  trailA.z = spawnTile.z;
+  trailA.yaw = Math.PI / 2;
+  trailA.vx = 5.2;
+  trailA.speed = 5.2;
+  trailA.steerSmooth = -1;
+  const coastA = { ...trailA, steerSmooth: -1 };
+  stepTruckPhysics(trailA, { throttle: -1, steer: -1, wantsBoost: false, rawAnalogSteer: true }, city, 0.05);
+  stepTruckPhysics(coastA, { throttle: 0, steer: -1, wantsBoost: false, rawAnalogSteer: true }, city, 0.05);
+  assert.ok(
+    Math.abs(trailA.yaw - Math.PI / 2) > Math.abs(coastA.yaw - Math.PI / 2),
+    'Trail braking at corner-entry speed must provide sharper corner turn-in bite than coasting',
+  );
+
+  // 3. Drifting builds measurable lateral slip angle relative to heading before straightening out
+  const driftTruck = createInitialTruckState(city);
+  driftTruck.x = spawnTile.x + 2.6;
+  driftTruck.z = spawnTile.z;
+  driftTruck.yaw = Math.PI / 2;
+  driftTruck.vx = 8.4;
+  driftTruck.vz = 0;
+  driftTruck.speed = 8.4;
+  for (let i = 0; i < 8; i++) {
+    stepTruckPhysics(
+      driftTruck,
+      { throttle: 1, steer: -1, wantsBoost: false, wantsDrift: true, rawAnalogSteer: true },
+      city,
+      0.05,
+    );
+  }
+  assert.equal(driftTruck.isDrifting, true, 'Sustained high-speed drift turn must stay drifting');
+  const driftRightX = -Math.cos(driftTruck.yaw);
+  const driftRightZ = Math.sin(driftTruck.yaw);
+  const lateralSlip = Math.abs(driftTruck.vx * driftRightX + driftTruck.vz * driftRightZ);
+  assert.ok(lateralSlip > 0.35, `Drifting should produce genuine lateral slip velocity, got ${lateralSlip.toFixed(3)}`);
+
+  // 4. Passing a stopped cruiser on the oncoming lane must NOT build wrong_way penalty
+  const passTruck = createInitialTruckState(city);
+  const passCity = generateProceduralCity(2);
+  const pCenter = gridToWorld(passCity.spawnCoord, passCity.totalGridSize);
+  const stoppedCruiser = passCity.hazards.find((h) => h.kind === HazardKind.Cruiser);
+  assert.ok(stoppedCruiser);
+  stoppedCruiser.x = pCenter.x + 1.8;
+  stoppedCruiser.z = pCenter.z + RIGHT_LANE_OFFSET;
+  stoppedCruiser.currentSpeed = 0;
+
+  for (let i = 0; i < 45; i++) {
+    passTruck.x = pCenter.x + 0.8;
+    passTruck.z = pCenter.z - 0.55;
+    passTruck.yaw = Math.PI / 2;
+    passTruck.vx = 5.0;
+    passTruck.vz = 0;
+    passTruck.speed = 5.0;
+    stepTruckPhysics(passTruck, { throttle: 1, steer: 0, wantsBoost: false }, passCity, 0.05);
+  }
+  assert.equal(passTruck.isWrongWay, false, 'Passing a stopped AI cruiser in left lane must not warn wrong-way');
+  assert.equal(passTruck.ticketsCount, 0, 'Overtaking stopped traffic must not issue wrong_way tickets');
+});
+
+test('Beginner driving difficulty: lower top speed, stronger auto-align, forgiving curb scrape & gentler wrong-way buildup', () => {
+  const city = generateProceduralCity(1);
+  const spawnTile = gridToWorld(city.spawnCoord, city.totalGridSize);
+
+  try {
+    // 1. Lower top speed vs balanced (track peak straight-line speed before reaching end-of-block)
+    const begCity = generateProceduralCity(1);
+    setHandlingPreset('beginner');
+    const begTruck = createInitialTruckState(begCity);
+    let begPeak = 0;
+    for (let i = 0; i < 30; i++) {
+      stepTruckPhysics(begTruck, { throttle: 1, steer: 0, wantsBoost: false }, begCity, 0.05);
+      begPeak = Math.max(begPeak, begTruck.speed);
+    }
+
+    const balCity = generateProceduralCity(1);
+    setHandlingPreset('balanced');
+    const balTruck = createInitialTruckState(balCity);
+    let balPeak = 0;
+    for (let i = 0; i < 30; i++) {
+      stepTruckPhysics(balTruck, { throttle: 1, steer: 0, wantsBoost: false }, balCity, 0.05);
+      balPeak = Math.max(balPeak, balTruck.speed);
+    }
+    assert.ok(
+      begPeak < balPeak * 0.9,
+      `Beginner peak speed (${begPeak.toFixed(2)}) must be meaningfully gentler than balanced (${balPeak.toFixed(2)})`,
+    );
+
+    // 2. Stronger auto-align: starting 0.48 rad off-axis (~27.5°) snaps sharply toward 0 rad in beginner,
+    //    whereas balanced leaves off-axis lines free (>0.24 rad threshold).
+    setHandlingPreset('beginner');
+    const begAlign = createInitialTruckState(city);
+    begAlign.x = spawnTile.x;
+    begAlign.z = spawnTile.z;
+    begAlign.yaw = 0.48;
+    begAlign.vx = Math.sin(0.48) * 5;
+    begAlign.vz = Math.cos(0.48) * 5;
+    begAlign.speed = 5;
+    stepTruckPhysics(begAlign, { throttle: 1, steer: 0, wantsBoost: false }, city, 0.05);
+
+    setHandlingPreset('balanced');
+    const balAlign = createInitialTruckState(city);
+    balAlign.x = spawnTile.x;
+    balAlign.z = spawnTile.z;
+    balAlign.yaw = 0.48;
+    balAlign.vx = Math.sin(0.48) * 5;
+    balAlign.vz = Math.cos(0.48) * 5;
+    balAlign.speed = 5;
+    stepTruckPhysics(balAlign, { throttle: 1, steer: 0, wantsBoost: false }, city, 0.05);
+    assert.ok(
+      Math.abs(begAlign.yaw) < Math.abs(balAlign.yaw) - 0.1,
+      `Beginner should strongly straighten out a 27.5° diagonal slip (${begAlign.yaw.toFixed(3)} vs ${balAlign.yaw.toFixed(3)})`,
+    );
+
+    // 3. Forgiving mild wall/curb scrape (~2.2–2.3 m/s perpendicular): no crash event or fragile damage in beginner vs bump in balanced.
+    const findWallRow = () => {
+      for (let r = 0; r < city.totalGridSize; r++) {
+        for (let c = 0; c < city.totalGridSize; c++) {
+          if (city.tiles[r]?.[c] && isDrivableTile(city.tiles[r][c]) && !isDrivableTile(city.tiles[r - 1]?.[c])) {
+            return { row: r, col: c };
+          }
+        }
+      }
+      return null;
+    };
+    const edgeCell = findWallRow();
+    assert.ok(edgeCell);
+    const edgePos = gridToWorld(edgeCell, city.totalGridSize);
+
+    setHandlingPreset('beginner');
+    const scrapeBeg = createInitialTruckState(city);
+    scrapeBeg.x = edgePos.x;
+    scrapeBeg.z = edgePos.z - 1.46; // grazing northern non-drivable curb
+    scrapeBeg.yaw = Math.PI;
+    scrapeBeg.vz = -3.2;
+    scrapeBeg.speed = 3.2;
+    const begRes = stepTruckPhysics(scrapeBeg, { throttle: 0, steer: 0, wantsBoost: false }, city, 0.05);
+    assert.equal(begRes.crashEvents.length, 0, 'Beginner should slide cleanly along a mild ~2.2 m/s curb scrape without a crash event');
+    assert.equal(scrapeBeg.fragileIntact, true, 'Beginner mild curb scrape must keep fragile parcel intact');
+
+    setHandlingPreset('balanced');
+    const scrapeBal = createInitialTruckState(city);
+    scrapeBal.x = edgePos.x;
+    scrapeBal.z = edgePos.z - 1.46;
+    scrapeBal.yaw = Math.PI;
+    scrapeBal.vz = -3.2;
+    scrapeBal.speed = 3.2;
+    const balRes = stepTruckPhysics(scrapeBal, { throttle: 0, steer: 0, wantsBoost: false }, city, 0.05);
+    assert.ok(balRes.crashEvents.length >= 1, 'Balanced should register a bump at ~2.3 m/s perpendicular impact');
+
+    // 4. Gentler wrong-way timer buildup in beginner
+    setHandlingPreset('beginner');
+    const wwBeg = createInitialTruckState(city);
+    wwBeg.x = spawnTile.x;
+    wwBeg.z = spawnTile.z - 0.65;
+    wwBeg.yaw = Math.PI / 2;
+    wwBeg.vx = 5.0;
+    wwBeg.speed = 5.0;
+    stepTruckPhysics(wwBeg, { throttle: 1, steer: 0, wantsBoost: false }, city, 0.05);
+
+    setHandlingPreset('balanced');
+    const wwBal = createInitialTruckState(city);
+    wwBal.x = spawnTile.x;
+    wwBal.z = spawnTile.z - 0.65;
+    wwBal.yaw = Math.PI / 2;
+    wwBal.vx = 5.0;
+    wwBal.speed = 5.0;
+    stepTruckPhysics(wwBal, { throttle: 1, steer: 0, wantsBoost: false }, city, 0.05);
+
+    if (wwBeg.isWrongWay && wwBal.isWrongWay) {
+      assert.ok(
+        wwBeg.wrongWayTimer < wwBal.wrongWayTimer,
+        `Beginner wrongWayTimer (${wwBeg.wrongWayTimer.toFixed(4)}) should accumulate slower than balanced (${wwBal.wrongWayTimer.toFixed(4)})`,
+      );
+    }
+  } finally {
+    setHandlingPreset('balanced');
+  }
+});
+
+

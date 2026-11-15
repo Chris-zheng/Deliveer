@@ -190,6 +190,45 @@ export const DesktopPedals: React.FC<DesktopPedalsProps> = (p) => {
             </svg>
           </button>
 
+          {hud.deliveredCount < hud.totalStops && !hud.demoActive && (
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-label={lang === 'zh' ? '加急承诺 [F]' : 'Engage Rush Promise [F]'}
+              title={
+                lang === 'zh'
+                  ? '加急承诺 [F] — 限时送达得高额加急奖励'
+                  : 'Rush Promise [F] — Gamble for extra points & coins'
+              }
+              disabled={hud.rushPromiseSec >= 0}
+              onClick={(e) => {
+                e.currentTarget.blur();
+                touchControls.rushPulse = true;
+                triggerWindowKeyPulse('KeyF');
+              }}
+              className={`${
+                hud.rushPromiseSec >= 0
+                  ? 'arcade-btn-cream ring-2 ring-[var(--red)] cursor-default'
+                  : 'arcade-btn-gold cursor-pointer hover:-translate-y-0.5 active:translate-y-0.5'
+              } h-14 px-3 rounded-2xl flex flex-col items-center justify-center shrink-0 transition-transform`}
+            >
+              <span className="arcade-stroke-sm text-white text-xs leading-none whitespace-nowrap">
+                {hud.rushPromiseSec >= 0
+                  ? `🔥 ${hud.rushPromiseSec.toFixed(1)}s`
+                  : lang === 'zh'
+                    ? '⚡ 加急'
+                    : '⚡ RUSH'}
+              </span>
+              <span className="text-[10px] font-extrabold text-[var(--ink-soft)] leading-tight mt-0.5 whitespace-nowrap">
+                {hud.rushPromiseSec >= 0
+                  ? lang === 'zh'
+                    ? '承诺中'
+                    : 'ACTIVE'
+                  : '[F]'}
+              </span>
+            </button>
+          )}
+
           <button
             type="button"
             tabIndex={-1}

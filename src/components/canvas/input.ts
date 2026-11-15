@@ -64,7 +64,19 @@ const SCROLL_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space']
 export function attachInputListeners(deps: InputListenerDeps): () => void {
   const { state, canvas } = deps;
 
+  const isEditableTarget = (target: EventTarget | null): boolean => {
+    if (!(target instanceof HTMLElement)) return false;
+    const tag = target.tagName;
+    return (
+      tag === 'INPUT' ||
+      tag === 'TEXTAREA' ||
+      tag === 'SELECT' ||
+      target.isContentEditable
+    );
+  };
+
   const onKeyDown = (e: KeyboardEvent) => {
+    if (isEditableTarget(e.target)) return;
     if (SCROLL_KEYS.includes(e.code) && deps.getPhase() === GamePhase.Playing) {
       e.preventDefault();
     }
@@ -80,8 +92,12 @@ export function attachInputListeners(deps: InputListenerDeps): () => void {
       deps.onExitDemo();
       return;
     }
-    // V cycles chase / far / top framing at any time (persisted per player).
-    if (e.code === 'KeyV' && !e.repeat) {
+    // V cycles view mode only during active gameplay/pause (not while a modal is open).
+    if (
+      e.code === 'KeyV' &&
+      !e.repeat &&
+      (deps.getPhase() === GamePhase.Playing || deps.getPhase() === GamePhase.Paused)
+    ) {
       deps.onCycleView(cycleViewMode());
       return;
     }
@@ -91,7 +107,7 @@ export function attachInputListeners(deps: InputListenerDeps): () => void {
       }
       state.keysHeld.add(e.code);
       if (e.code === 'Space' || e.code === 'KeyE') {
-        state.spaceBufferTimer = 0.14;
+        state.spaceBufferTimer = 0.22;
       }
     }
     if (

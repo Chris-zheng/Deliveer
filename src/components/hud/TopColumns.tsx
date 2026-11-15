@@ -31,6 +31,14 @@ export const TopColumns: React.FC<TopColumnsProps> = (p) => {
     onOpenQuests,
     hasClaimableQuest,
   } = p;
+  const [confirmRetry, setConfirmRetry] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!confirmRetry) return;
+    const timer = window.setTimeout(() => setConfirmRetry(false), 2600);
+    return () => window.clearTimeout(timer);
+  }, [confirmRetry]);
+
   return (
     <>
 <div className="flex flex-col items-start gap-1.5 md:gap-2.5 min-w-0">
@@ -295,17 +303,24 @@ export const TopColumns: React.FC<TopColumnsProps> = (p) => {
                 </span>
               </button>
 
-              {/* Button 2: Golden Stopwatch RETRY */}
+              {/* Button 2: Golden Stopwatch RETRY (2-tap inline confirm to prevent accidental mid-run resets) */}
               <button
                 type="button"
                 tabIndex={-1}
-                aria-label={t.restart}
-                title={t.restart}
+                aria-label={confirmRetry ? (lang === 'zh' ? '再次点击确认重试' : 'Tap again to confirm retry') : t.restart}
+                title={confirmRetry ? (lang === 'zh' ? '再次点击确认重试本关' : 'Click again to restart shift') : t.restart}
                 onClick={(e) => {
                   e.currentTarget.blur();
-                  onRestart();
+                  if (!confirmRetry) {
+                    setConfirmRetry(true);
+                  } else {
+                    setConfirmRetry(false);
+                    onRestart();
+                  }
                 }}
-                className="arcade-dock-tab rounded-r-[26px] md:rounded-r-[34px] pl-2.5 md:pl-3 pr-3 md:pr-4 pt-1.5 md:pt-2 pb-1 md:pb-1.5 flex flex-col items-center justify-center min-w-[76px] md:min-w-[86px] relative cursor-pointer"
+                className={`arcade-dock-tab rounded-r-[26px] md:rounded-r-[34px] pl-2.5 md:pl-3 pr-3 md:pr-4 pt-1.5 md:pt-2 pb-1 md:pb-1.5 flex flex-col items-center justify-center min-w-[76px] md:min-w-[86px] relative cursor-pointer ${
+                  confirmRetry ? 'ring-2 ring-[var(--red)]' : ''
+                }`}
               >
                 <svg
                   viewBox="0 0 56 56"
@@ -354,8 +369,12 @@ export const TopColumns: React.FC<TopColumnsProps> = (p) => {
                   <circle cx="21" cy="38" r="1.5" fill="#475569" />
                   <circle cx="33" cy="38" r="1.5" fill="#475569" />
                 </svg>
-                <span className="-mt-1 md:-mt-1.5 arcade-stroke-sm text-white text-xs sm:text-xs md:text-base uppercase leading-none whitespace-nowrap">
-                  {t.retry}
+                <span
+                  className={`-mt-1 md:-mt-1.5 arcade-stroke-sm text-xs sm:text-xs md:text-base uppercase leading-none whitespace-nowrap ${
+                    confirmRetry ? 'text-[var(--yellow)] animate-pulse' : 'text-white'
+                  }`}
+                >
+                  {confirmRetry ? (lang === 'zh' ? '确认重试?' : 'SURE?') : t.retry}
                 </span>
               </button>
 

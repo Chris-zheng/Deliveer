@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { pokoAudio } from '../game/audio';
 import { I18N, SupportedLanguage } from '../game/i18n';
 import { DiscoveryLorePayload, ParcelKind } from '../game/types';
@@ -27,8 +27,11 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
   onToggleAlwaysShow,
   onConfirmDeliver,
 }) => {
+  const openedAtRef = useRef<number>(0);
+
   useEffect(() => {
     if (!item) return;
+    openedAtRef.current = typeof performance !== 'undefined' ? performance.now() : Date.now();
     if (item.kind === 'landmark') {
       pokoAudio.playDiscoveryChime('landmark', item.isFirstDiscovery);
     } else if (item.isFirstDiscovery) {
@@ -42,6 +45,10 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
       if (e.code === 'Enter' || e.code === 'Space' || e.code === 'Escape') {
         e.preventDefault();
         e.stopImmediatePropagation();
+        const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+        if (e.code !== 'Escape' && now - openedAtRef.current < 260) {
+          return;
+        }
         pokoAudio.playUiClick();
         onConfirmDeliver();
       }

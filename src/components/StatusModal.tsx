@@ -5,6 +5,14 @@
 
 import React from 'react';
 import { pokoAudio } from '../game/audio';
+import {
+  HANDLING_DESCRIPTIONS,
+  HANDLING_LABELS,
+  HANDLING_PRESETS,
+  getHandlingPreset,
+  setHandlingPreset,
+  type HandlingPreset,
+} from '../game/controls';
 import { I18N, SupportedLanguage } from '../game/i18n';
 import { GamePhase, OutcomeKind, RunSnapshot } from '../game/types';
 
@@ -12,6 +20,7 @@ interface StatusModalProps {
   phase: GamePhase;
   snapshot: RunSnapshot | null;
   currentLevel: number;
+  isDailyRun?: boolean;
   lang: SupportedLanguage;
   careerRankInfo?: {
     badge: string;
@@ -42,6 +51,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
   phase,
   snapshot,
   currentLevel,
+  isDailyRun = false,
   lang,
   careerRankInfo,
   dailyMedalResult,
@@ -55,9 +65,21 @@ export const StatusModal: React.FC<StatusModalProps> = ({
   onExchangeEarnings,
   onBackToTitle,
 }) => {
+  const [handling, setHandlingState] = React.useState<HandlingPreset>(() => getHandlingPreset());
+
+  React.useEffect(() => {
+    setHandlingState(getHandlingPreset());
+  }, [phase]);
+
   if (phase !== GamePhase.Paused && phase !== GamePhase.GameOver) {
     return null;
   }
+
+  const pickHandling = (next: HandlingPreset) => {
+    setHandlingPreset(next);
+    setHandlingState(next);
+    pokoAudio.playUiClick();
+  };
 
   const t = I18N[lang];
   const isPaused = phase === GamePhase.Paused;
@@ -122,6 +144,39 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                 {lang === 'zh'
                   ? '正中金色靶心奖 2x 连击，热食急件要快送，大件包裹请减速停车！'
                   : 'Hit Gold Bullseye for 2x Combo, deliver Hot Thermal bags fast, and brake for Large Crates!'}
+              </div>
+            </div>
+
+            <div className="bg-[var(--paper)] border-2 border-[var(--ink)] rounded-2xl p-3 flex flex-col gap-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-display text-xs font-extrabold text-[var(--ink-soft)]">
+                  {lang === 'zh' ? '驾驶难度调节' : 'Driving Difficulty'}
+                </span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {HANDLING_PRESETS.map((preset) => {
+                    const active = handling === preset;
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => pickHandling(preset)}
+                        className={`rounded-lg border-2 px-2.5 py-0.5 text-xs font-extrabold transition cursor-pointer ${
+                          active
+                            ? 'border-[var(--ink-soft)] bg-[var(--orange)] text-[var(--paper)] shadow-[0_2px_0_#8B290D]'
+                            : 'border-[var(--ink-soft)]/30 bg-[var(--cream)] text-[var(--ink-soft)] hover:bg-[var(--paper)]'
+                        }`}
+                        aria-pressed={active}
+                      >
+                        {lang === 'zh' ? HANDLING_LABELS[preset].zh : HANDLING_LABELS[preset].en}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="text-[11px] font-bold text-slate-600 leading-snug">
+                {lang === 'zh'
+                  ? HANDLING_DESCRIPTIONS[handling].zh
+                  : HANDLING_DESCRIPTIONS[handling].en}
               </div>
             </div>
 
@@ -198,9 +253,11 @@ export const StatusModal: React.FC<StatusModalProps> = ({
           <>
             <div className="arcade-pill-brown rounded-2xl px-4 py-3 text-center">
               <div className="text-xs font-extrabold text-[var(--yellow)] tracking-wide">
-                {isCustomCity
-                  ? snapshot?.customCity?.districtName || t.customDistrictBadge
-                  : `${t.stageLabel.replace('{level}', String(snapshot?.level ?? currentLevel))} · ${snapshot?.districtName ?? 'Island Quarter'}`}
+                {isDailyRun
+                  ? `${lang === 'zh' ? '📅 每日挑战' : '📅 Daily Challenge'} · ${snapshot?.districtName ?? ''}`
+                  : isCustomCity
+                    ? snapshot?.customCity?.districtName || t.customDistrictBadge
+                    : `${t.stageLabel.replace('{level}', String(snapshot?.level ?? currentLevel))} · ${snapshot?.districtName ?? 'Island Quarter'}`}
               </div>
               <h2
                 id="modal-heading"
@@ -424,20 +481,36 @@ export const StatusModal: React.FC<StatusModalProps> = ({
             <div className="flex flex-col gap-2.5">
               {isVictory ? (
                 <>
-                  {canAdvanceNextStage && (
+                  {isDailyRun ? (
                     <button
                       type="button"
                       data-start="true"
                       onClick={() => {
                         pokoAudio.playUiClick();
-                        onNextLevel();
+                        onRestart();
                       }}
                       className="arcade-btn-gold w-full py-3.5 px-5 rounded-2xl cursor-pointer whitespace-nowrap"
                     >
                       <span className="arcade-stroke text-white text-lg sm:text-xl">
-                        {t.nextStage} ({worldCityId ? `STAGE ${worldStage + 1}/10` : `STAGE ${(snapshot?.level ?? currentLevel) + 1}`})
+                        {lang === 'zh' ? '再刷每日挑战高分' : 'REPLAY DAILY CHALLENGE'}
                       </span>
                     </button>
+                  ) : (
+                    canAdvanceNextStage && (
+                      <button
+                        type="button"
+                        data-start="true"
+                        onClick={() => {
+                          pokoAudio.playUiClick();
+                          onNextLevel();
+                        }}
+                        className="arcade-btn-gold w-full py-3.5 px-5 rounded-2xl cursor-pointer whitespace-nowrap"
+                      >
+                        <span className="arcade-stroke text-white text-lg sm:text-xl">
+                          {t.nextStage} ({worldCityId ? `STAGE ${worldStage + 1}/10` : `STAGE ${(snapshot?.level ?? currentLevel) + 1}`})
+                        </span>
+                      </button>
+                    )
                   )}
                   <div className="grid grid-cols-2 gap-2.5">
                     <button
@@ -478,7 +551,11 @@ export const StatusModal: React.FC<StatusModalProps> = ({
                     className="arcade-btn-gold w-full py-3.5 px-5 rounded-2xl cursor-pointer whitespace-nowrap"
                   >
                     <span className="arcade-stroke text-white text-lg sm:text-xl">
-                      {t.tryAgain}
+                      {isDailyRun
+                        ? lang === 'zh'
+                          ? '重挑每日挑战'
+                          : 'RETRY DAILY CHALLENGE'
+                        : t.tryAgain}
                     </span>
                   </button>
                   <div className="grid grid-cols-2 gap-2.5">

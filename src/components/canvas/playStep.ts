@@ -574,11 +574,12 @@ export function stepPlay(
             : touchControls.deliverPulse;
           touchControls.deliverPulse = false;
           if (usedTouchDeliver) {
-            input.spaceBufferTimer = 0.16;
+            input.spaceBufferTimer = 0.22;
           }
 
-          // Consume buffered Space/E/Touch-Deliver: if in Express Toss range, toss parcel! Otherwise trigger Turbo Boost!
-          let wantsBoost = S.demoState.active
+          // Space / E / Deliver-tap only throws parcels (with a 220ms arrival grace window) and
+          // never misfires Turbo Boost outside the ring; Boost is strictly Shift or Boost button.
+          const wantsBoost = S.demoState.active
             ? Boolean(demoOut?.wantsBoost)
             : input.keysJustPressed.has('ShiftLeft') ||
               input.keysJustPressed.has('ShiftRight') ||
@@ -592,13 +593,6 @@ export function stepPlay(
             if (preElig.canExpressToss && !demoBlockEarlyFinalDrop) {
               input.spaceBufferTimer = 0;
               triggerParcelDelivery(true, preElig.canBullseyeToss);
-            } else if (
-              !S.demoState.active &&
-              (input.keysJustPressed.has('Space') || usedTouchDeliver) &&
-              S.truckState.boostCooldown <= 0
-            ) {
-              input.spaceBufferTimer = 0;
-              wantsBoost = true;
             }
           }
 

@@ -19,7 +19,7 @@ export const TILE_SIZE = 2.6;
 export const RIGHT_LANE_OFFSET = 0.44;
 
 /** Vehicle motion & collision. */
-export const TRUCK_MAX_SPEED = 8.6;
+export const TRUCK_MAX_SPEED = 9.6;
 export const TRUCK_BOOST_SPEED = 13.4;
 export const TRUCK_REVERSE_SPEED = 3.4;
 export const TRUCK_REVERSE_ENTER_SEC = 0.22;
@@ -106,8 +106,8 @@ export const RUSH_PROMISE_FAIL_TIME_PENALTY_SEC = 5.0;
 export const RUSH_PROMISE_FAIL_REVIEW_PENALTY = 0.1;
 
 /** 2-Stage Drift Mini-Turbo thresholds & boost durations. */
-export const DRIFT_TIER1_SEC = 0.55;
-export const DRIFT_TIER2_SEC = 1.25;
+export const DRIFT_TIER1_SEC = 0.32;
+export const DRIFT_TIER2_SEC = 0.78;
 export const DRIFT_BOOST_TIER1_SEC = 0.52;
 export const DRIFT_BOOST_TIER2_SEC = 0.85;
 

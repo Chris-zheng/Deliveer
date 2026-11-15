@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { TILE_SIZE } from '../../config/balance';
-import { OutcomeKind, ShiftAtmosphere } from '../../game/types';
+import { OutcomeKind } from '../../game/types';
 import { VIEW_FRAMING, getViewMode } from '../../game/controls';
 import type { RuntimeState } from './runtimeState';
 import {
@@ -81,16 +81,10 @@ export function updateCameraFraming(dt: number, S: RuntimeState, deps: CameraFra
 
         const demoZoomOut = S.demoState.active ? S.demoState.transitionZoomAlpha : 0;
         const swoopA = Math.min(S.countdownState.swoopAlpha, 1 - demoZoomOut);
-        // Keep fog pushed back during high Bird's-Eye overview so the entire miniature island sparkles crisply!
+        // Keep fog pushed back during high Bird's-Eye overview while letting mid-run weather (rain/fog) tighten street visibility smoothly!
         if (scene.fog instanceof THREE.Fog) {
-          const baseFogNear =
-            S.currentCity.config.atmosphere === ShiftAtmosphere.TwilightNeon
-              ? 54
-              : 58;
-          const baseFogFar =
-            S.currentCity.config.atmosphere === ShiftAtmosphere.TwilightNeon
-              ? 122
-              : 128;
+          const baseFogNear = S.weatherVisual.fogNear;
+          const baseFogFar = S.weatherVisual.fogFar;
           const ovwFactor = 1 - swoopA;
           scene.fog.near = baseFogNear + ovwFactor * 98;
           scene.fog.far = baseFogFar + ovwFactor * 165;
@@ -177,11 +171,12 @@ export function updateCameraFraming(dt: number, S: RuntimeState, deps: CameraFra
           );
 
           const followDamp = 1 - Math.exp(-9.5 * dt);
-          const lookAheadDist = cockpit > 0 ? 12 : hood > 0 ? 9 : activeLookAhead;
+          const viewSign = (cockpit > 0 || hood > 0) && reverseBlend > 0.35 ? -1 : 1;
+          const lookAheadDist = (cockpit > 0 ? 12 : hood > 0 ? 9 : activeLookAhead) * viewSign;
           const leadX = S.truckState.x + Math.sin(S.camYaw) * lookAheadDist;
           const leadZ = S.truckState.z + Math.cos(S.camYaw) * lookAheadDist;
           camLookTarget.x += (leadX - camLookTarget.x) * followDamp;
-          const lookTargetY = cockpit > 0 ? 1.35 : hood > 0 ? 1.5 : targetLookY;
+          const lookTargetY = cockpit > 0 ? 1.35 : hood > 0 ? 1.35 : targetLookY;
           camLookTarget.y += (lookTargetY - camLookTarget.y) * followDamp;
           camLookTarget.z += (leadZ - camLookTarget.z) * followDamp;
 
@@ -194,19 +189,21 @@ export function updateCameraFraming(dt: number, S: RuntimeState, deps: CameraFra
             shakeAmt > 0.001 ? Math.cos(S.visualClock * 47) * shakeAmt : 0;
 
           if (hood > 0) {
-            // Bonnet cam: engine-cover height just in front of the windscreen.
+            // Bonnet cam: low on front nose/hood forward of roof-rack cargo stack (flips rearwards on reverse).
+            const hoodOffset = viewSign > 0 ? 0.58 : -0.78;
             camera.position.set(
-              S.truckState.x - Math.sin(S.camYaw) * 0.25 + rightX * shakeLat,
-              2.46,
-              S.truckState.z - Math.cos(S.camYaw) * 0.25 + rightZ * shakeLat,
+              S.truckState.x + Math.sin(S.camYaw) * hoodOffset + rightX * shakeLat,
+              1.92,
+              S.truckState.z + Math.cos(S.camYaw) * hoodOffset + rightZ * shakeLat,
             );
           } else if (cockpit > 0) {
             // Eye at the driver's head, just behind the windscreen: the van body is
             // hidden in this mode so nothing clips through the lens.
+            const eyeOffset = viewSign > 0 ? 0.42 : -0.42;
             camera.position.set(
-              S.truckState.x + Math.sin(S.camYaw) * 0.42 + rightX * shakeLat,
+              S.truckState.x + Math.sin(S.camYaw) * eyeOffset + rightX * shakeLat,
               1.58,
-              S.truckState.z + Math.cos(S.camYaw) * 0.42 + rightZ * shakeLat,
+              S.truckState.z + Math.cos(S.camYaw) * eyeOffset + rightZ * shakeLat,
             );
           } else {
             camera.position.set(

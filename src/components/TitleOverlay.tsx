@@ -8,6 +8,8 @@ import { pokoAudio } from '../game/audio';
 import { I18N, SupportedLanguage } from '../game/i18n';
 import { LevelConfig } from '../game/types';
 import {
+  DIFFICULTY_INDICATOR,
+  HANDLING_DESCRIPTIONS,
   HANDLING_LABELS,
   HANDLING_PRESETS,
   VIEW_MODE_LABELS,
@@ -50,6 +52,9 @@ interface TitleOverlayProps {
     hasLedgerNotice: boolean;
   };
   onStartDaily?: () => void;
+  onOpenShop?: () => void;
+  coins?: number;
+  hasFreeSpin?: boolean;
   onOpenCareerLedger?: (tab?: 'career' | 'daily') => void;
   onToggleMute: () => void;
   onToggleLang: () => void;
@@ -98,6 +103,9 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
   daily,
   careerSummary,
   onStartDaily,
+  onOpenShop,
+  coins = 0,
+  hasFreeSpin = false,
   onOpenCareerLedger,
   onToggleMute,
   onToggleLang,
@@ -111,6 +119,31 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
   const [viewMode, setViewModeState] = React.useState<ViewMode>(() => getViewMode());
   const [handling, setHandlingState] = React.useState<HandlingPreset>(() => getHandlingPreset());
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const difficultyMeta = DIFFICULTY_INDICATOR[handling];
+  const difficultyStyles: Record<
+    HandlingPreset,
+    { badge: string; bar: string; emptyBar: string; activeBtn: string }
+  > = {
+    beginner: {
+      badge: 'bg-emerald-600 text-white border-[var(--ink-soft)]',
+      bar: 'bg-[#fef9c3]',
+      emptyBar: 'bg-black/25',
+      activeBtn: 'border-[var(--ink-soft)] bg-emerald-600 text-white shadow-[0_2px_0_#065f46]',
+    },
+    balanced: {
+      badge: 'bg-amber-400 text-[var(--ink)] border-[var(--ink-soft)]',
+      bar: 'bg-[var(--ink)]',
+      emptyBar: 'bg-black/15',
+      activeBtn: 'border-[var(--ink-soft)] bg-[var(--orange)] text-[var(--paper)] shadow-[0_2px_0_#8B290D]',
+    },
+    arcade: {
+      badge: 'bg-rose-600 text-white border-[var(--ink-soft)]',
+      bar: 'bg-[#fef08a]',
+      emptyBar: 'bg-black/25',
+      activeBtn: 'border-[var(--ink-soft)] bg-rose-600 text-white shadow-[0_2px_0_#881337]',
+    },
+  };
+  const activeDiffStyle = difficultyStyles[handling];
   const pickView = (next: ViewMode) => {
     setViewMode(next);
     setViewModeState(next);
@@ -507,13 +540,74 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
           )}
         </div>
 
-        {/* Row 2: compact how-to strip (replaces the three banner cards) */}
+        {/* Row 2: compact how-to strip + Driving Difficulty Selector */}
         <div className="relative z-10 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-[16px] border-2 border-[var(--ink-soft)]/30 bg-[var(--cream)]/85 px-3 py-1.5 text-xs font-extrabold text-[var(--ink-soft)]">
           <span>{lang === 'zh' ? '跟箭头跑' : 'Follow arrows'}</span>
           <span className="text-[var(--orange)]">·</span>
           <span>{lang === 'zh' ? '限时送达' : 'Beat the clock'}</span>
           <span className="text-[var(--orange)]">·</span>
           <span>{lang === 'zh' ? '命中圆环 ×2' : 'Bullseye ×2'}</span>
+        </div>
+
+        <div className="relative z-10 rounded-[18px] border-2 border-[var(--ink-soft)]/35 bg-[var(--cream)]/92 px-3 py-2 flex flex-col gap-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-extrabold text-[var(--ink-soft)]">
+                {lang === 'zh' ? '驾驶难度' : 'Difficulty'}
+              </span>
+              <div
+                data-testid="difficulty-indicator"
+                role="status"
+                aria-label={`${lang === 'zh' ? '当前难度：' : 'Selected difficulty: '}${difficultyMeta.labelEn}`}
+                className={`inline-flex items-center gap-1.5 rounded-[10px] border-2 px-2 py-0.5 text-[11px] font-black tracking-wide shadow-[0_2px_0_rgba(50,20,5,0.22)] ${activeDiffStyle.badge}`}
+              >
+                <span aria-hidden="true">{difficultyMeta.icon}</span>
+                <span>{lang === 'zh' ? difficultyMeta.labelZh : difficultyMeta.labelEn}</span>
+                <span
+                  className="inline-flex items-end gap-[2px] ml-0.5"
+                  aria-hidden="true"
+                >
+                  {[1, 2, 3].map((step) => {
+                    const filled = step <= difficultyMeta.bars;
+                    const heights = ['h-1.5', 'h-2.5', 'h-3'];
+                    return (
+                      <span
+                        key={step}
+                        className={`w-[4px] ${heights[step - 1]} rounded-[2px] border border-[var(--ink-soft)]/70 transition-colors ${
+                          filled ? activeDiffStyle.bar : activeDiffStyle.emptyBar
+                        }`}
+                      />
+                    );
+                  })}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {HANDLING_PRESETS.map((preset) => {
+                const active = handling === preset;
+                return (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => pickHandling(preset)}
+                    className={`rounded-[10px] border-[2px] px-2.5 py-0.5 text-xs font-extrabold transition cursor-pointer ${
+                      active
+                        ? difficultyStyles[preset].activeBtn
+                        : 'border-[var(--ink-soft)]/35 bg-[var(--paper)] text-[var(--ink-soft)] hover:bg-[var(--cream)]'
+                    }`}
+                    aria-pressed={active}
+                  >
+                    {lang === 'zh' ? HANDLING_LABELS[preset].zh : HANDLING_LABELS[preset].en}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="text-[11px] font-bold text-[var(--ink-soft)]/85 leading-snug">
+            {lang === 'zh'
+              ? HANDLING_DESCRIPTIONS[handling].zh
+              : HANDLING_DESCRIPTIONS[handling].en}
+          </div>
         </div>
 
         {/* Row 3: the four menu entries — world tour, daily, random run, settings */}
@@ -621,13 +715,75 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                 {lang === 'zh' ? '随机挑战' : 'RANDOM RUN'}
               </span>
               <span className="mt-1 text-xs font-extrabold text-[var(--paper)]">
-                {lang === 'zh' ? '随机街区 · 随机天气' : 'random district · random weather'}
+                {lang === 'zh'
+                  ? `随机街区 · 随机天气 · ${difficultyMeta.labelEn}`
+                  : `random district · random weather · ${difficultyMeta.labelEn}`}
               </span>
             </span>
           </button>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                pokoAudio.playUiClick();
+                onOpenShop?.();
+              }}
+              disabled={!onOpenShop}
+              className="arcade-btn-cream relative h-[48px] rounded-[16px] flex flex-col items-center justify-center px-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5 disabled:opacity-60"
+            >
+              <span
+                style={{ fontFamily: 'var(--font-display)' }}
+                className="arcade-stroke-sm text-white text-xs sm:text-sm font-bold tracking-wide leading-tight"
+              >
+                🔧 {t.garageShop}
+              </span>
+              <span className="text-[11px] font-extrabold text-[var(--ink-soft)] leading-none mt-0.5 tabular-nums">
+                🪙 {coins.toLocaleString()}
+                {hasFreeSpin ? (lang === 'zh' ? ' · 可抽奖' : ' · Spin!') : ''}
+              </span>
+              {hasFreeSpin && (
+                <span
+                  className="absolute top-1.5 right-2 w-2 h-2 rounded-full bg-[var(--red)] animate-pulse"
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                pokoAudio.playUiClick();
+                onOpenCareerLedger?.('career');
+              }}
+              disabled={!onOpenCareerLedger}
+              className="arcade-btn-cream relative h-[48px] rounded-[16px] flex flex-col items-center justify-center px-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5 disabled:opacity-60"
+            >
+              <span
+                style={{ fontFamily: 'var(--font-display)' }}
+                className="arcade-stroke-sm text-white text-xs sm:text-sm font-bold tracking-wide leading-tight"
+              >
+                📒 {t.careerLedgerBtn}
+              </span>
+              {careerSummary && (
+                <span className="text-[11px] font-extrabold text-[var(--ink-soft)] leading-none mt-0.5 truncate max-w-full">
+                  {careerSummary.rankBadge} {careerSummary.rankName}
+                  {careerSummary.unconvertedYuan >= 0.2
+                    ? ` · ¥${careerSummary.unconvertedYuan.toFixed(1)}`
+                    : ''}
+                </span>
+              )}
+              {careerSummary?.hasLedgerNotice && (
+                <span
+                  className="absolute top-1.5 right-2 w-2 h-2 rounded-full bg-[var(--red)] animate-pulse"
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Row 4: settings drawer (view, handling, keys, side entries) */}
+        {/* Row 4: settings drawer (view, keys, side entries) */}
         <button
           type="button"
           onClick={() => {
@@ -646,12 +802,6 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
           <span className="text-xs font-extrabold text-[var(--orange)]">
             {settingsOpen ? '▾' : '▸'}
           </span>
-          {careerSummary?.hasLedgerNotice && !settingsOpen && (
-            <span
-              className="absolute top-1 right-2 w-2 h-2 rounded-full bg-[var(--red)] animate-pulse"
-              aria-hidden="true"
-            />
-          )}
         </button>
 
         {settingsOpen ? (
@@ -668,7 +818,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                       key={mode}
                       type="button"
                       onClick={() => pickView(mode)}
-                      className={`rounded-[10px] border-[2px] px-2 py-0.5 text-xs font-extrabold transition ${
+                      className={`rounded-[10px] border-[2px] px-2 py-0.5 text-xs font-extrabold transition cursor-pointer ${
                         active
                           ? 'border-[var(--ink-soft)] bg-[var(--orange)] text-[var(--ink-soft)] shadow-[0_2px_0_#8B290D]'
                           : 'border-[var(--ink-soft)]/35 bg-[var(--paper)] text-[var(--orange)] hover:bg-[var(--cream)]'
@@ -676,29 +826,6 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                       aria-pressed={active}
                     >
                       {lang === 'zh' ? VIEW_MODE_LABELS[mode].zh : VIEW_MODE_LABELS[mode].en}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-extrabold text-[var(--orange)]">
-                  {lang === 'zh' ? '手感' : 'Handling'}
-                </span>
-                {HANDLING_PRESETS.map((preset) => {
-                  const active = handling === preset;
-                  return (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => pickHandling(preset)}
-                      className={`rounded-[10px] border-[2px] px-2 py-0.5 text-xs font-extrabold transition ${
-                        active
-                          ? 'border-[var(--ink-soft)] bg-[var(--orange)] text-[var(--ink-soft)] shadow-[0_2px_0_#8B290D]'
-                          : 'border-[var(--ink-soft)]/35 bg-[var(--paper)] text-[var(--orange)] hover:bg-[var(--cream)]'
-                      }`}
-                      aria-pressed={active}
-                    >
-                      {lang === 'zh' ? HANDLING_LABELS[preset].zh : HANDLING_LABELS[preset].en}
                     </button>
                   );
                 })}
@@ -720,7 +847,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => {
@@ -750,26 +877,6 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                 >
                   {t.almanacBtn}
                 </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  pokoAudio.playUiClick();
-                  onOpenCareerLedger?.('career');
-                }}
-                className="arcade-btn-cream relative h-[46px] rounded-[16px] flex flex-col items-center justify-center px-1 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5"
-              >
-                <span
-                  style={{ fontFamily: 'var(--font-display)' }}
-                  className="arcade-stroke-sm text-white text-xs sm:text-xs font-bold tracking-wide leading-tight text-center"
-                >
-                  {t.careerLedgerBtn}
-                </span>
-                {careerSummary && (
-                  <span className="text-xs font-extrabold text-[var(--yellow)] leading-none mt-0.5">
-                    {careerSummary.rankBadge} {careerSummary.rankName}
-                  </span>
-                )}
               </button>
             </div>
           </div>

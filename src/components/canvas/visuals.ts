@@ -9,6 +9,7 @@ import { GamePhase, HazardKind, HazardPhase, SignalAxisState } from '../../game/
 import type { ToyTruckRig, WindStreakRig } from '../../game/meshes';
 import type { EffectsSystem } from './effects';
 import type { RuntimeState } from './runtimeState';
+import type { WeatherParticleSystem } from './weatherParticles';
 import {
   CHASE_BACK_DIST,
   CHASE_BASE_FOV,
@@ -25,6 +26,8 @@ import {
 // Everything the visual layer needs from the runtime that is not part of RuntimeState.
 export interface VisualDeps {
   fx: EffectsSystem;
+  weatherFx: WeatherParticleSystem;
+  camLookTarget: THREE.Vector3;
   truckRig: ToyTruckRig;
   windStreakRig: WindStreakRig;
   refreshForwardRoadPath: () => void;
@@ -38,7 +41,7 @@ export function updateVisuals(
   deps: VisualDeps,
   currentPhase: GamePhase,
 ): void {
-  const { fx, truckRig, windStreakRig, refreshForwardRoadPath } = deps;
+  const { fx, weatherFx, camLookTarget, truckRig, windStreakRig, refreshForwardRoadPath } = deps;
       // 7. Update Visual Meshes (Truck Gait/Roll/Pitch/Steer/Jump/Shield, Citizens, Pedestrians, Hazards, Particles)
       truckRig.root.position.set(
         S.truckState.x,
@@ -537,4 +540,5 @@ export function updateVisuals(
       // Advance every pooled visual effect (parcels, tip coins, crash bursts, particles)
       fx.setCoinTarget(S.truckState.x, 1.38 + S.truckState.y, S.truckState.z);
       fx.update(dt, S.camYaw);
+      weatherFx.update(dt, S, currentPhase, camLookTarget);
 }

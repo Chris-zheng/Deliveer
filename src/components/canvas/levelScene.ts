@@ -13,10 +13,14 @@ import {
 } from '../../game/rules';
 import { touchControls } from '../../game/touchControls';
 import { setActiveWeather } from '../../game/weather';
+import type { WeatherKind } from '../../game/weather';
+import {
+  resetWeatherVisualState,
+  triggerPlayingPhaseTransition,
+} from '../../game/weatherTransition';
 import { loadGhost, sampleGhostAt, saveGhost } from '../../game/ghost';
 import type { GhostSample } from '../../game/ghost';
 import { getGhostKey, getRunMode } from '../../game/runMode';
-import type { WeatherKind } from '../../game/weather';
 import { isCrossingWarningActive, warningPulse } from '../../game/hazardWarning';
 import type { TrafficHazard } from '../../game/types';
 import { GamePhase, LiveryId, OutcomeKind, ShiftAtmosphere } from '../../game/types';
@@ -200,26 +204,6 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
       const baseAtmosphere = S.currentCity
         ? S.currentCity.config.atmosphere
         : ShiftAtmosphere.SunnyHarbor;
-      applyAtmosphereRig(baseAtmosphere);
-      const fog = scene.fog;
-      if (!(fog instanceof THREE.Fog)) return;
-
-      if (kind === 'rain') {
-        scene.background = new THREE.Color(0x5b6c75);
-        fog.color.setHex(0x5b6c75);
-        fog.near = 34;
-        fog.far = 96;
-        sunLight.intensity = 0.92;
-        hemiLight.intensity = 0.62;
-      } else if (kind === 'fog') {
-        scene.background = new THREE.Color(0xd3e2e6);
-        fog.color.setHex(0xd3e2e6);
-        fog.near = 13;
-        fog.far = 52;
-        sunLight.intensity = 1.08;
-        hemiLight.intensity = 0.66;
-      }
-
       truckRig.headlightCones.visible =
         kind !== 'clear' || baseAtmosphere === ShiftAtmosphere.TwilightNeon;
     }
@@ -397,6 +381,13 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
         S.runElapsedSec = 0;
       S.weatherKind = 'clear';
       setActiveWeather('clear');
+      resetWeatherVisualState(
+        S.weatherVisual,
+        S.currentCity.config.atmosphere,
+        'clear',
+        Boolean(S.currentCity.config.hasSunshower),
+        S.currentCity.config.customCity?.worldCityId,
+      );
       S.riderSpillDeduction = 0;
       S.riderTrafficFines = 0;
       S.riderLateDeduction = 0;
@@ -466,12 +457,15 @@ export function createLevelScene(S: RuntimeState, handles: LevelStageHandles) {
           S.lastStartedLevel = lvl;
         }
         S.countdownState = createStartCountdownState(cdMode);
+        triggerPlayingPhaseTransition(S.weatherVisual, 2.4);
+        S.prevVisualPhase = GamePhase.Playing;
         pokoAudio.playCountdownBeep(3);
         if (S.currentCity.config.atmosphere !== ShiftAtmosphere.TwilightNeon) {
           pokoAudio.playBirdChirp(0.7);
         }
       } else {
         S.countdownState = createStartCountdownState('instant');
+        S.prevVisualPhase = phaseRef.current;
       }
 
       // Position truck at spawn & set initial camera (Bird's-Eye Overview on Playing start, Chase on Title!)

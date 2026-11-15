@@ -30,6 +30,7 @@ import {
   canCheckInToday,
   claimDailyCheckIn,
   getDailyChallenge,
+  getDailyDateKey,
   getDisplayCheckInStreak,
   loadDailyProgress,
   loadDailyStreak,
@@ -124,6 +125,7 @@ export default function App() {
   const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge>(() => getDailyChallenge());
   const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(() => loadDailyProgress());
   const [dailyStreak, setDailyStreak] = useState<DailyStreakState>(() => loadDailyStreak());
+  const [activeRunKind, setActiveRunKind] = useState<'free' | 'daily'>('free');
   const [lastShiftXp, setLastShiftXp] = useState<number>(0);
   const [lastDailyMedalResult, setLastDailyMedalResult] = useState<{
     medalEarned: 'none' | 'bronze' | 'silver' | 'gold';
@@ -148,6 +150,26 @@ export default function App() {
   useEffect(() => {
     saveProgression(progression);
   }, [progression]);
+
+  // Refresh Daily Challenge automatically across midnight or tab focus
+  useEffect(() => {
+    const syncDailyDay = () => {
+      const todayKey = getDailyDateKey();
+      if (todayKey !== dailyChallenge.dateKey) {
+        setDailyChallenge(getDailyChallenge());
+        setDailyProgress(loadDailyProgress());
+        setDailyStreak(loadDailyStreak());
+      }
+    };
+    const timer = window.setInterval(syncDailyDay, 30_000);
+    window.addEventListener('focus', syncDailyDay);
+    document.addEventListener('visibilitychange', syncDailyDay);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', syncDailyDay);
+      document.removeEventListener('visibilitychange', syncDailyDay);
+    };
+  }, [dailyChallenge.dateKey]);
 
   const initialCfg = getLevelConfig(activeLevel);
   const initialVehSpec =
@@ -232,6 +254,7 @@ export default function App() {
     setActiveDiscovery(null);
     setLastShiftXp(0);
     setLastDailyMedalResult(null);
+    setActiveRunKind('free');
     setRunMode({ kind: 'free', level: targetLevel !== undefined ? targetLevel : activeLevel });
     setCustomCityOpen(false);
     document.body.dataset.state = GamePhase.Playing;
@@ -253,7 +276,9 @@ export default function App() {
   const handleStartDaily = useCallback(() => {
     const challenge = getDailyChallenge();
     setDailyChallenge(challenge);
+    setCustomCityConfig(null);
     startPlaying(challenge.level);
+    setActiveRunKind('daily');
     setRunMode({
       kind: 'daily',
       level: challenge.level,
@@ -263,9 +288,12 @@ export default function App() {
     });
   }, [startPlaying]);
   const handleRestart = useCallback(() => {
-
+    if (activeRunKind === 'daily') {
+      handleStartDaily();
+      return;
+    }
     startPlaying(activeLevel);
-  }, [activeLevel, startPlaying]);
+  }, [activeLevel, activeRunKind, handleStartDaily, startPlaying]);
 
   const handleNextLevel = useCallback(() => {
     const worldId = snapshot?.customCity?.worldCityId;
@@ -476,10 +504,25 @@ export default function App() {
 
   // Global keyboard shortcuts for Title Start, Mute [M], Restart [R], Garage [G], Quests [J], and Modal Escape
   useEffect(() => {
+    const isEditable = (target: EventTarget | null) =>
+      target instanceof HTMLElement &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable);
+
     const onGlobalKey = (e: KeyboardEvent) => {
       if (e.repeat) return;
 
-      if (e.code === 'Escape' && (shopOpen || questsOpen || worldTourOpen || almanacOpen || careerLedgerOpen)) {
+      if (
+        e.code === 'Escape' &&
+        (shopOpen ||
+          questsOpen ||
+          worldTourOpen ||
+          almanacOpen ||
+          careerLedgerOpen ||
+          customCityOpen)
+      ) {
         e.preventDefault();
         e.stopImmediatePropagation();
         pokoAudio.playUiClick();
@@ -488,10 +531,11 @@ export default function App() {
         setWorldTourOpen(false);
         setAlmanacOpen(false);
         setCareerLedgerOpen(false);
+        setCustomCityOpen(false);
         return;
       }
 
-      if (anySubModalOpen) {
+      if (anySubModalOpen || isEditable(e.target)) {
         return;
       }
 
@@ -510,7 +554,9 @@ export default function App() {
       ) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        if (snapshot?.outcome === OutcomeKind.Victory) {
+        if (activeRunKind === 'daily') {
+          handleRestart();
+        } else if (snapshot?.outcome === OutcomeKind.Victory) {
           handleNextLevel();
         } else {
           handleRestart();
@@ -553,7 +599,9 @@ export default function App() {
     worldTourOpen,
     almanacOpen,
     careerLedgerOpen,
+    customCityOpen,
     anySubModalOpen,
+    activeRunKind,
     startPlaying,
     handleNextLevel,
     handleRestart,
@@ -625,6 +673,12 @@ export default function App() {
           }}
           onStart={() => startPlaying(activeLevel)}
           onStartDaily={handleStartDaily}
+          onOpenShop={() => {
+            pokoAudio.playUiClick();
+            setShopOpen(true);
+          }}
+          coins={progression.coins}
+          hasFreeSpin={hasFreeSpin}
           careerSummary={{
             rankBadge: rankInfo.current.badge,
             rankName: lang === 'zh' ? rankInfo.current.nameZh : rankInfo.current.nameEn,
@@ -688,6 +742,7 @@ export default function App() {
           phase={phase}
           snapshot={snapshot}
           currentLevel={activeLevel}
+          isDailyRun={activeRunKind === 'daily'}
           lang={lang}
           careerRankInfo={{
             badge: rankInfo.current.badge,
