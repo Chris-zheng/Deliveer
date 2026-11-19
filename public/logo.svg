@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 118" role="img" aria-label="Courier Field">
+  <g transform="translate(4,4) scale(1.5)">
+    <rect width="64" height="64" rx="14" fill="#ffe524"/>
+    <rect x="1.7" y="1.7" width="60.6" height="60.6" rx="12.4" fill="none" stroke="#140c04" stroke-width="3.4"/>
+    <rect x="13" y="14.5" width="22" height="11.5" rx="2.4" fill="#f97316" stroke="#140c04" stroke-width="2.6"/>
+    <path d="M23.5 14.5v11.5" stroke="#fffdf5" stroke-width="2.6"/>
+    <path d="M7 42V30.5a2.6 2.6 0 0 1 2.6-2.6H40v14.1z" fill="#fffdf5" stroke="#140c04" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M40 27.9h8.2l6.2 8.4v5.7H40z" fill="#fffdf5" stroke="#140c04" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M43.6 31.3h3.6l4 5.5h-7.6z" fill="#7ea6c9" stroke="#140c04" stroke-width="1.7"/>
+    <circle cx="18.5" cy="43" r="5.2" fill="#2b1b08" stroke="#140c04" stroke-width="2.2"/>
+    <circle cx="46" cy="43" r="5.2" fill="#2b1b08" stroke="#140c04" stroke-width="2.2"/>
+    <circle cx="18.5" cy="43" r="1.9" fill="#ffe524"/>
+    <circle cx="46" cy="43" r="1.9" fill="#ffe524"/>
+  </g>
+  <text x="120" y="58" font-family="'Lilita One','Plus Jakarta Sans',system-ui,sans-serif" font-size="42" font-weight="900" letter-spacing="1.2" fill="#fffdf5" stroke="#140c04" stroke-width="8" paint-order="stroke fill">COURIER</text>
+  <text x="120" y="102" font-family="'Lilita One','Plus Jakarta Sans',system-ui,sans-serif" font-size="42" font-weight="900" letter-spacing="1.2" fill="#ffe524" stroke="#140c04" stroke-width="8" paint-order="stroke fill">FIELD</text>
+</svg>
